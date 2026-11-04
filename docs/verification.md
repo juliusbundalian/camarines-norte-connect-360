@@ -7,7 +7,7 @@ Scope: initial onboarding and Firebase email authentication foundation only. Tes
 | Check | Result |
 | --- | --- |
 | Strict TypeScript (`npm run typecheck`) | Passed |
-| Jest + React Native Testing Library | 53 tests passed across 9 suites |
+| Jest + React Native Testing Library | 54 tests passed across 9 suites |
 | Real application auth service against Auth Emulator | 3 integration tests passed: lifecycle, password-reset action, native persistence adapter restoration |
 | `npx expo install --check` | Compatible versions; no updates required |
 | `npx expo-doctor` | 20/20 checks passed |
@@ -51,4 +51,8 @@ Latest compatible stable versions were resolved with Expo's installer and locked
 
 Firebase's prepared Firestore dependency pinned an older gRPC version with high-severity advisories. A scoped override selects a compatible patched 1.x release (`@grpc/grpc-js ^1.14.7`). After a nonbreaking audit-fix pass, the full dependency tree reports 39 remaining advisories (38 moderate, 1 low), with no high/critical advisories. Do not use `npm audit fix --force`: its suggestions include downgrading Expo/Firebase/tooling to incompatible older major versions. Track upstream compatible fixes; Firestore is not used by any screen.
 
-Whole-change independent review: pending. Remaining native/live checks above must stay explicit at handover; this record does not claim all device acceptance checks passed.
+Whole-change independent review: completed. No authentication, persistence, or access-control defects found. One important temporary-layout issue was fixed: onboarding Back/Get Started now stack vertically so their intrinsic widths cannot overflow together on narrow screens with enlarged text. A rendered layout-contract regression was observed failing before the fix, then passing; actual native enlarged-text rendering remains an outstanding device check.
+
+Two minor findings are deferred for the user: consistently applying the shared 48-point touch-height token to Paper buttons, and strengthening the rotation test to assert the actual post-resize nonanimated scroll offset after an initial measured layout. Existing measured-width regression verifies the Next-button offset, but the separate rotation assertion is weaker.
+
+Decisions retained from review: final Figma fidelity and new modules remain deferred (cost: presentation/feature work waits for supplied designs); native gesture/keyboard/large-text/relaunch/splash behavior and Android/tablet parity remain unverified (cost: outstanding device-specific confidence); cloud email delivery/Console settings remain unverified (cost: live-project readiness is pending); Firestore authorization/data behavior remains deferred until there is approved data access (cost: future features still need rules/data verification). The development-only tsx runner is retained to execute the actual service (cost: one small development dependency). Remaining native/live checks above must stay explicit at handover; this record does not claim all device acceptance checks passed.

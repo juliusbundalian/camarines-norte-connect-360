@@ -1,4 +1,9 @@
-import { render, screen, fireEvent } from "@testing-library/react-native";
+import {
+  render,
+  screen,
+  fireEvent,
+  within,
+} from "@testing-library/react-native";
 import { PaperProvider } from "react-native-paper";
 import { FlatList, useWindowDimensions } from "react-native";
 import OnboardingScreen from "../OnboardingScreen";
@@ -96,4 +101,22 @@ test("only the active page is exposed to assistive technology", async () => {
   await fireEvent.press(screen.getByRole("button", { name: "Next" }));
   expect(screen.getByText("Explore Real Estate Opportunities")).toBeTruthy();
   expect(screen.queryByText("Discover Camarines Norte")).toBeNull();
+});
+
+test("narrow enlarged-text navigation gives each action its own row", async () => {
+  jest
+    .mocked(useWindowDimensions)
+    .mockReturnValue({ width: 320, height: 568, scale: 1, fontScale: 2 });
+  await show();
+  await fireEvent.press(screen.getByRole("button", { name: "Next" }));
+  await fireEvent.press(screen.getByRole("button", { name: "Next" }));
+  let actions = screen.getByRole("button", { name: "Back" }).parent;
+  while (
+    actions &&
+    !within(actions).queryByRole("button", { name: "Get Started" })
+  )
+    actions = actions.parent;
+  expect(actions).toHaveStyle({ flexDirection: "column" });
+  await fireEvent.press(screen.getByRole("button", { name: "Get Started" }));
+  expect(complete).toHaveBeenCalledTimes(1);
 });

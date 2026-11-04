@@ -182,8 +182,7 @@ const styles = StyleSheet.create({
   },
   progress: { textAlign: "center", color: tokens.colors.muted },
   actions: {
-    flexDirection: "row",
-    justifyContent: "flex-end",
+    flexDirection: "column",
     gap: tokens.space.md,
   },
   error: { color: tokens.colors.error },
