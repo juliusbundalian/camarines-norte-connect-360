@@ -1,1 +1,1 @@
-export {default} from '../../features/auth/RegisterScreen';
+export { default } from "../../features/auth/RegisterScreen";

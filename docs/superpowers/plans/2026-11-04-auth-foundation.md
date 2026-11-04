@@ -1,6 +1,6 @@
 # Authentication Foundation Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Deliver only the Expo onboarding and Firebase email authentication foundation, ready for future Figma layouts.
 
@@ -37,12 +37,12 @@
 
 **Interfaces:** `readFirebaseConfig(env: FirebaseEnvironment, development: boolean): FirebaseConfiguration` validates the explicitly listed public Firebase fields and optional emulator URL. Platform clients expose `getFirebaseAuth(): Auth`, `getFirebaseApp(): FirebaseApp`, and lazy `getFirestoreDb(): Firestore`; the base client supplies a resolvable fallback for TypeScript/test tooling. Theme exports `theme` and `tokens`; constants export `APP_NAME`.
 
-- [ ] Establish an isolated branch/worktree using the execution workflow. Initialize a minimal Expo Router TypeScript project while preserving LICENSE and docs. Set `main` to `expo-router/entry`; use Expo-compatible package versions. Add scripts `start`, `android`, `ios`, `web`, `typecheck`, `test`, `test:emulator`, and `emulators:auth`. Configure `jest-expo`, strict TypeScript, and environment ignore rules. Do not retain template feature screens.
-- [ ] Write configuration tests: missing required fields produce actionable errors; valid demo config parses; malformed emulator URLs fail; any production emulator opt-in fails. Assert `expect(() => readFirebaseConfig(emulatorEnv, false)).toThrow(/emulator/i)` and valid production configuration has no emulator connection.
-- [ ] Run `npm test -- --runInBand services/firebase/__tests__/config.test.ts`; observe failure from the missing parser.
-- [ ] Implement config parsing and lazy platform initialization. Native Auth uses `initializeAuth`/`getReactNativePersistence` with compatible AsyncStorage; web uses browser persistence. Reuse initialized clients under Fast Refresh. Connect an explicitly enabled development emulator before any auth operations. Do not initialize Firestore until its getter is called.
-- [ ] Add centralized temporary Paper tokens and local brand asset, and configure Expo Router/Splash Screen plugins. Use a simple generated asset without spending time on visual design.
-- [ ] Run the configuration test, `npm run typecheck`, and `npx expo install --check`; require exit 0. Commit this foundation with its lockfile and setup instructions.
+- [x] Establish an isolated branch/worktree using the execution workflow. Initialize a minimal Expo Router TypeScript project while preserving LICENSE and docs. Set `main` to `expo-router/entry`; use Expo-compatible package versions. Add scripts `start`, `android`, `ios`, `web`, `typecheck`, `test`, `test:emulator`, and `emulators:auth`. Configure `jest-expo`, strict TypeScript, and environment ignore rules. Do not retain template feature screens.
+- [x] Write configuration tests: missing required fields produce actionable errors; valid demo config parses; malformed emulator URLs fail; any production emulator opt-in fails. Assert `expect(() => readFirebaseConfig(emulatorEnv, false)).toThrow(/emulator/i)` and valid production configuration has no emulator connection.
+- [x] Run `npm test -- --runInBand services/firebase/__tests__/config.test.ts`; observe failure from the missing parser.
+- [x] Implement config parsing and lazy platform initialization. Native Auth uses `initializeAuth`/`getReactNativePersistence` with compatible AsyncStorage; web uses browser persistence. Reuse initialized clients under Fast Refresh. Connect an explicitly enabled development emulator before any auth operations. Do not initialize Firestore until its getter is called.
+- [x] Add centralized temporary Paper tokens and local brand asset, and configure Expo Router/Splash Screen plugins. Use a simple generated asset without spending time on visual design.
+- [x] Run the configuration test, `npm run typecheck`, and `npx expo install --check`; require exit 0. Commit this foundation with its lockfile and setup instructions.
 
 ### Task 2: Auth service, validation, and observed session lifecycle
 
@@ -50,12 +50,12 @@
 
 **Interfaces:** `getAuthService(): AuthService` returns `login(email, password): Promise<void>`, `register(email, password): Promise<void>`, `requestPasswordReset(email): Promise<void>`, `logout(): Promise<void>`, and `observe(next: (user: User | null) => void, error: (error: unknown) => void): Unsubscribe`. `useAuth()` exposes those actions plus `{ user: User | null, ready: boolean, error: string | null, retry(): void }`. Export `loginSchema`, `registrationSchema`, `resetPasswordSchema` and their inferred form types. `getAuthErrorMessage(error: unknown): string` translates safe messages. `useAsyncAction()` exposes `{ pending, error, run(action: () => Promise<void>): Promise<boolean>, clearError(): void }` with a synchronous duplicate guard and mounted-state cleanup.
 
-- [ ] Write tests that assert SDK calls receive unchanged password bytes (`' pässword '`) and normalized email; seven-character registration passwords and mismatched confirmation fail; eight-character matching passwords pass; an empty login password fails without applying registration minimum length to existing users.
-- [ ] Write reset tests that account-not-found resolves normally, while network and rate-limit errors reject. Assert credential errors are neutral and unknown errors do not expose raw SDK messages.
-- [ ] Write provider/hook tests: readiness waits for the first observer event (including null), action results alone do not grant access, retry replaces/unsubscribes the old listener, stale callbacks are ignored, and cleanup unsubscribes. Assert `expect(login).toHaveBeenCalledTimes(1)` after two simultaneous `run` calls; pending failures release the guard; unmount does not update UI.
-- [ ] Run the Task 2 test files with `npm test -- --runInBand`; observe the missing implementations fail.
-- [ ] Implement the thin service using the four requested Firebase functions and `onAuthStateChanged`; implement schemas, safe errors, auth context, and the focused async-action hook. Handle configuration/observation failure as settled error state with retry. Never manually persist user/session data.
-- [ ] Run Task 2 tests plus `npm run typecheck`; require all pass. Commit auth logic and tests.
+- [x] Write tests that assert SDK calls receive unchanged password bytes (`' pässword '`) and normalized email; seven-character registration passwords and mismatched confirmation fail; eight-character matching passwords pass; an empty login password fails without applying registration minimum length to existing users.
+- [x] Write reset tests that account-not-found resolves normally, while network and rate-limit errors reject. Assert credential errors are neutral and unknown errors do not expose raw SDK messages.
+- [x] Write provider/hook tests: readiness waits for the first observer event (including null), action results alone do not grant access, retry replaces/unsubscribes the old listener, stale callbacks are ignored, and cleanup unsubscribes. Assert `expect(login).toHaveBeenCalledTimes(1)` after two simultaneous `run` calls; pending failures release the guard; unmount does not update UI.
+- [x] Run the Task 2 test files with `npm test -- --runInBand`; observe the missing implementations fail.
+- [x] Implement the thin service using the four requested Firebase functions and `onAuthStateChanged`; implement schemas, safe errors, auth context, and the focused async-action hook. Handle configuration/observation failure as settled error state with retry. Never manually persist user/session data.
+- [x] Run Task 2 tests plus `npm run typecheck`; require all pass. Commit auth logic and tests.
 
 ### Task 3: Persistent three-page onboarding
 
@@ -63,11 +63,11 @@
 
 **Interfaces:** `useOnboarding()` returns `{ completed: boolean, ready: boolean, error: string | null, saving: boolean, complete(): Promise<void>, retry(): void }`. Persist key `@cn360/onboarding/v1` with value `complete`; absent or invalid values mean incomplete, failed reads are retryable errors. `OnboardingScreen(): React.JSX.Element` consumes this shared provider; navigation follows state through Task 5 guards.
 
-- [ ] Write storage tests for missing/completed/corrupt values, rejected reads, successful retry, and a rejected completion write: `expect(result.current.completed).toBe(false)` until `setItem` resolves. Assert concurrent completion attempts cause one write and failed writes allow retry.
-- [ ] Write interaction tests for the exact three approved headings, Next/Back, swipe index updates, final Get Started, Skip, accessible pagination labels, and storage errors. Simulate viewport changes after page two and assert the active page remains page two and the list scrolls to its new offset. Skip and Get Started each invoke the shared completion operation.
-- [ ] Run `npm test -- --runInBand features/onboarding`; observe failure before implementation.
-- [ ] Implement provider cleanup/retry and a horizontal paged list with token-based layout, optional Expo Image local placeholder, synchronized page state, and button alternatives. Rejected writes stay on onboarding with retry feedback. Render no tourism/property/community feature content beyond the approved onboarding copy.
-- [ ] Run onboarding tests and `npm run typecheck`; require all pass. Commit onboarding behavior.
+- [x] Write storage tests for missing/completed/corrupt values, rejected reads, successful retry, and a rejected completion write: `expect(result.current.completed).toBe(false)` until `setItem` resolves. Assert concurrent completion attempts cause one write and failed writes allow retry.
+- [x] Write interaction tests for the exact three approved headings, Next/Back, swipe index updates, final Get Started, Skip, accessible pagination labels, and storage errors. Simulate viewport changes after page two and assert the active page remains page two and the list scrolls to its new offset. Skip and Get Started each invoke the shared completion operation.
+- [x] Run `npm test -- --runInBand features/onboarding`; observe failure before implementation.
+- [x] Implement provider cleanup/retry and a horizontal paged list with token-based layout, optional Expo Image local placeholder, synchronized page state, and button alternatives. Rejected writes stay on onboarding with retry feedback. Render no tourism/property/community feature content beyond the approved onboarding copy.
+- [x] Run onboarding tests and `npm run typecheck`; require all pass. Commit onboarding behavior.
 
 ### Task 4: Temporary auth forms and authenticated placeholder
 
@@ -75,12 +75,12 @@
 
 **Interfaces:** Each screen exports a default zero-argument React component. `Screen` accepts children and provides safe-area/keyboard-aware scrolling. `PasswordField` accepts Paper text-input props, a label, and its own accessible visibility toggle. Screens consume Task 2 schemas/context/action hook, use React Hook Form/Zod, and link only to `/login`, `/register`, and `/forgot-password`.
 
-- [ ] Write user interaction tests: invalid input prevents submission; corrected input submits normalized email and untouched password; visibility toggles work independently; double taps submit once; recoverable errors preserve fields and enable retry; leaving a pending screen causes no local state update. Verify Forgot Password/Register/Login links target their respective routes.
-- [ ] Write recovery tests asserting the exact generic confirmation appears for existing and nonexistent accounts, network failures retain the form, and confirmation returns to login. Assert the recovery API is not called for an invalid email.
-- [ ] Write placeholder tests for application name, welcome, email, exact Figma-awaiting message, logout pending state, and retryable logout errors. The observer remains the source of navigation after logout.
-- [ ] Run `npm test -- --runInBand features/auth/__tests__/auth-screens.test.tsx`; observe failure before implementation.
-- [ ] Implement the reusable layout/visibility controls and four minimal Paper screens. Use `Controller`, field-level errors, correct keyboard/autofill settings, safe error feedback, and guarded submission. The reset confirmation stays within the forgot-password route. Add no other screens or feature entry points.
-- [ ] Run screen tests and `npm run typecheck`; require all pass. Commit temporary auth presentation.
+- [x] Write user interaction tests: invalid input prevents submission; corrected input submits normalized email and untouched password; visibility toggles work independently; double taps submit once; recoverable errors preserve fields and enable retry; leaving a pending screen causes no local state update. Verify Forgot Password/Register/Login links target their respective routes.
+- [x] Write recovery tests asserting the exact generic confirmation appears for existing and nonexistent accounts, network failures retain the form, and confirmation returns to login. Assert the recovery API is not called for an invalid email.
+- [x] Write placeholder tests for application name, welcome, email, exact Figma-awaiting message, logout pending state, and retryable logout errors. The observer remains the source of navigation after logout.
+- [x] Run `npm test -- --runInBand features/auth/__tests__/auth-screens.test.tsx`; observe failure before implementation.
+- [x] Implement the reusable layout/visibility controls and four minimal Paper screens. Use `Controller`, field-level errors, correct keyboard/autofill settings, safe error feedback, and guarded submission. The reset confirmation stays within the forgot-password route. Add no other screens or feature entry points.
+- [x] Run screen tests and `npm run typecheck`; require all pass. Commit temporary auth presentation.
 
 ### Task 5: Splash readiness and protected Expo Router navigation
 
@@ -88,11 +88,11 @@
 
 **Interfaces:** `RootLayout` mounts SafeArea/Paper/Auth/Onboarding providers, then the readiness gate and router. `index.tsx` selects the approved destination. Root `Stack.Protected` guards allow onboarding only for unauthenticated incomplete onboarding, auth only for unauthenticated completed onboarding, and welcome only for an observed authenticated user. Route files only re-export feature screens.
 
-- [ ] Using Expo Router's testing-library `renderRouter` with controlled auth/storage adapters, write tests for both restoration completion orders and no visible route before both settle. Assert restored users open welcome even with a missing onboarding flag; unauthenticated first launch opens onboarding; completed onboarding opens login.
-- [ ] Write deep-link and history tests: unauthenticated `/welcome` is guarded, authenticated `/login` resolves to welcome, completing onboarding unlocks auth, observer login removes public history, and observer logout removes welcome history. Also test initialization errors, failed storage reads, retry, and observer failure: a usable recovery UI appears and splash hide is called when that UI mounts.
-- [ ] Run `npm test -- --runInBand features/auth/__tests__/navigation.test.tsx`; observe failure before implementation.
-- [ ] Implement native splash prevention at module scope and hide only when a settled destination/error UI mounts; add no artificial delay. Render no navigator while restoring, use protected groups rather than per-screen auth effects, and handle authenticated precedence explicitly. Recover startup failure without indefinite loading or duplicate observers.
-- [ ] Run navigation tests, the full Jest suite, `npm run typecheck`, and `npx expo install --check`; require all pass. Commit routing and splash integration.
+- [x] Using Expo Router's testing-library `renderRouter` with controlled auth/storage adapters, write tests for both restoration completion orders and no visible route before both settle. Assert restored users open welcome even with a missing onboarding flag; unauthenticated first launch opens onboarding; completed onboarding opens login.
+- [x] Write deep-link and history tests: unauthenticated `/welcome` is guarded, authenticated `/login` resolves to welcome, completing onboarding unlocks auth, observer login removes public history, and observer logout removes welcome history. Also test initialization errors, failed storage reads, retry, and observer failure: a usable recovery UI appears and splash hide is called when that UI mounts.
+- [x] Run `npm test -- --runInBand features/auth/__tests__/navigation.test.tsx`; observe failure before implementation.
+- [x] Implement native splash prevention at module scope and hide only when a settled destination/error UI mounts; add no artificial delay. Render no navigator while restoring, use protected groups rather than per-screen auth effects, and handle authenticated precedence explicitly. Recover startup failure without indefinite loading or duplicate observers.
+- [x] Run navigation tests, the full Jest suite, `npm run typecheck`, and `npx expo install --check`; require all pass. Commit routing and splash integration.
 
 ### Task 6: Real-SDK verification, documentation, and final review
 
@@ -112,4 +112,4 @@
 
 Spec coverage: Tasks 1–2 cover initialization, tokens, Firebase services/configuration, validation, and session persistence; Task 3 covers onboarding; Task 4 covers all requested auth UI; Task 5 covers splash/route protection; Task 6 covers real SDK validation, setup instructions, review, and the Figma stop boundary. Each Review Focus item has explicit behavioral coverage in its owning task. Shared service/hook names and return types agree across tasks.
 
-Recommended execution: **Native**, using `superpowers:executing-plans`, because the six tasks share provider, service, and route interfaces and benefit from one implementer maintaining that context. A fresh reviewer checks the complete result before handover. Await user plan review and execution-method selection before implementing.
+Recommended execution: **Native**, using `superpowers:executing-plans`, because the six tasks share provider, service, and route interfaces and benefit from one implementer maintaining that context. A fresh reviewer checks the complete result before handover. The user approved this plan and selected Native execution.
