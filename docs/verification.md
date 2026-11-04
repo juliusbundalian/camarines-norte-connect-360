@@ -32,7 +32,16 @@ After the user unlocked the Mac, native checks on iPhone 16 Pro Max / iOS 18.5 a
 - An incorrect password displayed the neutral credential error while preserving the login form.
 - Onboarding's final-page controls remained exposed while the simulator Text Size setting was raised from 3 to 7; the setting was restored to 3 afterward. This is a limited check on this phone, not exhaustive narrow-screen accessibility certification.
 
-The Mac locked again before the successful native Login retry and password-reset form checks could finish. The user was asked to unlock it again. Native swipe attempts through the automation tool did not change pages, so gesture behavior is **not verified** rather than assumed to pass. Remaining native checks include the successful Login retry/reset form, full signed-out deep-link/back behavior, software-keyboard behavior, narrow-screen/accessibility-size rendering, and splash timing/no-flicker. Automated component/router tests cover the corresponding logic, but do not certify these device outcomes.
+After the second unlock, the remaining native authentication checks also passed:
+
+- Correct credentials successfully retried the earlier failed login and opened Welcome with the expected email.
+- Show/Hide Password toggled visibility and the credential still authenticated correctly.
+- Forgot Password opened the recovery form; submitting the registered email displayed the neutral confirmation.
+- The local emulator's reset-action endpoint confirmed the native form generated a `PASSWORD_RESET` action for the disposable account.
+- Back to Login returned from confirmation to Login.
+- Opening the `/welcome` deep link while signed out retained Login rather than exposing the authenticated placeholder.
+
+Native swipe attempts through the automation tool did not change pages, so gesture behavior is **not verified** rather than assumed to pass. Software-keyboard visibility was not exercised (the simulator used hardware-keyboard-style input). Remaining device checks include gestures/back gestures, software-keyboard behavior, narrow-screen/accessibility-size rendering, and splash timing/no-flicker. Automated component/router tests cover the corresponding logic, but do not certify these device outcomes.
 No Android device/emulator interaction check or tablet interaction check has been completed. No cloud Firebase project configuration or mailbox was supplied, so real reset-email delivery and Firebase Console settings have not been verified. The emulator never sends real email.
 
 ## Acceptance checklist
@@ -51,7 +60,8 @@ No Android device/emulator interaction check or tablet interaction check has bee
 - [x] Firebase configuration instructions and environment example documented.
 - [x] Business logic is separate from temporary presentation for later Figma integration.
 - [x] Complete native process-relaunch authentication persistence and onboarding verification on the tested iPhone simulator.
-- [ ] Complete remaining native Login/reset/gesture/keyboard/deep-link/splash smoke checks after the Mac is unlocked again.
+- [x] Complete native Login retry, password visibility, reset confirmation, and signed-in/signed-out protected deep-link checks.
+- [ ] Complete gesture/software-keyboard/narrow-large-text/splash checks and other untested device coverage.
 - [ ] Confirm cloud reset-email delivery and Console settings in the intended Firebase project.
 
 ## Dependencies and review
