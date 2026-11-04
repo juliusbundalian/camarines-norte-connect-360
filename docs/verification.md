@@ -22,8 +22,17 @@ The integration runner executes the real TypeScript auth service using developme
 
 The locally generated iOS app built, installed, and launched. The first-launch onboarding screen rendered with temporary branding, all three page descriptions were present, and Next/Back updated the selected page. Native Xcode build success was confirmed separately because Expo CLI's post-install window-activation step encountered an OS automation error. Metro started successfully; the app fetched and ran its iOS bundle.
 
-The Mac locked while continuing simulator interaction checks. The user has been asked to unlock it. The following native checks are **not yet verified**: swipe gestures, the complete forms/authentication flow against the emulator, persisted onboarding after process relaunch, authenticated process-relaunch restoration, full back/deep-link behavior, keyboard/large-text behavior, and splash timing/no-flicker. These behaviors have automated component, router, service, or adapter coverage where applicable, but those tests are not device checks.
+After the user unlocked the Mac, native checks on iPhone 16 Pro Max / iOS 18.5 additionally confirmed:
 
+- Get Started persisted onboarding completion; terminating and relaunching the application returned to Login rather than onboarding.
+- The registration form created a disposable local-emulator account and opened Welcome with that account's email.
+- Terminating and relaunching the authenticated app restored the same Welcome/email using actual native AsyncStorage persistence.
+- Opening the `/login` deep link while authenticated retained Welcome.
+- Logout returned to Login.
+- An incorrect password displayed the neutral credential error while preserving the login form.
+- Onboarding's final-page controls remained exposed while the simulator Text Size setting was raised from 3 to 7; the setting was restored to 3 afterward. This is a limited check on this phone, not exhaustive narrow-screen accessibility certification.
+
+The Mac locked again before the successful native Login retry and password-reset form checks could finish. The user was asked to unlock it again. Native swipe attempts through the automation tool did not change pages, so gesture behavior is **not verified** rather than assumed to pass. Remaining native checks include the successful Login retry/reset form, full signed-out deep-link/back behavior, software-keyboard behavior, narrow-screen/accessibility-size rendering, and splash timing/no-flicker. Automated component/router tests cover the corresponding logic, but do not certify these device outcomes.
 No Android device/emulator interaction check or tablet interaction check has been completed. No cloud Firebase project configuration or mailbox was supplied, so real reset-email delivery and Firebase Console settings have not been verified. The emulator never sends real email.
 
 ## Acceptance checklist
@@ -41,8 +50,8 @@ No Android device/emulator interaction check or tablet interaction check has bee
 - [x] TypeScript, compatibility checks, and relevant automated tests pass.
 - [x] Firebase configuration instructions and environment example documented.
 - [x] Business logic is separate from temporary presentation for later Figma integration.
-- [ ] Complete native process-relaunch authentication persistence and onboarding verification.
-- [ ] Complete native auth/gesture/keyboard/deep-link/splash smoke checks after the Mac is unlocked.
+- [x] Complete native process-relaunch authentication persistence and onboarding verification on the tested iPhone simulator.
+- [ ] Complete remaining native Login/reset/gesture/keyboard/deep-link/splash smoke checks after the Mac is unlocked again.
 - [ ] Confirm cloud reset-email delivery and Console settings in the intended Firebase project.
 
 ## Dependencies and review
@@ -51,8 +60,8 @@ Latest compatible stable versions were resolved with Expo's installer and locked
 
 Firebase's prepared Firestore dependency pinned an older gRPC version with high-severity advisories. A scoped override selects a compatible patched 1.x release (`@grpc/grpc-js ^1.14.7`). After a nonbreaking audit-fix pass, the full dependency tree reports 39 remaining advisories (38 moderate, 1 low), with no high/critical advisories. Do not use `npm audit fix --force`: its suggestions include downgrading Expo/Firebase/tooling to incompatible older major versions. Track upstream compatible fixes; Firestore is not used by any screen.
 
-Whole-change independent review: completed. No authentication, persistence, or access-control defects found. One important temporary-layout issue was fixed: onboarding Back/Get Started now stack vertically so their intrinsic widths cannot overflow together on narrow screens with enlarged text. A rendered layout-contract regression was observed failing before the fix, then passing; actual native enlarged-text rendering remains an outstanding device check.
+Whole-change independent review: completed. No authentication, persistence, or access-control defects found. One important temporary-layout issue was fixed: onboarding Back/Get Started now stack vertically so their intrinsic widths cannot overflow together on narrow screens with enlarged text. A rendered layout-contract regression was observed failing before the fix, then passing; limited enlarged-text inspection passed on the tested phone; narrow-screen accessibility rendering remains an outstanding device check.
 
 Two minor findings are deferred for the user: consistently applying the shared 48-point touch-height token to Paper buttons, and strengthening the rotation test to assert the actual post-resize nonanimated scroll offset after an initial measured layout. Existing measured-width regression verifies the Next-button offset, but the separate rotation assertion is weaker.
 
-Decisions retained from review: final Figma fidelity and new modules remain deferred (cost: presentation/feature work waits for supplied designs); native gesture/keyboard/large-text/relaunch/splash behavior and Android/tablet parity remain unverified (cost: outstanding device-specific confidence); cloud email delivery/Console settings remain unverified (cost: live-project readiness is pending); Firestore authorization/data behavior remains deferred until there is approved data access (cost: future features still need rules/data verification). The development-only tsx runner is retained to execute the actual service (cost: one small development dependency). Remaining native/live checks above must stay explicit at handover; this record does not claim all device acceptance checks passed.
+Decisions retained from review: final Figma fidelity and new modules remain deferred (cost: presentation/feature work waits for supplied designs); actual iPhone onboarding/auth process restoration is now verified, while the remaining gesture/keyboard/narrow-large-text/splash behavior and Android/tablet parity remain unverified (cost: outstanding confidence outside the tested native cases); cloud email delivery/Console settings remain unverified (cost: live-project readiness is pending); Firestore authorization/data behavior remains deferred until there is approved data access (cost: future features still need rules/data verification). The development-only tsx runner is retained to execute the actual service (cost: one small development dependency). Remaining native/live checks above must stay explicit at handover; this record does not claim all device acceptance checks passed.
