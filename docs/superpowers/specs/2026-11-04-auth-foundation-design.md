@@ -1,7 +1,7 @@
 # CAMARINES NORTE 360 CONNECT — Initial foundation
 
 Date: 2026-11-04 (Asia/Manila)
-Status: Proposed; architecture approach selected, full design awaiting approval.
+Status: Approved by the user on 2026-11-04; implementation plan pending review.
 
 ## Intent and boundaries
 
@@ -114,7 +114,7 @@ Verify native relaunch/session restoration and splash/no-flicker behavior on an 
 
 ## Approval and completion boundary
 
-The architecture choice is approved. This full specification still requires user approval under the requested Superpowers workflow before scaffolding, dependency installation, or product code. Then write a concise phased implementation plan, execute small verifiable tasks, review the result, and report evidence against the acceptance criteria. Any environment-dependent gaps must be explicit.
+The user approved the architecture choice and this full specification. Write a concise phased implementation plan and obtain its workflow-required review before execution, then execute small verifiable tasks, review the result, and report evidence against the acceptance criteria. Any environment-dependent gaps must be explicit.
 
 After this scope is implemented, stop. Further screens or modules require the user's official Figma designs and explicit development scope.
 
