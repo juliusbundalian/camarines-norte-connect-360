@@ -42,7 +42,7 @@ After the second unlock, the remaining native authentication checks also passed:
 - Opening the `/welcome` deep link while signed out retained Login rather than exposing the authenticated placeholder.
 
 Native swipe attempts through the automation tool did not change pages, so gesture behavior is **not verified** rather than assumed to pass. Software-keyboard visibility was not exercised (the simulator used hardware-keyboard-style input). Remaining device checks include gestures/back gestures, software-keyboard behavior, narrow-screen/accessibility-size rendering, and splash timing/no-flicker. Automated component/router tests cover the corresponding logic, but do not certify these device outcomes.
-No Android device/emulator interaction check or tablet interaction check has been completed. No cloud Firebase project configuration or mailbox was supplied, so real reset-email delivery and Firebase Console settings have not been verified. The emulator never sends real email.
+Android native build, installation, and startup were subsequently checked as recorded below. Android authentication/persistence/gesture interaction checks and tablet interaction checks remain unverified. No cloud Firebase project configuration or mailbox was supplied, so real reset-email delivery and Firebase Console settings have not been verified. The emulator never sends real email.
 
 ## Acceptance checklist
 
@@ -75,3 +75,18 @@ Whole-change independent review: completed. No authentication, persistence, or a
 Two minor findings are deferred for the user: consistently applying the shared 48-point touch-height token to Paper buttons, and strengthening the rotation test to assert the actual post-resize nonanimated scroll offset after an initial measured layout. Existing measured-width regression verifies the Next-button offset, but the separate rotation assertion is weaker.
 
 Decisions retained from review: final Figma fidelity and new modules remain deferred (cost: presentation/feature work waits for supplied designs); actual iPhone onboarding/auth process restoration is now verified, while the remaining gesture/keyboard/narrow-large-text/splash behavior and Android/tablet parity remain unverified (cost: outstanding confidence outside the tested native cases); cloud email delivery/Console settings remain unverified (cost: live-project readiness is pending); Firestore authorization/data behavior remains deferred until there is approved data access (cost: future features still need rules/data verification). The development-only tsx runner is retained to execute the actual service (cost: one small development dependency). Remaining native/live checks above must stay explicit at handover; this record does not claim all device acceptance checks passed.
+
+## Updated platform priority
+
+The user confirmed Android as the primary target on 2026-11-04. Future development and testing must prioritize Android; iOS-specific testing is deferred unless requested. The earlier iOS smoke checks do not establish Android readiness. This guidance is recorded in `AGENTS.md` for future sessions.
+
+
+### Initial native Android evidence
+
+- Target: Pixel 9 AVD, Android 15 / API 35, ARM64, Java 21.
+- Expo Android prebuild succeeded. Gradle `:app:assembleDebug` succeeded; the all-architecture first build took 8m43s.
+- The existing emulator rejected installation with `INSTALL_FAILED_INSUFFICIENT_STORAGE`; no existing apps or data were deleted. An isolated temporary writable-image directory was used for a successful installation.
+- A smaller `:app:assembleDebug -PreactNativeArchitectures=arm64-v8a` build succeeded in 9s using the existing build cache.
+- Installation and launching `ph.cn360connect.app/.MainActivity` succeeded. Metro served the Android bundle; the first onboarding page rendered with branding, Skip, pagination, and Next. Screenshot: `docs/screenshots/android-startup.png`.
+- The initial debug launch could not find Metro on the earlier custom port; starting Metro on its default 8081 and forwarding `adb reverse tcp:8081 tcp:8081` resolved it. The local Auth Emulator used `adb reverse tcp:9098 tcp:9098`.
+- This confirms native build/install/startup only. Android registration, login, reset confirmation, logout, relaunch persistence, protected navigation, gestures, keyboard handling, and splash timing still require Android emulator/device interaction checks. They are now the testing priority; iOS testing is deferred.
