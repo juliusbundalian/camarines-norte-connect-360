@@ -1,0 +1,13 @@
+node_modules/
+.expo/
+dist/
+web-build/
+coverage/
+.superpowers/
+.worktrees/
+.env*
+!.env.example
+*-debug.log*
+.DS_Store
+android/
+ios/

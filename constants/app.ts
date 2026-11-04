@@ -1,0 +1,1 @@
+export const APP_NAME = 'CAMARINES NORTE 360 CONNECT';
