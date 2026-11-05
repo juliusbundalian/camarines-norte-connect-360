@@ -154,3 +154,9 @@ Firebase Console was inspected in the live project. Password policy changed from
 QA cleanup completed: original display/font/keyboard settings restored, disposable QA package uninstalled, QA Metro/Auth Emulator stopped, and temporary port forwards removed. The live package and its Metro forwarding were preserved.
 
 No merge or push is authorized. Stop at the authenticated placeholder and wait for official Figma designs and approved feature scope.
+
+## Supplied splash logo — 2026-11-06
+
+The user supplied `ic_logo.svg` for the splash screen. Its original bytes are preserved in `assets/splash-logo.svg`; `assets/splash-logo.png` is a faithful 1024px transparent raster export for Expo's native splash plugin. The plugin now uses that PNG with the existing centered 160dp image and background. Source rendering used temporary external tooling, adding no application dependency.
+
+Strict TypeScript and Android prebuild passed. Native ARM64 debug build succeeded (1m29s), installed with an in-place update preserving application data, and cold-launch screenshots on the available Android emulator visibly confirmed the new centered logo. No authentication, onboarding, app-icon, or additional module behavior was changed. iOS testing remains deferred.
