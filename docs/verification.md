@@ -7,7 +7,7 @@ Scope: initial onboarding and Firebase email authentication foundation only. Aut
 | Check | Result |
 | --- | --- |
 | Strict TypeScript (`npm run typecheck`) | Passed |
-| Jest + React Native Testing Library | 54 tests passed across 9 suites |
+| Jest + React Native Testing Library | 56 tests passed across 10 suites (closure recheck 2026-11-05) |
 | Real application auth service against Auth Emulator | 3 integration tests passed: lifecycle, password-reset action, native persistence adapter restoration |
 | `npx expo install --check` | Compatible versions; no updates required |
 | `npx expo-doctor` | 20/20 checks passed |
@@ -17,6 +17,8 @@ Scope: initial onboarding and Firebase email authentication foundation only. Aut
 Tests were developed before their corresponding behavior and observed failing before implementation. Additional regressions cover measured safe-area pager width, hiding inactive onboarding content from assistive technology, and same-turn stale auth callbacks during retry.
 
 The integration runner executes the real TypeScript auth service using development-only `tsx`. It verifies account creation, duplicate email rejection, logout, failed/successful login, neutral missing-account reset requests, generated reset-code retrieval, verification/confirmation of the reset action, and login with the changed password. The SDK's React Native persistence adapter is exercised with an AsyncStorage-shaped test store across fresh Firebase app/auth instances. This does not substitute for process-relaunch verification with the device's actual AsyncStorage.
+
+Earlier sections preserve the original verification history. See the closure record at the end for current Android coverage and resolved findings.
 
 ## Native smoke checks and limitations
 
@@ -61,9 +63,9 @@ Android native build, installation, and startup were subsequently checked as rec
 - [x] Business logic is separate from temporary presentation for later Figma integration.
 - [x] Complete native process-relaunch authentication persistence and onboarding verification on the tested iPhone simulator.
 - [x] Complete native Login retry, password visibility, reset confirmation, and signed-in/signed-out protected deep-link checks.
-- [ ] Complete gesture/software-keyboard/narrow-large-text/splash checks and other untested device coverage.
+- [x] Complete Android gesture/software-keyboard/narrow-large-text and sampled splash checks (closure below); physical-device/tablet coverage remains unverified.
 - [x] Confirm cloud reset-email delivery, hosted password change, and subsequent Android login (user-confirmed 2026-11-05).
-- [ ] Confirm intended Firebase Console password policy and enumeration-protection settings.
+- [x] Confirm intended Firebase Console password policy and enumeration-protection settings (2026-11-05).
 
 ## Dependencies and review
 
@@ -115,10 +117,40 @@ At the user's request, the application's actual `requestPasswordReset` service w
 
 The user confirmed that the reset email arrived, the hosted password reset succeeded, and logout/login on Android with the new password succeeded. This is user-confirmed evidence; password entry remained with the user. Live registration/sign-in, native Android session restoration, reset-email delivery, and recovery are now covered by the combined observed and user-confirmed checks.
 
-### Current remaining foundation work
+### Foundation work identified before closure (historical)
 
 - Complete Android-specific UI smoke checks: onboarding swipes/Skip/Back/Next and completion persistence; the Android Forgot Password form itself; protected links and Android back navigation; duplicate/error/offline feedback; software-keyboard usability; narrow/enlarged-text layouts; splash transitions. Automated tests cover much of this logic, but the corresponding Android device checks are not all verified.
 - Resolve or explicitly accept the two deferred review minors: consistent 48-point button touch targets and a stronger measured rotation-offset assertion.
 - Confirm Firebase Console password policy and email-enumeration protection. Firestore data access remains deferred by scope.
 - Choose branch integration (local merge, PR, or preserve the branch). No merge or push has been performed.
 - Stop after foundation closure and wait for official Figma designs. Defer iOS testing unless explicitly requested.
+
+## Android foundation closure — 2026-11-05
+
+This section supersedes the outstanding Android/minor-review/Console items in the historical sections above. Android is primary; further iOS testing is deferred.
+
+Target: Diorama_API_35 AVD, Android 15/API 35, ARM64, 1080×2424 at 420 dpi. Native QA used a separately installed `ph.cn360connect.app.qa` debug build and a demo Auth Emulator on port 9098. The temporary generated Gradle application-ID suffix was removed after building. The user's live app, account, and stored session were preserved. No Firestore data access was added.
+
+| Android check | Evidence/result |
+| --- | --- |
+| Native build | ARM64 Gradle debug APK built successfully and installed |
+| Onboarding | Three pages, horizontal swipes, Next/Back, Skip and Get Started exercised; completion survives force-stop/relaunch |
+| Authentication | Demo registration, login, logout and native authenticated relaunch passed |
+| Route guards | Signed-in `/login` remains Welcome; signed-out `/welcome` remains Login; Back/relaunch cannot restore a protected screen after logout |
+| Validation/errors | Required login fields, invalid email, incorrect credentials and connection failure display errors; connection restoration permits retry |
+| Password reset | Actual Android form exercised for existing and nonexistent demo accounts; identical neutral confirmation and return to Login |
+| Keyboard/password visibility | Android software keyboard observed; registration controls remain reachable; show/hide works |
+| Touch targets | Native bounds verified at least 48dp for buttons and password visibility icons |
+| Narrow/enlarged text | At 320dp / 200% text, page content scrolls into view and Back/Get Started remain usable; completion passed |
+| Rotation | Active second page realigns after native content resize; landscape content and navigation verified |
+| Startup | Sampled cold-start screenshots show temporary branded splash; restored signed-in route reaches Welcome. Sampling in a debug build is not frame-by-frame release performance certification |
+
+The two deferred review minors are resolved by a shared token-based Button and an actual post-resize scroll-offset regression. Native inspection additionally found collapsed onboarding content in landscape and a stale horizontal offset after rotation. An outer vertical scroller with a minimum pager viewport and realignment after content-size updates fixes these cases. Layout and content-size regressions were observed failing before the fixes, then passing. The prior width-effect mutation check also failed when its implementation was removed. A fresh independent reviewer found no critical or important issues in the closure changes; actual layout behavior is supported by native checks rather than the structural Jest assertion alone.
+
+Fresh closure checks: 56 Jest/RNTL tests across 10 suites, strict TypeScript, three real-SDK emulator tests, and Android production export passed. Expo Doctor passed 20/20. Existing unit tests cover pending/duplicate-submit behavior and storage failure/retry; a native forced AsyncStorage write failure and native network request counting were not performed. Physical-device and tablet coverage remain unverified. Repeated display/font changes during Fast Refresh produced an Expo linking warning in the debug session; clean process restarts cleared it. Release startup timing and repeated configuration changes in release builds were not certified.
+
+Firebase Console was inspected in the live project. Password policy changed from minimum 6 / Notify to minimum **8 / Require**; maximum remains 4096, no extra character-class requirements were added, and forced password upgrade remains off. SDK `validatePassword` confirmed minimum 8, rejected seven characters and accepted eight. Email enumeration protection was already enabled and was left enabled. Live registration, native session restoration, and user-confirmed email recovery remain documented above.
+
+QA cleanup completed: original display/font/keyboard settings restored, disposable QA package uninstalled, QA Metro/Auth Emulator stopped, and temporary port forwards removed. The live package and its Metro forwarding were preserved.
+
+No merge or push is authorized. Stop at the authenticated placeholder and wait for official Figma designs and approved feature scope.

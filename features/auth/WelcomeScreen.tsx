@@ -1,4 +1,5 @@
-import { Button, Text } from "react-native-paper";
+import { Button } from "../../components/Button";
+import { Text } from "react-native-paper";
 import { Screen } from "../../components/Screen";
 import { FormError } from "../../components/FormError";
 import { useAuth } from "./AuthProvider";

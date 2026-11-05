@@ -119,8 +119,10 @@ Recommended execution: **Native**, using `superpowers:executing-plans`, because 
 
 ## Remaining closure checklist — updated 2026-11-05
 
-- [ ] Finish Android-specific UI acceptance checks recorded in `docs/verification.md` (onboarding gestures/persistence, reset form, protected/back navigation, error/offline handling, keyboard, large text, and splash transitions).
-- [ ] Fix or explicitly accept the two deferred review minors (button touch height and rotation-offset regression).
-- [ ] Confirm Firebase Console password policy and enumeration protection.
+- [x] Finish Android-specific UI acceptance checks recorded in `docs/verification.md` (onboarding gestures/persistence, reset form, protected/back navigation, error/offline handling, keyboard, large text, and splash transitions).
+- [x] Fix or explicitly accept the two deferred review minors (button touch height and rotation-offset regression).
+- [x] Confirm Firebase Console password policy and enumeration protection.
 - [ ] Choose integration of `codex/auth-foundation`; no merge/push is authorized yet.
 - [ ] After foundation closure, wait for Figma and explicit feature scope; keep iOS testing deferred.
+
+Closure execution: Android QA completed on Diorama_API_35 with isolated demo app/auth data. Two review minors and native landscape/rotation defects fixed with regression coverage; 56 Jest tests, TypeScript, three SDK emulator tests, Android export and Doctor pass. Firebase minimum-eight Require policy and enabled enumeration protection verified. See the final closure section in `docs/verification.md` for exact coverage and remaining device limits. Integration remains unapproved; stop for Figma.

@@ -1,6 +1,7 @@
+import { Button } from "../../components/Button";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Button, HelperText, TextInput } from "react-native-paper";
+import { HelperText, TextInput } from "react-native-paper";
 import { View } from "react-native";
 import { router } from "expo-router";
 import { Screen } from "../../components/Screen";

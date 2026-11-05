@@ -52,23 +52,40 @@ test("Skip completes onboarding", async () => {
   await fireEvent.press(screen.getByRole("button", { name: "Skip" }));
   expect(complete).toHaveBeenCalledTimes(1);
 });
-test("swipe updates the active page and rotation preserves its index", async () => {
-  const view = await show();
-  await fireEvent(screen.getByTestId("onboarding-pages"), "momentumScrollEnd", {
-    nativeEvent: { contentOffset: { x: 390 } },
-  });
-  expect(screen.getByLabelText("Page 2 of 3")).toBeSelected();
-  jest
-    .mocked(useWindowDimensions)
-    .mockReturnValue({ width: 320, height: 700, scale: 1, fontScale: 1 });
-  await view.rerender(
-    <PaperProvider>
-      <OnboardingScreen />
-    </PaperProvider>,
-  );
-  expect(screen.getByLabelText("Page 2 of 3")).toBeSelected();
-  expect(screen.getByTestId("onboarding-pages").props.extraData).toBe(320);
+test("rotation realigns the measured pager to the active page", async () => {
+  const scroll = jest.spyOn(FlatList.prototype, "scrollToOffset");
+  try {
+    await show();
+    await fireEvent(screen.getByTestId("onboarding-pages"), "layout", {
+      nativeEvent: { layout: { width: 360, height: 600, x: 0, y: 0 } },
+    });
+    await fireEvent(
+      screen.getByTestId("onboarding-pages"),
+      "momentumScrollEnd",
+      {
+        nativeEvent: { contentOffset: { x: 360 } },
+      },
+    );
+    expect(screen.getByLabelText("Page 2 of 3")).toBeSelected();
+    scroll.mockClear();
+    await fireEvent(screen.getByTestId("onboarding-pages"), "layout", {
+      nativeEvent: { layout: { width: 640, height: 300, x: 0, y: 0 } },
+    });
+    expect(scroll).toHaveBeenLastCalledWith({ offset: 640, animated: false });
+    scroll.mockClear();
+    await fireEvent(
+      screen.getByTestId("onboarding-pages"),
+      "contentSizeChange",
+      1920,
+      300,
+    );
+    expect(scroll).toHaveBeenLastCalledWith({ offset: 640, animated: false });
+    expect(screen.getByLabelText("Page 2 of 3")).toBeSelected();
+  } finally {
+    scroll.mockRestore();
+  }
 });
+
 test("shows a retryable save error and disables completion while saving", async () => {
   jest.mocked(useOnboarding).mockReturnValue({
     completed: false,
@@ -119,4 +136,15 @@ test("narrow enlarged-text navigation gives each action its own row", async () =
   expect(actions).toHaveStyle({ flexDirection: "column" });
   await fireEvent.press(screen.getByRole("button", { name: "Get Started" }));
   expect(complete).toHaveBeenCalledTimes(1);
+});
+
+test("short screens can scroll the entire onboarding layout without collapsing the pager", async () => {
+  await show();
+  expect(screen.getByTestId("onboarding-layout")).toHaveProp(
+    "nestedScrollEnabled",
+    true,
+  );
+  expect(screen.getByTestId("onboarding-pages")).toHaveStyle({
+    minHeight: 240,
+  });
 });

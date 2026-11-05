@@ -14,6 +14,7 @@ export const tokens = {
   size: {
     content: 480,
     brand: 120,
+    onboardingViewport: 240,
     touch: 48,
     dot: 8,
     activeDot: 24,

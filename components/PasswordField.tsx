@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { tokens } from "../theme";
 import { TextInput, type TextInputProps } from "react-native-paper";
 import Eye from "lucide-react-native/icons/eye";
 import EyeOff from "lucide-react-native/icons/eye-off";
@@ -18,6 +19,7 @@ export function PasswordField({
       secureTextEntry={!visible}
       right={
         <TextInput.Icon
+          style={{ minWidth: tokens.size.touch, minHeight: tokens.size.touch }}
           icon={({ size, color }) =>
             visible ? (
               <EyeOff size={size} color={color} />

@@ -1,4 +1,5 @@
-import { Button, Text } from "react-native-paper";
+import { Button } from "./Button";
+import { Text } from "react-native-paper";
 import { Screen } from "./Screen";
 export function StartupError({
   message,
