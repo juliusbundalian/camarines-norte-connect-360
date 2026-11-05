@@ -1,6 +1,6 @@
 # Verification record — 2026-11-04
 
-Scope: initial onboarding and Firebase email authentication foundation only. Testing uses `demo-cn360-connect`, never a live project.
+Scope: initial onboarding and Firebase email authentication foundation only. Automated integration tests use `demo-cn360-connect`; subsequent user-authorized live Android checks are recorded below.
 
 ## Automated evidence
 
@@ -62,7 +62,8 @@ Android native build, installation, and startup were subsequently checked as rec
 - [x] Complete native process-relaunch authentication persistence and onboarding verification on the tested iPhone simulator.
 - [x] Complete native Login retry, password visibility, reset confirmation, and signed-in/signed-out protected deep-link checks.
 - [ ] Complete gesture/software-keyboard/narrow-large-text/splash checks and other untested device coverage.
-- [ ] Confirm cloud reset-email delivery and Console settings in the intended Firebase project.
+- [x] Confirm cloud reset-email delivery, hosted password change, and subsequent Android login (user-confirmed 2026-11-05).
+- [ ] Confirm intended Firebase Console password policy and enumeration-protection settings.
 
 ## Dependencies and review
 
@@ -108,3 +109,16 @@ The Android debug APK installed successfully on the available Pixel 9 / API 35 e
 The user completed registration in the Android app using their designated test mailbox and entered the password directly. The Android screen was observed on Welcome with the matching signed-in email. After `am force-stop` and a fresh launch of `ph.cn360connect.app/.MainActivity`, Welcome and the same account email were observed again. This verifies live authenticated session restoration on the tested Pixel 9 / Android 15 (API 35) emulator using native persistence.
 
 At the user's request, the application's actual `requestPasswordReset` service was executed with live configuration and the designated mailbox. Firebase accepted the request. This check used the shared service from a Node harness; it does not independently verify the Android reset-form interaction. No password or reset token was collected or logged. Inbox delivery, the hosted password change, and signing in on Android with the changed password await the user's confirmation. Firestore data access remains unused.
+
+
+### User-confirmed live recovery completion — 2026-11-05
+
+The user confirmed that the reset email arrived, the hosted password reset succeeded, and logout/login on Android with the new password succeeded. This is user-confirmed evidence; password entry remained with the user. Live registration/sign-in, native Android session restoration, reset-email delivery, and recovery are now covered by the combined observed and user-confirmed checks.
+
+### Current remaining foundation work
+
+- Complete Android-specific UI smoke checks: onboarding swipes/Skip/Back/Next and completion persistence; the Android Forgot Password form itself; protected links and Android back navigation; duplicate/error/offline feedback; software-keyboard usability; narrow/enlarged-text layouts; splash transitions. Automated tests cover much of this logic, but the corresponding Android device checks are not all verified.
+- Resolve or explicitly accept the two deferred review minors: consistent 48-point button touch targets and a stronger measured rotation-offset assertion.
+- Confirm Firebase Console password policy and email-enumeration protection. Firestore data access remains deferred by scope.
+- Choose branch integration (local merge, PR, or preserve the branch). No merge or push has been performed.
+- Stop after foundation closure and wait for official Figma designs. Defer iOS testing unless explicitly requested.

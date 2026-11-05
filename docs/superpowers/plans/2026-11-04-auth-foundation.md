@@ -1,6 +1,6 @@
 # Authentication Foundation Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Deliver only the Expo onboarding and Firebase email authentication foundation, ready for future Figma layouts.
 
@@ -110,8 +110,17 @@
 
 ## Plan self-review and execution checkpoint
 
-Execution record: code and automated checks completed. Native interaction checks limited by the locked Mac and live-project checks limited by absent cloud configuration; see `docs/verification.md` for the unchecked acceptance items. Review found one important action-layout issue, fixed with a failing-then-passing regression; two minors are documented for follow-up.
+Execution record: implementation and automated checks completed. Live Firebase setup, Android registration, native session restoration, and user-confirmed password recovery/login have since been verified. Android-specific UI acceptance checks and Console policy confirmation remain open; see `docs/verification.md` for current unchecked items. Review found one important action-layout issue, fixed with a failing-then-passing regression; two minors are documented for follow-up.
 
 Spec coverage: Tasks 1–2 cover initialization, tokens, Firebase services/configuration, validation, and session persistence; Task 3 covers onboarding; Task 4 covers all requested auth UI; Task 5 covers splash/route protection; Task 6 covers real SDK validation, setup instructions, review, and the Figma stop boundary. Each Review Focus item has explicit behavioral coverage in its owning task. Shared service/hook names and return types agree across tasks.
 
 Recommended execution: **Native**, using `superpowers:executing-plans`, because the six tasks share provider, service, and route interfaces and benefit from one implementer maintaining that context. A fresh reviewer checks the complete result before handover. The user approved this plan and selected Native execution.
+
+
+## Remaining closure checklist — updated 2026-11-05
+
+- [ ] Finish Android-specific UI acceptance checks recorded in `docs/verification.md` (onboarding gestures/persistence, reset form, protected/back navigation, error/offline handling, keyboard, large text, and splash transitions).
+- [ ] Fix or explicitly accept the two deferred review minors (button touch height and rotation-offset regression).
+- [ ] Confirm Firebase Console password policy and enumeration protection.
+- [ ] Choose integration of `codex/auth-foundation`; no merge/push is authorized yet.
+- [ ] After foundation closure, wait for Figma and explicit feature scope; keep iOS testing deferred.
