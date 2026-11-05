@@ -1,17 +1,24 @@
 export const onboardingPages = [
   {
-    title: "Discover Camarines Norte",
+    title: "Discover the\nCamarines Norte",
     description:
-      "Discover local destinations, attractions, and cultural experiences across Camarines Norte.",
+      "Explore stunning beaches, heritage sites, & hidden gems across the province",
+    icon: "palm",
+    steps: require("../../assets/onboarding/steps-1.svg"),
   },
   {
-    title: "Explore Real Estate Opportunities",
+    title: "Explore Property Opportunities",
     description:
-      "Explore property listings and real estate opportunities throughout Camarines Norte, conveniently in one place.",
+      "Find homes, lots, & investment properties around Camarines Norte",
+    icon: "home",
+    steps: require("../../assets/onboarding/steps-2.svg"),
   },
   {
-    title: "Connect with the Community",
+    title: "Stay Connected \nwith the Community",
     description:
-      "Stay informed with local news, community information, events, and surveys. Start exploring your community.",
+      "Get local updates, join events, & share your voice through surveys & feedbacks",
+    icon: "community",
+    steps: require("../../assets/onboarding/steps-3.svg"),
   },
 ] as const;
+export type OnboardingContent = (typeof onboardingPages)[number];

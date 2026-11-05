@@ -19,6 +19,15 @@ const config: ExpoConfig = {
   plugins: [
     "expo-router",
     [
+      "expo-font",
+      {
+        fonts: [
+          "./assets/fonts/Poppins-Regular.ttf",
+          "./assets/fonts/Poppins-Medium.ttf",
+        ],
+      },
+    ],
+    [
       "expo-splash-screen",
       {
         image: "./assets/splash-logo.png",

@@ -1,210 +1,151 @@
-import { Button } from "../../components/Button";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  BackHandler,
   FlatList,
-  ScrollView,
   StyleSheet,
   View,
   useWindowDimensions,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Text } from "react-native-paper";
-import { Image } from "expo-image";
-import { tokens } from "../../theme";
-import { APP_NAME } from "../../constants/app";
+import { ActivityIndicator } from "react-native-paper";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { StatusBar } from "expo-status-bar";
+import { useFonts } from "expo-font";
+import { StartupError } from "../../components/StartupError";
+import { onboardingTokens as t } from "../../theme/onboarding";
 import { useOnboarding } from "./OnboardingProvider";
 import { onboardingPages } from "./content";
+import { OnboardingPage } from "./OnboardingPage";
+
 export default function OnboardingScreen() {
+  const [attempt, setAttempt] = useState(0);
+  return (
+    <OnboardingFonts key={attempt} retry={() => setAttempt((n) => n + 1)} />
+  );
+}
+function OnboardingFonts({ retry }: { retry(): void }) {
+  const [loaded, error] = useFonts({
+    "Poppins-Regular": require("../../assets/fonts/Poppins-Regular.ttf"),
+    "Poppins-Medium": require("../../assets/fonts/Poppins-Medium.ttf"),
+  });
+  if (error)
+    return (
+      <StartupError
+        message="Could not load onboarding fonts. Please retry."
+        retry={retry}
+      />
+    );
+  if (!loaded)
+    return (
+      <View style={styles.loading}>
+        <ActivityIndicator accessibilityLabel="Loading onboarding fonts" />
+      </View>
+    );
+  return <OnboardingPager />;
+}
+function OnboardingPager() {
   const { complete, saving, error } = useOnboarding();
-  const { width: windowWidth } = useWindowDimensions();
-  const [measuredWidth, setMeasuredWidth] = useState<number | null>(null);
-  const width = measuredWidth ?? windowWidth;
+  const window = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  const [measured, setMeasured] = useState<{
+    width: number;
+    height: number;
+  } | null>(null);
+  const width = measured?.width ?? window.width;
+  const height = measured?.height ?? window.height;
   const [page, setPage] = useState(0);
   const current = useRef(0);
   const list = useRef<FlatList>(null);
-  useEffect(() => {
+  const align = () =>
     list.current?.scrollToOffset({
       offset: current.current * width,
       animated: false,
     });
-  }, [width]);
-  const move = (next: number) => {
-    current.current = next;
-    setPage(next);
-    list.current?.scrollToOffset({ offset: next * width, animated: true });
-  };
+  useEffect(align, [width]);
+  const move = useCallback(
+    (next: number) => {
+      current.current = next;
+      setPage(next);
+      list.current?.scrollToOffset({ offset: next * width, animated: true });
+    },
+    [width],
+  );
+  useEffect(() => {
+    const subscription = BackHandler.addEventListener(
+      "hardwareBackPress",
+      () => {
+        if (saving) return true;
+        if (current.current === 0) return false;
+        move(current.current - 1);
+        return true;
+      },
+    );
+    return () => subscription.remove();
+  }, [move, saving]);
   return (
-    <SafeAreaView style={styles.root}>
-      <ScrollView
-        testID="onboarding-layout"
-        nestedScrollEnabled
-        contentContainerStyle={styles.layout}
-      >
-        <View style={styles.header}>
-          <Text variant="titleSmall" style={styles.name}>
-            {APP_NAME}
-          </Text>
-          <Button disabled={saving} onPress={() => void complete()}>
-            Skip
-          </Button>
-        </View>
-        <FlatList
-          ref={list}
-          style={styles.pager}
-          testID="onboarding-pages"
-          onContentSizeChange={() => {
-            list.current?.scrollToOffset({
-              offset: current.current * width,
-              animated: false,
-            });
-          }}
-          horizontal
-          nestedScrollEnabled
-          onLayout={(event) => {
-            const value = event.nativeEvent.layout.width;
-            if (value > 0) setMeasuredWidth(value);
-          }}
-          pagingEnabled
-          showsHorizontalScrollIndicator={false}
-          data={onboardingPages}
-          extraData={width}
-          keyExtractor={(item) => item.title}
-          getItemLayout={(_, index) => ({
-            length: width,
-            offset: width * index,
-            index,
-          })}
-          onMomentumScrollEnd={(event) => {
-            const next = Math.max(
-              0,
-              Math.min(
-                2,
-                Math.round(event.nativeEvent.contentOffset.x / width),
-              ),
-            );
-            current.current = next;
-            setPage(next);
-          }}
-          renderItem={({ item, index }) => (
-            <ScrollView
-              nestedScrollEnabled
-              style={{ width }}
-              contentContainerStyle={styles.page}
-              accessibilityElementsHidden={index !== page}
-              importantForAccessibility={
-                index === page ? "auto" : "no-hide-descendants"
-              }
-            >
-              <Image
-                source={require("../../assets/brand.png")}
-                accessibilityLabel="Temporary 360 branding"
-                style={styles.image}
-                contentFit="contain"
-              />
-              <View style={styles.copy}>
-                <Text accessibilityRole="header" variant="headlineMedium">
-                  {item.title}
-                </Text>
-                <Text variant="bodyLarge" style={styles.description}>
-                  {item.description}
-                </Text>
-              </View>
-            </ScrollView>
-          )}
-        />
-        <View style={styles.footer}>
-          <View style={styles.indicators}>
-            {onboardingPages.map((item, index) => (
-              <View
-                key={item.title}
-                accessible
-                accessibilityRole="text"
-                accessibilityLabel={`Page ${index + 1} of 3`}
-                accessibilityState={{ selected: page === index }}
-                style={[styles.dot, page === index && styles.activeDot]}
-              />
-            ))}
-          </View>
-          <Text
-            accessibilityLiveRegion="polite"
-            style={styles.progress}
-          >{`Page ${page + 1} of 3`}</Text>
-          {error && (
-            <Text accessibilityRole="alert" style={styles.error}>
-              {error}
-            </Text>
-          )}
-          <View style={styles.actions}>
-            {page > 0 && (
-              <Button disabled={saving} onPress={() => move(page - 1)}>
-                Back
-              </Button>
-            )}
-            {page === 2 ? (
-              <Button
-                mode="contained"
-                loading={saving}
-                disabled={saving}
-                onPress={() => void complete()}
-              >
-                Get Started
-              </Button>
-            ) : (
-              <Button
-                mode="contained"
-                disabled={saving}
-                onPress={() => move(page + 1)}
-              >
-                Next
-              </Button>
-            )}
-          </View>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+    <View style={styles.root}>
+      <StatusBar style="dark" />
+      <FlatList
+        ref={list}
+        testID="onboarding-pages"
+        horizontal
+        pagingEnabled
+        scrollEnabled={!saving}
+        showsHorizontalScrollIndicator={false}
+        style={styles.pager}
+        data={onboardingPages}
+        extraData={{
+          width,
+          height,
+          page,
+          saving,
+          error,
+          fontScale: window.fontScale,
+        }}
+        keyExtractor={(item) => item.icon}
+        getItemLayout={(_, index) => ({
+          length: width,
+          offset: width * index,
+          index,
+        })}
+        onLayout={(event) => {
+          const { width: w, height: h } = event.nativeEvent.layout;
+          if (w > 0 && h > 0) setMeasured({ width: w, height: h });
+        }}
+        onContentSizeChange={align}
+        onMomentumScrollEnd={(event) => {
+          const next = Math.max(
+            0,
+            Math.min(2, Math.round(event.nativeEvent.contentOffset.x / width)),
+          );
+          current.current = next;
+          setPage(next);
+        }}
+        renderItem={({ item, index }) => (
+          <OnboardingPage
+            content={item}
+            index={index}
+            width={width}
+            height={height}
+            bottomInset={insets.bottom}
+            fontScale={window.fontScale}
+            selected={index === page}
+            saving={saving}
+            error={error}
+            onNext={() => move(Math.min(2, index + 1))}
+            onComplete={() => void complete()}
+          />
+        )}
+      />
+    </View>
   );
 }
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: tokens.colors.background },
-  layout: { flexGrow: 1 },
-  pager: { minHeight: tokens.size.onboardingViewport },
-  header: {
-    padding: tokens.space.md,
-    flexDirection: "row",
+  root: { flex: 1, backgroundColor: t.colors.background },
+  pager: { flex: 1 },
+  loading: {
+    flex: 1,
     alignItems: "center",
-    gap: tokens.space.sm,
-  },
-  name: { flex: 1 },
-  page: {
-    flexGrow: 1,
     justifyContent: "center",
-    alignItems: "center",
-    padding: tokens.space.lg,
-    gap: tokens.space.lg,
+    backgroundColor: t.colors.background,
   },
-  copy: { width: "100%", maxWidth: tokens.size.content, gap: tokens.space.md },
-  image: { width: tokens.size.brand, height: tokens.size.brand },
-  description: { color: tokens.colors.muted },
-  footer: { padding: tokens.space.lg, gap: tokens.space.md },
-  indicators: {
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: tokens.space.sm,
-  },
-  dot: {
-    width: tokens.size.dot,
-    height: tokens.size.dot,
-    borderRadius: tokens.size.dot,
-    backgroundColor: tokens.colors.indicator,
-  },
-  activeDot: {
-    width: tokens.size.activeDot,
-    backgroundColor: tokens.colors.primary,
-  },
-  progress: { textAlign: "center", color: tokens.colors.muted },
-  actions: {
-    flexDirection: "column",
-    gap: tokens.space.md,
-  },
-  error: { color: tokens.colors.error },
 });

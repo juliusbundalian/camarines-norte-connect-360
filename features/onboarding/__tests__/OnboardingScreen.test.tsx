@@ -1,23 +1,21 @@
-import {
-  render,
-  screen,
-  fireEvent,
-  within,
-} from "@testing-library/react-native";
+import { render, screen, fireEvent, act } from "@testing-library/react-native";
 import { PaperProvider } from "react-native-paper";
-import { FlatList, useWindowDimensions } from "react-native";
+import { BackHandler, FlatList, useWindowDimensions } from "react-native";
+import { useFonts } from "expo-font";
 import OnboardingScreen from "../OnboardingScreen";
 import { useOnboarding } from "../OnboardingProvider";
 jest.mock("../OnboardingProvider", () => ({ useOnboarding: jest.fn() }));
+jest.mock("expo-font", () => ({ useFonts: jest.fn(() => [true, null]) }));
 jest.mock("react-native/Libraries/Utilities/useWindowDimensions", () => ({
   __esModule: true,
-  default: jest.fn(() => ({ width: 390, height: 844, scale: 1, fontScale: 1 })),
+  default: jest.fn(() => ({ width: 412, height: 892, scale: 1, fontScale: 1 })),
 }));
 const complete = jest.fn().mockResolvedValue(undefined);
 beforeEach(() => {
+  jest.mocked(useFonts).mockReturnValue([true, null]);
   jest
     .mocked(useWindowDimensions)
-    .mockReturnValue({ width: 390, height: 844, scale: 1, fontScale: 1 });
+    .mockReturnValue({ width: 412, height: 892, scale: 1, fontScale: 1 });
   jest.mocked(useOnboarding).mockReturnValue({
     completed: false,
     ready: true,
@@ -34,39 +32,71 @@ const show = () =>
       <OnboardingScreen />
     </PaperProvider>,
   );
-test("Next, Back, and final Get Started follow the three-page flow", async () => {
+const swipe = (x: number) =>
+  fireEvent(screen.getByTestId("onboarding-pages"), "momentumScrollEnd", {
+    nativeEvent: { contentOffset: { x } },
+  });
+test("Figma copy, Next, reverse swipe and Finish preserve completion", async () => {
   await show();
-  expect(screen.getByText("Discover Camarines Norte")).toBeTruthy();
+  expect(screen.getByRole("header")).toHaveTextContent(
+    "Discover the\nCamarines Norte",
+  );
+  expect(
+    screen.getByText(
+      "Explore stunning beaches, heritage sites, & hidden gems across the province",
+    ),
+  ).toBeTruthy();
   await fireEvent.press(screen.getByRole("button", { name: "Next" }));
-  expect(screen.getByLabelText("Page 2 of 3")).toBeSelected();
-  await fireEvent.press(screen.getByRole("button", { name: "Back" }));
+  expect(screen.getByRole("header")).toHaveTextContent(
+    "Explore Property Opportunities",
+  );
+  await swipe(0);
   expect(screen.getByLabelText("Page 1 of 3")).toBeSelected();
-  await fireEvent.press(screen.getByRole("button", { name: "Next" }));
-  await fireEvent.press(screen.getByRole("button", { name: "Next" }));
-  expect(screen.getByText("Connect with the Community")).toBeTruthy();
-  await fireEvent.press(screen.getByRole("button", { name: "Get Started" }));
+  await swipe(824);
+  expect(screen.getByRole("header")).toHaveTextContent(/Stay Connected/);
+  expect(screen.queryByRole("button", { name: "Skip" })).toBeNull();
+  expect(screen.queryByRole("button", { name: "Back" })).toBeNull();
+  await fireEvent.press(screen.getByRole("button", { name: "Finish" }));
   expect(complete).toHaveBeenCalledTimes(1);
 });
-test("Skip completes onboarding", async () => {
+test("Skip completes onboarding on the first two pages", async () => {
   await show();
   await fireEvent.press(screen.getByRole("button", { name: "Skip" }));
-  expect(complete).toHaveBeenCalledTimes(1);
+  await fireEvent.press(screen.getByRole("button", { name: "Next" }));
+  await fireEvent.press(screen.getByRole("button", { name: "Skip" }));
+  expect(complete).toHaveBeenCalledTimes(2);
 });
-test("rotation realigns the measured pager to the active page", async () => {
+test("Android Back returns to the preceding page before leaving onboarding", async () => {
+  let back: Parameters<typeof BackHandler.addEventListener>[1] | undefined;
+  const remove = jest.fn();
+  const listener = jest
+    .spyOn(BackHandler, "addEventListener")
+    .mockImplementation((_, fn) => {
+      back = fn;
+      return { remove };
+    });
+  try {
+    const view = await show();
+    expect(back?.({ type: "hardwareBackPress", timeStamp: 0 })).toBe(false);
+    await fireEvent.press(screen.getByRole("button", { name: "Next" }));
+    await act(() => {
+      expect(back?.({ type: "hardwareBackPress", timeStamp: 0 })).toBe(true);
+    });
+    expect(screen.getByLabelText("Page 1 of 3")).toBeSelected();
+    await view.unmount();
+    expect(remove).toHaveBeenCalled();
+  } finally {
+    listener.mockRestore();
+  }
+});
+test("rotation realigns the measured pager after native content resizes", async () => {
   const scroll = jest.spyOn(FlatList.prototype, "scrollToOffset");
   try {
     await show();
     await fireEvent(screen.getByTestId("onboarding-pages"), "layout", {
-      nativeEvent: { layout: { width: 360, height: 600, x: 0, y: 0 } },
+      nativeEvent: { layout: { width: 360, height: 800, x: 0, y: 0 } },
     });
-    await fireEvent(
-      screen.getByTestId("onboarding-pages"),
-      "momentumScrollEnd",
-      {
-        nativeEvent: { contentOffset: { x: 360 } },
-      },
-    );
-    expect(screen.getByLabelText("Page 2 of 3")).toBeSelected();
+    await swipe(360);
     scroll.mockClear();
     await fireEvent(screen.getByTestId("onboarding-pages"), "layout", {
       nativeEvent: { layout: { width: 640, height: 300, x: 0, y: 0 } },
@@ -85,66 +115,65 @@ test("rotation realigns the measured pager to the active page", async () => {
     scroll.mockRestore();
   }
 });
-
-test("shows a retryable save error and disables completion while saving", async () => {
+test("save failure remains visible and completion can be retried", async () => {
   jest.mocked(useOnboarding).mockReturnValue({
-    completed: false,
-    ready: true,
-    initializationError: null,
+    ...jest.mocked(useOnboarding)(),
     error: "Could not save. Try again.",
-    saving: true,
-    complete,
-    retry: jest.fn(),
   });
   await show();
+  await swipe(824);
   expect(screen.getByRole("alert")).toHaveTextContent(/Could not save/);
+  await fireEvent.press(screen.getByRole("button", { name: "Finish" }));
+  expect(complete).toHaveBeenCalledTimes(1);
+});
+test("pending completion disables Skip, Next, Finish and swiping", async () => {
+  jest
+    .mocked(useOnboarding)
+    .mockReturnValue({ ...jest.mocked(useOnboarding)(), saving: true });
+  await show();
   expect(screen.getByRole("button", { name: "Skip" })).toBeDisabled();
+  expect(screen.getByRole("button", { name: "Next" })).toBeDisabled();
+  expect(screen.getByTestId("onboarding-pages")).toHaveProp(
+    "scrollEnabled",
+    false,
+  );
+  await swipe(824);
+  expect(screen.getByRole("button", { name: "Finish" })).toBeDisabled();
 });
-
-test("Next uses the measured pager width inside safe areas", async () => {
-  const scroll = jest.spyOn(FlatList.prototype, "scrollToOffset");
+test("inactive pages are hidden from assistive technology", async () => {
   await show();
-  await fireEvent(screen.getByTestId("onboarding-pages"), "layout", {
-    nativeEvent: { layout: { width: 300, height: 500, x: 0, y: 0 } },
-  });
+  expect(screen.queryByText("Explore Property Opportunities")).toBeNull();
   await fireEvent.press(screen.getByRole("button", { name: "Next" }));
-  expect(scroll).toHaveBeenLastCalledWith({ offset: 300, animated: true });
-  scroll.mockRestore();
+  expect(screen.getByText("Explore Property Opportunities")).toBeTruthy();
+  expect(screen.queryByText("Discover the\nCamarines Norte")).toBeNull();
 });
-
-test("only the active page is exposed to assistive technology", async () => {
-  await show();
-  expect(screen.queryByText("Explore Real Estate Opportunities")).toBeNull();
-  await fireEvent.press(screen.getByRole("button", { name: "Next" }));
-  expect(screen.getByText("Explore Real Estate Opportunities")).toBeTruthy();
-  expect(screen.queryByText("Discover Camarines Norte")).toBeNull();
+test("font loading prevents fallback typography and font failures provide Retry", async () => {
+  jest.mocked(useFonts).mockReturnValue([false, null]);
+  const view = await show();
+  expect(screen.getByLabelText("Loading onboarding fonts")).toBeTruthy();
+  expect(screen.queryByRole("header")).toBeNull();
+  jest.mocked(useFonts).mockReturnValue([false, new Error("font unavailable")]);
+  await view.rerender(
+    <PaperProvider>
+      <OnboardingScreen />
+    </PaperProvider>,
+  );
+  expect(screen.getByRole("alert")).toHaveTextContent(/font/i);
+  jest.mocked(useFonts).mockReturnValue([true, null]);
+  await fireEvent.press(screen.getByRole("button", { name: "Retry" }));
+  expect(screen.getByRole("header")).toHaveTextContent(/Discover the/);
 });
-
-test("narrow enlarged-text navigation gives each action its own row", async () => {
+test("at 320dp and enlarged text, copy and Finish remain in a scrollable page", async () => {
   jest
     .mocked(useWindowDimensions)
     .mockReturnValue({ width: 320, height: 568, scale: 1, fontScale: 2 });
   await show();
-  await fireEvent.press(screen.getByRole("button", { name: "Next" }));
-  await fireEvent.press(screen.getByRole("button", { name: "Next" }));
-  let actions = screen.getByRole("button", { name: "Back" }).parent;
-  while (
-    actions &&
-    !within(actions).queryByRole("button", { name: "Get Started" })
-  )
-    actions = actions.parent;
-  expect(actions).toHaveStyle({ flexDirection: "column" });
-  await fireEvent.press(screen.getByRole("button", { name: "Get Started" }));
-  expect(complete).toHaveBeenCalledTimes(1);
-});
-
-test("short screens can scroll the entire onboarding layout without collapsing the pager", async () => {
-  await show();
-  expect(screen.getByTestId("onboarding-layout")).toHaveProp(
+  await swipe(640);
+  expect(screen.getByTestId("onboarding-page-2")).toHaveProp(
     "nestedScrollEnabled",
     true,
   );
-  expect(screen.getByTestId("onboarding-pages")).toHaveStyle({
-    minHeight: 240,
-  });
+  expect(screen.getByRole("button", { name: "Finish" })).toBeEnabled();
+  await fireEvent.press(screen.getByRole("button", { name: "Finish" }));
+  expect(complete).toHaveBeenCalledTimes(1);
 });
