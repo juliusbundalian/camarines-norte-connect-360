@@ -96,3 +96,9 @@ The user confirmed Android as the primary target on 2026-11-04. Future developme
 The user supplied the public web client configuration for `camarines-norte-connect-360`. It was saved to the ignored `.env.local`; the Auth Emulator URL was removed. Production-mode environment parsing passed and confirmed emulator mode is disabled. Analytics was not added; the supplied measurement ID is outside the approved scope. Emulator tooling remains tied to its safe demo project.
 
 A public Auth project-configuration request and an intentionally invalid, nonexistent-user password sign-in probe both returned HTTP 400 `CONFIGURATION_NOT_FOUND`. No account was created and no email was sent. This is consistent with Authentication not yet being initialized in the Firebase Console; the user must initialize Authentication and enable Email/Password before live authentication can be verified. Live Android authentication testing is pending that project setup. No live authentication success is claimed.
+
+### Live Auth setup recheck — 2026-11-05
+
+After the user initialized Authentication and Firestore, the public Auth configuration request succeeded (HTTP 200, project number `1028588633761`). An intentionally nonexistent-user password sign-in returned HTTP 400 `INVALID_LOGIN_CREDENTIALS`, replacing the prior `CONFIGURATION_NOT_FOUND` error. This establishes a responding live Auth endpoint, not a successful-user sign-in. No account was created or email sent by these probes.
+
+The Android debug APK installed successfully on the available Pixel 9 / API 35 emulator, and the app was launched with Metro using the live `.env.local` configuration (no emulator URL). Live registration, successful sign-in, session restoration, and reset-email delivery await a user-designated test mailbox and credentials entered directly into the app. Firestore remains configuration-only; no collections, queries, or rule changes were made.
