@@ -90,3 +90,9 @@ The user confirmed Android as the primary target on 2026-11-04. Future developme
 - Installation and launching `ph.cn360connect.app/.MainActivity` succeeded. Metro served the Android bundle; the first onboarding page rendered with branding, Skip, pagination, and Next. Screenshot: `docs/screenshots/android-startup.png`.
 - The initial debug launch could not find Metro on the earlier custom port; starting Metro on its default 8081 and forwarding `adb reverse tcp:8081 tcp:8081` resolved it. The local Auth Emulator used `adb reverse tcp:9098 tcp:9098`.
 - This confirms native build/install/startup only. Android registration, login, reset confirmation, logout, relaunch persistence, protected navigation, gestures, keyboard handling, and splash timing still require Android emulator/device interaction checks. They are now the testing priority; iOS testing is deferred.
+
+## Live Firebase configuration — 2026-11-05
+
+The user supplied the public web client configuration for `camarines-norte-connect-360`. It was saved to the ignored `.env.local`; the Auth Emulator URL was removed. Production-mode environment parsing passed and confirmed emulator mode is disabled. Analytics was not added; the supplied measurement ID is outside the approved scope. Emulator tooling remains tied to its safe demo project.
+
+A public Auth project-configuration request and an intentionally invalid, nonexistent-user password sign-in probe both returned HTTP 400 `CONFIGURATION_NOT_FOUND`. No account was created and no email was sent. This is consistent with Authentication not yet being initialized in the Firebase Console; the user must initialize Authentication and enable Email/Password before live authentication can be verified. Live Android authentication testing is pending that project setup. No live authentication success is claimed.
