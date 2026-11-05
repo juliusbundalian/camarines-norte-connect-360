@@ -31,7 +31,7 @@ export const onboardingTokens = {
     radius: 12,
     padding: 12,
     abovePanel: 56,
-    icon: 24,
+    icon: 40,
   },
   actionWidth: 54,
   touch: 48,

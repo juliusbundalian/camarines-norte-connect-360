@@ -7,7 +7,7 @@ Scope: initial onboarding and Firebase email authentication foundation only. Aut
 | Check | Result |
 | --- | --- |
 | Strict TypeScript (`npm run typecheck`) | Passed |
-| Jest + React Native Testing Library | 56 tests passed across 10 suites (closure recheck 2026-11-05) |
+| Jest + React Native Testing Library | 57 tests passed across 10 suites (Figma onboarding recheck 2026-11-06) |
 | Real application auth service against Auth Emulator | 3 integration tests passed: lifecycle, password-reset action, native persistence adapter restoration |
 | `npx expo install --check` | Compatible versions; no updates required |
 | `npx expo-doctor` | 20/20 checks passed |
@@ -166,3 +166,28 @@ Strict TypeScript and Android prebuild passed. Native ARM64 debug build succeede
 The same supplied logo now drives the standard app icon (`assets/app-icon.png`, opaque 1024×1024 with the existing light background) and Android adaptive foreground (`assets/adaptive-icon.png`, transparent 1024×1024 with padding for launcher masks). Both derive from the preserved SVG; no application dependency was added. The splash asset remains unchanged.
 
 Android prebuild, strict TypeScript, and ARM64 debug build passed (39s). The APK installed as an in-place update, and the Android launcher visibly displayed the new logo without cropping. Application data was preserved. iOS-specific testing remains deferred.
+
+## Figma onboarding implementation — 2026-11-06
+
+The user approved the three supplied CamNorteConnect onboarding frames (`4004:13065`, `4004:13083`, `4004:13101`), then supplied the beach PNG and requested Lucide palm tree, house and users icons instead of the repeated search icon. The image is preserved byte-for-byte. The white curve and three pagination variants are local Figma SVG exports with their original root dimensions. Poppins Regular/Medium and the font license are bundled locally; Expo Font is the only added direct dependency.
+
+Visual implementation uses scoped onboarding tokens: Poppins28/36 headings,16/24 body/actions,32dp content insets, white curved panel, green badge, and amber pagination/actions. Native inspection established that the badge has an8dp **outside** stroke around its64dp green square, so the native outer box is80dp and the Lucide icon box40dp. Text actions preserve54dp visual columns and48dp minimum touch height at default text scale; their width expands with text scaling and actions stack above140%.
+
+Target: Diorama_API_35, Android15/API35, ARM64. Disposable package `ph.cn360connect.app.onboardingqa` used demo-only Firebase configuration and its own local onboarding state; no live account operations were needed. Reference comparison used a temporary1030×2230px viewport at400dpi, exactly412×892dp. All three native screenshots were compared against the individual Figma exports: photo composition, curve, badge, Poppins faces, line wrapping, colors, dots, and action positions. Real Android system bars replace Figma's simulated clock/camera/navigation artwork. The supplied412px photo is resampled on the high-density display. Screenshot overview: `docs/screenshots/figma-onboarding-android.png`.
+
+Native checks passed:
+
+- Forward/reverse swipes on the photo, Next, Android Back to preceding pages, and final Finish.
+- Skip and Finish persist completion before routing to the existing Login screen; a fresh process launch stays on Login.
+- Rotation on page2 preserves the selected page and its **full visible alignment**. The initial accessibility-only check missed a stale offset; screenshot inspection caught it. The fix remounts the measured-width pager at its preserved initial index. Native landscape heading bounds then confirmed the expected32dp left inset, with no partial neighboring page.
+- At130% text, Finish's target expanded from54dp (observed failing width check) to70dp and its label was visibly complete.
+- At320×568dp and200% text, all three pages and Finish remained reachable by vertical scrolling; completion reached Login.
+- Native pixel/bounds checks caught the initially undersized badge and Paper's default64dp action width, then passed after correction. The final badge green area is64dp and normal action bounds54×48dp.
+
+Verification:57 Jest/RNTL tests across10 suites, strict TypeScript, Expo compatibility check, Expo Doctor20/20, Android production export, and native ARM64 debug build (46s) passed. Updated tests cover Figma copy, Next/Finish, hidden final Skip, reverse paging/Android Back, measured resize/content layout, saving/errors/retry, active-page accessibility, and font loading/failure/retry. Existing provider tests retain duplicate-write and persistence failure coverage.
+
+A fresh independent reviewer found two important issues (rotation alignment and intermediate-scale label clipping), both resolved with failing-then-passing regression evidence and a green full suite. No critical or minor findings were reported. Actual TalkBack traversal and native storage/font failure injection were not performed; those failure paths have automated coverage. Physical-device/tablet and iOS verification remain deferred. A debug-only Expo CLI connection warning appeared during the isolated custom-port session and was dismissed for screenshot checks; no warning-suppression code was added.
+
+Only onboarding presentation/navigation within the existing flow changed. Finish continues to Login; no location permission screen, Home, OTP, profile fields, or other modules were added. Other authentication forms retain temporary layouts. No merge or push was performed.
+
+QA cleanup: original1080×2424/420dpi display, text scale and rotation settings were restored and checked; the disposable onboarding QA package and its8085 forwarding were removed, and the owned QA Metro stopped. The live app and its stored account/session were preserved.

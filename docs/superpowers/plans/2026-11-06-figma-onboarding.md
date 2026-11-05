@@ -51,13 +51,15 @@
 
 **Interfaces:** Uses Task1's finished route. QA package is isolated from `ph.cn360connect.app`; no live account resets, new live users, or real reset messages are needed.
 
-- [ ] Build/install native Android. Match emulator viewport to412×892dp where available, record real system insets, and compare all three pages with Figma. Check image crop, wave placement, badge, line breaks, fonts, dots, colors and control baselines; correct every in-scope mismatch and repeat affected screenshots.
-- [ ] Exercise forward/reverse swipes, Next, Android Back, Skip/Finish, cold-launch onboarding persistence, active-page rotation, and320dp/200%-text scrolling. Verify loading/errors/duplicate completion with appropriate automated tests; distinguish native from unit evidence.
-- [ ] Run final full Jest, TypeScript, Expo Doctor, Android export, and native build as appropriate to changes. Use one fresh independent reviewer per the preserved Native workflow; resolve substantive findings, then record exact results/limitations.
-- [ ] Restore temporary device settings, uninstall only the QA package, stop owned QA processes, preserve the live app/session, and commit final evidence. Stop at onboarding; no merge/push or additional modules.
+- [x] Build/install native Android. Match emulator viewport to412×892dp where available, record real system insets, and compare all three pages with Figma. Check image crop, wave placement, badge, line breaks, fonts, dots, colors and control baselines; correct every in-scope mismatch and repeat affected screenshots.
+- [x] Exercise forward/reverse swipes, Next, Android Back, Skip/Finish, cold-launch onboarding persistence, active-page rotation, and320dp/200%-text scrolling. Verify loading/errors/duplicate completion with appropriate automated tests; distinguish native from unit evidence.
+- [x] Run final full Jest, TypeScript, Expo Doctor, Android export, and native build as appropriate to changes. Use one fresh independent reviewer per the preserved Native workflow; resolve substantive findings, then record exact results/limitations.
+- [x] Restore temporary device settings, uninstall only the QA package, stop owned QA processes, preserve the live app/session, and commit final evidence. Stop at onboarding; no merge/push or additional modules.
 
 ## Self-review and checkpoint
 
 The plan covers every visible layer of the three supplied onboarding frames and retains completion/persistence/navigation from the approved foundation. Native system UI and accessible reflow are explicit adaptations. Figma contains no functional Skip/Finish prototype reactions, so the existing completion behavior supplies those actions; the only explicit Next reaction connects page1 to page2. Location and Home arrows are outside this change.
 
 Execution method remains **Native**, as previously selected by the user. Approved by the user on2026-11-06 with supplied-photo/Lucide-icon amendment; proceed using Native execution.
+
+Completed2026-11-06. Both tasks verified; native visual/rotation/font-scale findings resolved and independently reviewed. See `docs/verification.md` and the Android screenshot overview for evidence and device limits. No merge/push; additional screens await their own approved scope.

@@ -1,6 +1,6 @@
 # CAMARINES NORTE 360 CONNECT
 
-An Expo mobile foundation for Camarines Norte's future tourism, real estate, and community application. This phase contains only onboarding, email authentication, password recovery, and an authenticated placeholder. Official Figma designs and additional modules are deferred.
+An Expo mobile foundation for Camarines Norte's future tourism, real estate, and community application. This phase contains only onboarding, email authentication, password recovery, and an authenticated placeholder. Onboarding follows the supplied Figma design; designs for other screens and additional modules remain deferred.
 
 ## Platform priority
 
@@ -56,12 +56,12 @@ Use the Auth Emulator host `10.0.2.2:9098` from the Android emulator, or retain 
 
 - `app/`: route wrappers, splash/readiness gate, and Expo Router protected groups.
 - `features/auth/`: observed auth context, schemas, safe errors, guarded actions, temporary forms and welcome screen.
-- `features/onboarding/`: three swipeable pages and shared locally persisted completion state.
+- `features/onboarding/`: three Figma-based swipeable pages, local Poppins/assets, and shared locally persisted completion state.
 - `services/firebase/`: environment validation, native/browser persistence clients, centralized auth service, lazy Firestore getter.
 - `components/`, `theme/`, `constants/`: shared temporary presentation, Paper theme/tokens, and application name.
 
 Firebase's observer is the source of authenticated state. Onboarding uses a separate provider and `useOnboarding` hook. The native splash remains until both initial reads settle; setup/storage failures have a recovery screen. Authenticated sessions take priority over onboarding. Logout and route guards remove access to the previous session's screens.
 
-The UI deliberately uses simple temporary Paper layouts. Future Figma work can replace components, tokens, and screen presentation while preserving services, validation, state, and navigation. No Home Screen, tabs, feature portals, profile fields, or custom password-reset deep-link handling exist.
+Onboarding uses the supplied Figma layout with the approved beach photo and Lucide palm tree, house, and users icons. Authentication forms and the welcome screen retain temporary Paper layouts. Further Figma work can replace presentation while preserving services, validation, state, and navigation. No Home Screen, tabs, feature portals, profile fields, or custom password-reset deep-link handling exist.
 
 See the [approved specification](docs/superpowers/specs/2026-11-04-auth-foundation-design.md), [implementation plan](docs/superpowers/plans/2026-11-04-auth-foundation.md), and [verification record](docs/verification.md) for scope and evidence.

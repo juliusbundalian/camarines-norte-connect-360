@@ -102,6 +102,10 @@ test("rotation realigns the measured pager after native content resizes", async 
       nativeEvent: { layout: { width: 640, height: 300, x: 0, y: 0 } },
     });
     expect(scroll).toHaveBeenLastCalledWith({ offset: 640, animated: false });
+    expect(screen.getByTestId("onboarding-pages")).toHaveProp(
+      "initialScrollIndex",
+      1,
+    );
     scroll.mockClear();
     await fireEvent(
       screen.getByTestId("onboarding-pages"),

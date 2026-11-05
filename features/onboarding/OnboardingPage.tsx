@@ -44,6 +44,10 @@ export function OnboardingPage({
   );
   const Icon = icons[content.icon];
   const enlarged = fontScale > 1.4;
+  const actionSize = {
+    width: t.actionWidth * Math.max(1, fontScale),
+    minWidth: t.actionWidth * Math.max(1, fontScale),
+  };
   return (
     <ScrollView
       testID={`onboarding-page-${index}`}
@@ -77,7 +81,13 @@ export function OnboardingPage({
           <Text accessibilityRole="header" style={styles.title}>
             {content.title}
           </Text>
-          <Text style={styles.description}>{content.description}</Text>
+          <Text
+            style={styles.description}
+            textBreakStrategy="simple"
+            android_hyphenationFrequency="none"
+          >
+            {content.description}
+          </Text>
         </View>
         <View style={[styles.actions, enlarged && styles.enlargedActions]}>
           {index < 2 ? (
@@ -85,7 +95,11 @@ export function OnboardingPage({
               textColor={t.colors.skip}
               disabled={saving}
               onPress={onComplete}
-              style={[styles.action, enlarged && styles.enlargedAction]}
+              style={[
+                styles.action,
+                actionSize,
+                enlarged && styles.enlargedAction,
+              ]}
               labelStyle={styles.skipLabel}
               contentStyle={styles.actionContent}
             >
@@ -93,7 +107,7 @@ export function OnboardingPage({
             </Button>
           ) : (
             <View
-              style={styles.action}
+              style={[styles.action, actionSize]}
               importantForAccessibility="no-hide-descendants"
             />
           )}
@@ -119,7 +133,11 @@ export function OnboardingPage({
             disabled={saving}
             loading={index === 2 && saving}
             onPress={index === 2 ? onComplete : onNext}
-            style={[styles.action, enlarged && styles.enlargedAction]}
+            style={[
+              styles.action,
+              actionSize,
+              enlarged && styles.enlargedAction,
+            ]}
             labelStyle={styles.nextLabel}
             contentStyle={styles.actionContent}
           >
@@ -134,7 +152,9 @@ export function OnboardingPage({
         importantForAccessibility="no-hide-descendants"
         style={[
           styles.badge,
-          { top: heroHeight + waveHeight - t.badge.abovePanel },
+          {
+            top: heroHeight + waveHeight - t.badge.abovePanel - t.badge.border,
+          },
         ]}
       >
         <Icon size={t.badge.icon} color={t.colors.background} strokeWidth={2} />
@@ -172,7 +192,7 @@ const styles = StyleSheet.create({
     minHeight: t.touch,
   },
   enlargedActions: { flexDirection: "column", gap: t.panel.copyGap },
-  action: { width: t.actionWidth, minHeight: t.touch },
+  action: { width: t.actionWidth, minWidth: t.actionWidth, minHeight: t.touch },
   enlargedAction: { width: "100%" },
   actionContent: { minHeight: t.touch },
   skipLabel: {
@@ -192,12 +212,12 @@ const styles = StyleSheet.create({
   steps: { flex: 1, alignItems: "center", justifyContent: "center" },
   badge: {
     position: "absolute",
-    left: t.panel.inset,
-    width: t.badge.size,
-    height: t.badge.size,
+    left: t.panel.inset - t.badge.border,
+    width: t.badge.size + 2 * t.badge.border,
+    height: t.badge.size + 2 * t.badge.border,
     borderWidth: t.badge.border,
     borderColor: t.colors.background,
-    borderRadius: t.badge.radius,
+    borderRadius: t.badge.radius + t.badge.border,
     backgroundColor: t.colors.badge,
     padding: t.badge.padding,
     alignItems: "center",

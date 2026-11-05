@@ -85,6 +85,8 @@ function OnboardingPager() {
     <View style={styles.root}>
       <StatusBar style="dark" />
       <FlatList
+        key={width}
+        initialScrollIndex={current.current}
         ref={list}
         testID="onboarding-pages"
         horizontal
