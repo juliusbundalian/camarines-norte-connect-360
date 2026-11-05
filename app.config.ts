@@ -6,12 +6,12 @@ const config: ExpoConfig = {
   scheme: "cn360connect",
   orientation: "default",
   userInterfaceStyle: "light",
-  icon: "./assets/brand.png",
+  icon: "./assets/app-icon.png",
   ios: { supportsTablet: true, bundleIdentifier: "ph.cn360connect.app" },
   android: {
     package: "ph.cn360connect.app",
     adaptiveIcon: {
-      foregroundImage: "./assets/brand.png",
+      foregroundImage: "./assets/adaptive-icon.png",
       backgroundColor: "#FAFAF7",
     },
   },

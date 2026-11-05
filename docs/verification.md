@@ -160,3 +160,9 @@ No merge or push is authorized. Stop at the authenticated placeholder and wait f
 The user supplied `ic_logo.svg` for the splash screen. Its original bytes are preserved in `assets/splash-logo.svg`; `assets/splash-logo.png` is a faithful 1024px transparent raster export for Expo's native splash plugin. The plugin now uses that PNG with the existing centered 160dp image and background. Source rendering used temporary external tooling, adding no application dependency.
 
 Strict TypeScript and Android prebuild passed. Native ARM64 debug build succeeded (1m29s), installed with an in-place update preserving application data, and cold-launch screenshots on the available Android emulator visibly confirmed the new centered logo. No authentication, onboarding, app-icon, or additional module behavior was changed. iOS testing remains deferred.
+
+## Supplied app icon — 2026-11-06
+
+The same supplied logo now drives the standard app icon (`assets/app-icon.png`, opaque 1024×1024 with the existing light background) and Android adaptive foreground (`assets/adaptive-icon.png`, transparent 1024×1024 with padding for launcher masks). Both derive from the preserved SVG; no application dependency was added. The splash asset remains unchanged.
+
+Android prebuild, strict TypeScript, and ARM64 debug build passed (39s). The APK installed as an in-place update, and the Android launcher visibly displayed the new logo without cropping. Application data was preserved. iOS-specific testing remains deferred.
