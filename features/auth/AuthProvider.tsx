@@ -17,14 +17,15 @@ interface AuthValue extends Omit<AuthService, "observe"> {
   user: User | null;
   ready: boolean;
   error: string | null;
+  logoutError: string | null;
+  logoutPending: boolean;
   retry(): void;
 }
 const Context = createContext<AuthValue | null>(null);
-const actions: Omit<AuthService, "observe"> = {
+const actions: Omit<AuthService, "observe" | "logout"> = {
   login: (email, password) => getAuthService().login(email, password),
   register: (email, password) => getAuthService().register(email, password),
   requestPasswordReset: (email) => getAuthService().requestPasswordReset(email),
-  logout: () => getAuthService().logout(),
 };
 export function AuthProvider({ children }: PropsWithChildren) {
   const [state, setState] = useState<{
@@ -32,6 +33,38 @@ export function AuthProvider({ children }: PropsWithChildren) {
     ready: boolean;
     error: string | null;
   }>({ user: null, ready: false, error: null });
+  // Outcome lives above route screens: one store may sign out before another fails.
+  const [logoutError, setLogoutError] = useState<string | null>(null);
+  const [logoutPending, setLogoutPending] = useState(false);
+  const logoutRequest = useRef<Promise<void> | null>(null);
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
+  const logout = useCallback(() => {
+    if (logoutRequest.current) return logoutRequest.current;
+    setLogoutPending(true);
+    const request = Promise.resolve()
+      .then(() => getAuthService().logout())
+      .then(
+        () => {
+          if (mounted.current) setLogoutError(null);
+        },
+        (error) => {
+          if (mounted.current) setLogoutError(getAuthErrorMessage(error));
+          throw error;
+        },
+      )
+      .finally(() => {
+        logoutRequest.current = null;
+        if (mounted.current) setLogoutPending(false);
+      });
+    logoutRequest.current = request;
+    return request;
+  }, []);
   const [attempt, setAttempt] = useState(0);
   const generation = useRef(0);
   const retry = useCallback(() => {
@@ -72,7 +105,16 @@ export function AuthProvider({ children }: PropsWithChildren) {
     };
   }, [attempt]);
   return (
-    <Context.Provider value={{ ...state, ...actions, retry }}>
+    <Context.Provider
+      value={{
+        ...state,
+        ...actions,
+        logout,
+        logoutError,
+        logoutPending,
+        retry,
+      }}
+    >
       {children}
     </Context.Provider>
   );

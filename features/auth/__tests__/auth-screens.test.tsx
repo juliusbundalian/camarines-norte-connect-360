@@ -24,18 +24,18 @@ const login = jest.fn(),
 beforeEach(() => {
   for (const fn of [login, register, reset, logout])
     fn.mockReset().mockResolvedValue(undefined);
-  jest
-    .mocked(useAuth)
-    .mockReturnValue({
-      user: { email: "a@example.com" } as User,
-      ready: true,
-      error: null,
-      retry: jest.fn(),
-      login,
-      register,
-      requestPasswordReset: reset,
-      logout,
-    });
+  jest.mocked(useAuth).mockReturnValue({
+    user: { email: "a@example.com" } as User,
+    ready: true,
+    error: null,
+    logoutError: null,
+    logoutPending: false,
+    retry: jest.fn(),
+    login,
+    register,
+    requestPasswordReset: reset,
+    logout,
+  });
 });
 const show = (node: React.ReactNode) =>
   render(<PaperProvider>{node}</PaperProvider>);

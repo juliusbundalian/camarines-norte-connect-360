@@ -15,6 +15,7 @@ import * as RootLayout from "../../../app/_layout";
 import Index from "../../../app/index";
 import * as AuthLayout from "../../../app/(auth)/_layout";
 import * as AppLayout from "../../../app/(app)/_layout";
+import { useAuth } from "../AuthProvider";
 import { useOnboarding } from "../../onboarding/OnboardingProvider";
 import { Button } from "react-native-paper";
 jest.mock("../../../services/firebase/auth-service", () => ({
@@ -41,7 +42,15 @@ const routes = {
   "(auth)/login": () => <Text>Login destination</Text>,
   "(auth)/register": () => <Text>Registration destination</Text>,
   "(auth)/forgot-password": () => <Text>Reset destination</Text>,
-  "(app)/welcome": () => <Text>Private destination</Text>,
+  "(app)/welcome": () => {
+    const { logout } = useAuth();
+    return (
+      <>
+        <Text>Private destination</Text>
+        <Button onPress={() => void logout().catch(() => {})}>Logout</Button>
+      </>
+    );
+  },
 };
 beforeEach(() => {
   jest.mocked(AsyncStorage.getItem).mockResolvedValue("complete");
@@ -147,4 +156,29 @@ test("configuration errors settle and retry restores navigation", async () => {
   await fireEvent.press(screen.getByRole("button", { name: "Retry" }));
   await act(() => next(null));
   await waitFor(() => expect(screen).toHavePathname("/login"));
+});
+
+test("logout failure survives observer-driven route removal and can retry", async () => {
+  const logout = jest.mocked(getAuthService().logout);
+  let reject!: (error: unknown) => void;
+  logout.mockReturnValueOnce(
+    new Promise<void>((_resolve, fail) => {
+      reject = fail;
+    }),
+  );
+  await renderRouter(routes);
+  await act(() => next(user));
+  await screen.findByText("Private destination");
+  await fireEvent.press(screen.getByRole("button", { name: "Logout" }));
+  await act(() => next(null));
+  await act(() => reject({ code: "auth/network-request-failed" }));
+  expect(await screen.findByRole("alert")).toHaveTextContent(/connection/i);
+  expect(
+    screen.getByRole("header", { name: "Sign-out incomplete" }),
+  ).toBeTruthy();
+  logout.mockResolvedValueOnce(undefined);
+  await fireEvent.press(screen.getByRole("button", { name: "Retry" }));
+  await waitFor(() => expect(screen).toHavePathname("/login"));
+  expect(logout).toHaveBeenCalledTimes(2);
+  expect(screen.queryByRole("alert")).toBeNull();
 });

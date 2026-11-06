@@ -38,10 +38,10 @@
 
 **Interfaces:** `AuthUser {uid,email,phoneNumber}`; service `requestPhoneCode(phone, forceResend?): Promise<PhoneConfirmation>` with `confirm(code): Promise<void>`; existing observe/logout remain central. Verification hook exposes phone, intent, ready/sending/verifying/error/resendAt, start/confirm/resend/cancel, with synchronous guards and generation checks. Provider mounted across public auth routes.
 
-- [ ] Write failing tests for phone normalization/code validation, native/legacy observer priority/readiness/cleanup/logout, safe provider error mappings, send/confirm/resend guards, stale results, cooldown, missing-session recovery. Run and observe failures.
-- [ ] Install current compatible stable native Firebase modules and configure Expo plugins. Production config path comes from ignored local google-services.json or explicit environment path. QA generator accepts demo project only and creates a matching isolated application config. No account secrets.
-- [ ] Implement adapter and provider with no manually persisted credentials. Keep unsupported web phone requests explicit rather than simulating success; retain existing JS service emulator coverage.
-- [ ] Run focused/full Jest and strict TypeScript; verify SDK integration using Auth Emulator where possible. Commit tested task.
+- [x] Write failing tests for phone normalization/code validation, native/legacy observer priority/readiness/cleanup/logout, safe provider error mappings, send/confirm/resend guards, stale results, cooldown, missing-session recovery. Run and observe failures.
+- [x] Install current compatible stable native Firebase modules and configure Expo plugins. Production config path comes from ignored local google-services.json or explicit environment path. QA generator accepts demo project only and creates a matching isolated application config. No account secrets.
+- [x] Implement adapter and provider with no manually persisted credentials. Keep unsupported web phone requests explicit rather than simulating success; retain existing JS service emulator coverage.
+- [x] Run focused/full Jest and strict TypeScript; verify SDK integration using Auth Emulator where possible. Commit tested task.
 
 ### Task 2: Figma-based phone entry, OTP, Terms and errors
 
@@ -49,21 +49,24 @@
 
 **Interfaces:** Login and Register collect validated phone/SMS consent and start verification, then navigate verify-phone. OTP uses the context's current phone/intent and confirm/resend/cancel. Native observer alone grants authenticated access. Terms is a public read-only pending-content page. Existing welcome shows phone or legacy email.
 
-- [ ] Inspect desktop OTP frames after MCP quota failure. Record measured properties/screenshots and deliberate SMS-flow adaptations; do not modify Figma or subscribe/upgrade the user's plan.
-- [ ] Write failing interaction tests for validation, consent, routing, Terms placeholder, loading/errors, code paste/submit, resend countdown, invalid/expired code retry, missing session, change-number/back and accessibility.
-- [ ] Implement reusable keyboard-safe layouts/fonts/tokens matching inspected Figma; remove obsolete password UI in this flow. No misleading legal agreement or unsupported account-enumeration scenarios.
-- [ ] Run relevant/full tests, TypeScript, compatibility/Doctor and Android export; commit tested UI.
+- [x] Inspect desktop OTP frames after MCP quota failure. Record measured properties/screenshots and deliberate SMS-flow adaptations; do not modify Figma or subscribe/upgrade the user's plan.
+- [x] Write failing interaction tests for validation, consent, routing, Terms placeholder, loading/errors, code paste/submit, resend countdown, invalid/expired code retry, missing session, change-number/back and accessibility.
+- [x] Implement reusable keyboard-safe layouts/fonts/tokens matching inspected Figma; remove obsolete password UI in this flow. No misleading legal agreement or unsupported account-enumeration scenarios.
+- [x] Run relevant/full tests, TypeScript, compatibility/Doctor and Android export; commit tested UI.
 
 ### Task 3: Android integration, review and documentation
 
 **Files:** Update Firebase setup/README/verification/plan, safe screenshot evidence and meaningful emulator/native regressions.
 
-- [ ] Build/install isolated Android demo package. Use real native Firebase SDK against Auth Emulator, fictional number/codes from emulator endpoints (no real SMS), exercise login/signup/confirm/wrong/expired code/resend/cancel/logout/relaunch/guards; distinguish emulator limitations from live Play Integrity/reCAPTCHA testing.
-- [ ] Compare native login/register/OTP/errors to Figma at412×892, adapt only approved SMS differences; verify keyboard,320dp/enlarged text/rotation, restore device settings and preserve live app/data.
-- [ ] Run final full Jest/TypeScript/emulator/native/export/Doctor checks appropriate to changes. Obtain one fresh independent review; fix important findings with regression evidence, record precise limitations.
-- [ ] Finish all implementation before requesting any remaining live Firebase configuration/security approval. Matching Android registration/SHA settings and a user-controlled test number are required for real SMS verification; no billing upgrade or unrelated app deletion.
-- [ ] Clean only owned QA resources, record completion/setup requirements, commit and stop. No merge/push; future plans require approval.
+- [x] Build/install isolated Android demo package. Use real native Firebase SDK against Auth Emulator, fictional number/codes from emulator endpoints (no real SMS), exercise login/signup/confirm/wrong code/resend/cancel/logout/relaunch/guards; cover expiry handling automatically with live server expiry deferred; distinguish emulator limitations from live Play Integrity/reCAPTCHA testing.
+- [x] Compare native login/register/OTP/errors to Figma at412×892, adapt only approved SMS differences; verify keyboard,320dp/enlarged text/rotation, restore device settings and preserve live app/data.
+- [x] Run final full Jest/TypeScript/emulator/native/export/Doctor checks appropriate to changes. Obtain one fresh independent review; fix important findings with regression evidence, record precise limitations.
+- [x] Finish all implementation before requesting any remaining live Firebase configuration/security approval. Matching Android registration/SHA settings and a user-controlled test number are required for real SMS verification; no billing upgrade or unrelated app deletion.
+- [x] Clean only owned QA resources, record completion/setup requirements, commit and stop. No merge/push; future plans require approval.
 
 ## Self-review
 
 Phone/SMS selection supersedes password fields/rules/incorrect-password/duplicate-number assumptions in Figma. Pending Terms is explicitly authorized and no legal content is invented. All three tasks share the documented auth/verification interfaces. The only unresolved external live prerequisite is matching Android Firebase registration, not implementation design; emulator configuration permits complete local/native verification first.
+
+## Local implementation closure
+All three implementation tasks and the independent review/fix pass are complete locally.102 Jest/RNTL tests, strict TypeScript, native Android build/device checks, Android export, dependency compatibility, Expo Doctor20/20, demo-config tests and legacy SDK emulator tests passed. Live SMS delivery/app verification requires the matching Firebase Android registration/client JSON and signing fingerprints described in docs/firebase-setup.md; Console trust-setting changes remain a required checkpoint. Future plans still require approval.

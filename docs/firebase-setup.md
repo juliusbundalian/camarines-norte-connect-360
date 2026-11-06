@@ -14,7 +14,12 @@ Requires Node 24.12+, Java 21, Android SDK and a **native development build**. E
    keytool -list -v -alias androiddebugkey -keystore android/app/debug.keystore -storepass android -keypass android
    ```
 
-   For distributed builds, register the relevant release and Google Play App Signing certificates too. Firebase uses SHA-256 for Play Integrity and SHA-1 for the reCAPTCHA fallback. Re-download the client config after Console changes as needed.
+   Local development certificate inspected during this task:
+
+   - SHA-1: `5E:8F:16:06:2E:A3:CD:2C:4A:0D:54:78:76:BA:A6:F3:8C:AB:F6:25`
+   - SHA-256: `FA:C6:17:45:DC:09:03:78:6F:B9:ED:E6:2A:96:2B:39:9F:73:48:F0:BB:6F:89:9B:83:32:66:75:91:03:3B:9C`
+
+   These identify the local Expo debug certificate only. For distributed builds, register the relevant release and Google Play App Signing certificates too. Firebase uses SHA-256 for Play Integrity and SHA-1 for the reCAPTCHA fallback. Re-download the client config after Console changes as needed.
 4. Enable Authentication → Phone. Review SMS region policy to allow the Philippines. Review the project's current SMS quota/billing requirements before real SMS testing; no billing or security settings are changed by this app or its tests.
 5. Put the existing **web client config for the same project** into `.env.local` using `.env.example`. This supports legacy email-session restoration and configuration-only Firestore preparation. Remove `EXPO_PUBLIC_FIREBASE_AUTH_EMULATOR_URL` for the live project. Native initialization rejects mismatched project IDs; production builds reject emulator configuration.
 6. Run `npx expo prebuild --platform android` and `npm run android`. Rebuild after native configuration changes; Metro reload alone is insufficient.

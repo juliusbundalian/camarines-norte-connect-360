@@ -24,11 +24,25 @@ function Navigation() {
     if (ready) void SplashScreen.hideAsync().catch(() => {});
   }, [ready]);
   // During retry the native splash has already gone; show a neutral loader.
-  if (!ready)
+  if (!ready || auth.logoutPending)
     return (
       <View style={styles.loading}>
-        <ActivityIndicator accessibilityLabel="Restoring application state" />
+        <ActivityIndicator
+          accessibilityLabel={
+            auth.logoutPending ? "Signing out" : "Restoring application state"
+          }
+        />
       </View>
+    );
+  if (auth.logoutError)
+    return (
+      <StartupError
+        title="Sign-out incomplete"
+        message={auth.logoutError}
+        retry={() => {
+          void auth.logout().catch(() => {});
+        }}
+      />
     );
   if (error)
     return (
