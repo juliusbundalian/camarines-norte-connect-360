@@ -4,7 +4,7 @@ import {
   sendPasswordResetEmail,
   signOut,
 } from "firebase/auth";
-import { getAuthService } from "../auth-service";
+import { getAuthService } from "../auth-service.web";
 jest.mock("../client", () => ({
   getFirebaseAuth: () => ({ name: "test-auth" }),
 }));

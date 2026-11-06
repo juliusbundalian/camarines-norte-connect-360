@@ -9,7 +9,9 @@ const config: ExpoConfig = {
   icon: "./assets/app-icon.png",
   ios: { supportsTablet: true, bundleIdentifier: "ph.cn360connect.app" },
   android: {
-    package: "ph.cn360connect.app",
+    package: process.env.ANDROID_APP_ID || "ph.cn360connect.app",
+    googleServicesFile:
+      process.env.GOOGLE_SERVICES_JSON || "./google-services.json",
     adaptiveIcon: {
       foregroundImage: "./assets/adaptive-icon.png",
       backgroundColor: "#FAFAF7",
@@ -18,6 +20,8 @@ const config: ExpoConfig = {
   web: { bundler: "metro", output: "single", favicon: "./assets/brand.png" },
   plugins: [
     "expo-router",
+    "@react-native-firebase/app",
+    "@react-native-firebase/auth",
     [
       "expo-font",
       {

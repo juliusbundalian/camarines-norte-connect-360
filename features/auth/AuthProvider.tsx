@@ -7,7 +7,7 @@ import {
   useCallback,
   type PropsWithChildren,
 } from "react";
-import type { User } from "firebase/auth";
+import type { AuthUser as User } from "../../services/firebase/auth-types";
 import {
   getAuthService,
   type AuthService,

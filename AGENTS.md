@@ -10,4 +10,4 @@
 
 ## Scope
 
-Only the initial onboarding and email authentication foundation is approved. Wait for supplied Figma designs and explicit scope before implementing a Home Screen, tabs, tourism, real estate, or community modules.
+The onboarding foundation and Figma login/registration with phone SMS verification, necessary OTP flow, and pending-content native Terms page are approved. Wait for supplied Figma designs and explicit scope before implementing a Home Screen, tabs, tourism, real estate, or community modules.

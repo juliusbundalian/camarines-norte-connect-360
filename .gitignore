@@ -13,3 +13,6 @@ android/
 ios/
 .firebase/
 *.tsbuildinfo
+
+google-services.json
+GoogleService-Info.plist
