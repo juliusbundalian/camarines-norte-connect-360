@@ -6,7 +6,7 @@ Phone login and signup use the native Firebase Android SDK through React Native 
 
 Requires Node 24.12+, Java 21, Android SDK and a **native development build**. Expo Go does not include these Firebase native modules. `expo-build-properties` pins Kotlin 2.4.20, the latest version supported by the installed Expo compiler artifacts and compatible with Firebase Auth 25.
 
-1. In project `camarines-norte-connect-360`, register an Android app with package **`ph.cn360connect.app`**. The existing Firebase registration `com.camarinesnorteconnect` does not match this app. Preserve the installed application's package identity.
+1. In project `camarines-norte-connect-360`, register an Android app with package **`ph.cn360connect.app`**. The matching registration was added with user approval on 2026-11-06 (app ID `1:1028588633761:android:b26985925f6cca27ed3ae0`). The older `com.camarinesnorteconnect` registration is separate.
 2. Download that Android app's `google-services.json` to the repository root, or set `GOOGLE_SERVICES_JSON` to its local path. These files are ignored. Do not use a service-account key. `ANDROID_APP_ID` is only an optional override for isolated QA builds.
 3. Register the SHA-1 and SHA-256 fingerprints for the actual signing certificate(s). For local debug builds:
 
@@ -20,7 +20,7 @@ Requires Node 24.12+, Java 21, Android SDK and a **native development build**. E
    - SHA-256: `FA:C6:17:45:DC:09:03:78:6F:B9:ED:E6:2A:96:2B:39:9F:73:48:F0:BB:6F:89:9B:83:32:66:75:91:03:3B:9C`
 
    These identify the local Expo debug certificate only. For distributed builds, register the relevant release and Google Play App Signing certificates too. Firebase uses SHA-256 for Play Integrity and SHA-1 for the reCAPTCHA fallback. Re-download the client config after Console changes as needed.
-4. Enable Authentication → Phone. Review SMS region policy to allow the Philippines. Review the project's current SMS quota/billing requirements before real SMS testing; no billing or security settings are changed by this app or its tests.
+4. Enable Authentication → Phone. Review SMS region policy to allow the Philippines. Review the project's current SMS quota/billing requirements before real SMS testing; billing and SMS region policies are not changed by the app or its tests; the approved Android registration/signing fingerprints are configured in the Console.
 5. Put the existing **web client config for the same project** into `.env.local` using `.env.example`. This supports legacy email-session restoration and configuration-only Firestore preparation. Remove `EXPO_PUBLIC_FIREBASE_AUTH_EMULATOR_URL` for the live project. Native initialization rejects mismatched project IDs; production builds reject emulator configuration.
 6. Run `npx expo prebuild --platform android` and `npm run android`. Rebuild after native configuration changes; Metro reload alone is insufficient.
 7. Verify SMS delivery on a physical Android device with a number you control. Verify Play Integrity/reCAPTCHA, incorrect/expired codes, resend/throttling, logout and relaunch. No real SMS was sent during local automated testing.
