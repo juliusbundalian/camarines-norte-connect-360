@@ -8,7 +8,10 @@ import {
   type PropsWithChildren,
 } from "react";
 import { getPhoneAuthService } from "../../services/firebase/auth-service";
-import type { PhoneConfirmation } from "../../services/firebase/auth-types";
+import type {
+  PhoneConfirmation,
+  PhoneAuthService,
+} from "../../services/firebase/auth-types";
 import { phoneSchema, codeSchema } from "./phone-schemas";
 import { getPhoneErrorMessage } from "./errors";
 export type PhoneIntent = "login" | "register";
@@ -42,13 +45,16 @@ export function PhoneVerificationProvider({ children }: PropsWithChildren) {
   const [state, setState] = useState<State>(initial);
   const current = useRef(state);
   current.current = state;
+  const service = useRef<PhoneAuthService | null>(null);
+  const getService = () =>
+    service.current ?? (service.current = getPhoneAuthService());
   const generation = useRef(0),
     busy = useRef(false),
     mounted = useRef(true);
   const cancel = useCallback(() => {
     generation.current++;
     busy.current = false;
-    getPhoneAuthService().cancel();
+    service.current?.cancel();
     if (mounted.current) setState(initial);
   }, []);
   useEffect(() => {
@@ -56,7 +62,7 @@ export function PhoneVerificationProvider({ children }: PropsWithChildren) {
     return () => {
       mounted.current = false;
       generation.current++;
-      getPhoneAuthService().cancel();
+      service.current?.cancel();
     };
   }, []);
   const send = useCallback(
@@ -81,7 +87,7 @@ export function PhoneVerificationProvider({ children }: PropsWithChildren) {
         error: null,
       }));
       try {
-        const confirmation = await getPhoneAuthService().requestCode(
+        const confirmation = await getService().requestCode(
           parsed.data,
           resend,
         );

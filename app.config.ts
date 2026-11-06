@@ -28,6 +28,8 @@ const config: ExpoConfig = {
         fonts: [
           "./assets/fonts/Poppins-Regular.ttf",
           "./assets/fonts/Poppins-Medium.ttf",
+          "./assets/fonts/PublicSans-Regular.ttf",
+          "./assets/fonts/PublicSans-Medium.ttf",
         ],
       },
     ],

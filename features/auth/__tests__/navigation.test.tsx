@@ -20,6 +20,7 @@ import { Button } from "react-native-paper";
 jest.mock("../../../services/firebase/auth-service", () => ({
   getAuthService: jest.fn(),
 }));
+jest.mock("expo-font", () => ({ useFonts: () => [true, null] }));
 jest.mock("expo-splash-screen", () => ({
   preventAutoHideAsync: jest.fn().mockResolvedValue(undefined),
   hideAsync: jest.fn().mockResolvedValue(undefined),

@@ -110,12 +110,12 @@ test("resend respects60sec cooldown and failed resend leaves number for retry", 
     clock.mockRestore();
   }
 });
-test("missing session cannot confirm and unmount invalidates a pending send", async () => {
+test("missing session cannot confirm or initialize a native service", async () => {
   const { result, unmount } = await show();
   await act(async () =>
     expect(await result.current.confirm("123456")).toBe(false),
   );
   expect(confirm).not.toHaveBeenCalled();
   await unmount();
-  expect(cancel).toHaveBeenCalled();
+  expect(getPhoneAuthService).not.toHaveBeenCalled();
 });

@@ -29,3 +29,6 @@ An asynchronous question asks the user to select phone+SMS (recommended), email/
 ## User clarification received
 
 User selected phone number+SMS code and requested a native Terms page with contents to follow. This task alone has a plan approval waiver. Password-based fields/requirements are therefore removed from the new phone flow. Terms is an explicitly pending-content placeholder with no acceptance claim.
+
+### Desktop fallback inspection (2026-11-06)
+Figma desktop search for OTP found five 412×892 frames, but these contain gender, interests, profile completion and avatar selection, not SMS code entry. Inspected 4005:15274 and 4005:15371 visually. They are outside the approved login/signup scope and are not implemented. The necessary SMS code screen uses the inspected auth typography/colors/spacing with a simple accessible six-digit input; it is a functional SMS adaptation, not a claim of an exact supplied OTP design.

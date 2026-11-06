@@ -41,66 +41,6 @@ const show = (node: React.ReactNode) =>
   render(<PaperProvider>{node}</PaperProvider>);
 const fill = async (label: string, value: string) =>
   fireEvent.changeText(screen.getByLabelText(label), value);
-test("login validates then submits normalized email with untouched password", async () => {
-  await show(<LoginScreen />);
-  await fireEvent.press(screen.getByRole("button", { name: "Log In" }));
-  expect(login).not.toHaveBeenCalled();
-  expect(await screen.findByText("Enter your email address.")).toBeTruthy();
-  await fill("Email", " a@example.com ");
-  await fill("Password", " pässword ");
-  await fireEvent.press(screen.getByRole("button", { name: "Log In" }));
-  await waitFor(() =>
-    expect(login).toHaveBeenCalledWith("a@example.com", " pässword "),
-  );
-});
-test("pending login prevents duplicate taps and can settle after leaving the screen", async () => {
-  let resolve!: () => void;
-  login.mockImplementation(
-    () =>
-      new Promise<void>((r) => {
-        resolve = r;
-      }),
-  );
-  const view = await show(<LoginScreen />);
-  await fill("Email", "a@example.com");
-  await fill("Password", "password");
-  await fireEvent.press(screen.getByRole("button", { name: "Log In" }));
-  await fireEvent.press(screen.getByRole("button", { name: "Log In" }));
-  expect(login).toHaveBeenCalledTimes(1);
-  expect(screen.getByRole("button", { name: "Log In" })).toBeDisabled();
-  await view.unmount();
-  await act(() => resolve());
-});
-test("recoverable login errors preserve inputs and allow retry", async () => {
-  login.mockRejectedValueOnce({ code: "auth/network-request-failed" });
-  await show(<LoginScreen />);
-  await fill("Email", "a@example.com");
-  await fill("Password", "password");
-  await fireEvent.press(screen.getByRole("button", { name: "Log In" }));
-  expect(await screen.findByRole("alert")).toHaveTextContent(/connection/i);
-  expect(screen.getByLabelText("Email")).toHaveDisplayValue("a@example.com");
-  await fireEvent.press(screen.getByRole("button", { name: "Log In" }));
-  await waitFor(() => expect(login).toHaveBeenCalledTimes(2));
-});
-test("registration validates matching passwords and provides independent visibility toggles", async () => {
-  await show(<RegisterScreen />);
-  await fill("Email", "a@example.com");
-  await fill("Password", "password");
-  await fill("Confirm Password", "different");
-  await fireEvent.press(screen.getByRole("button", { name: "Register" }));
-  expect(await screen.findByText("Passwords must match.")).toBeTruthy();
-  expect(register).not.toHaveBeenCalled();
-  await fireEvent.press(screen.getByRole("button", { name: "Show Password" }));
-  expect(screen.getByLabelText("Password").props.secureTextEntry).toBe(false);
-  expect(screen.getByLabelText("Confirm Password").props.secureTextEntry).toBe(
-    true,
-  );
-  await fill("Confirm Password", "password");
-  await fireEvent.press(screen.getByRole("button", { name: "Register" }));
-  await waitFor(() =>
-    expect(register).toHaveBeenCalledWith("a@example.com", "password"),
-  );
-});
 test("reset validates email and shows generic confirmation", async () => {
   await show(<ForgotPasswordScreen />);
   await fill("Email", "bad");
@@ -129,22 +69,6 @@ test("reset request failures remain retryable without showing confirmation", asy
   );
   expect(await screen.findByRole("alert")).toHaveTextContent(/connection/i);
   expect(screen.getByRole("button", { name: "Send Reset Link" })).toBeEnabled();
-});
-test("auth navigation links target only approved auth screens", async () => {
-  const view = await show(<LoginScreen />);
-  await fireEvent.press(
-    screen.getByRole("button", { name: "Forgot Password?" }),
-  );
-  expect(router.push).toHaveBeenCalledWith("/forgot-password");
-  await fireEvent.press(screen.getByRole("button", { name: "Register" }));
-  expect(router.push).toHaveBeenCalledWith("/register");
-  await view.rerender(
-    <PaperProvider>
-      <RegisterScreen />
-    </PaperProvider>,
-  );
-  await fireEvent.press(screen.getByRole("button", { name: "Back to Login" }));
-  expect(router.replace).toHaveBeenCalledWith("/login");
 });
 test("placeholder displays authenticated email and logout failures remain retryable", async () => {
   logout.mockRejectedValueOnce({ code: "auth/network-request-failed" });

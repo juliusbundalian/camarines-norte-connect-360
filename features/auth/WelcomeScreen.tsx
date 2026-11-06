@@ -10,7 +10,7 @@ export default function WelcomeScreen() {
   return (
     <Screen title="Welcome">
       <Text>You are signed in.</Text>
-      <Text selectable>{user?.email}</Text>
+      <Text selectable>{user?.phoneNumber || user?.email}</Text>
       <Text>The main application is awaiting its official Figma designs.</Text>
       <FormError message={action.error} />
       <Button
