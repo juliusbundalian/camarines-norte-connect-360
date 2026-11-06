@@ -73,11 +73,9 @@ test("requests verification without signing in until code confirmation", async (
       next({ state: "sent", verificationId: "session" });
     },
   } as any);
-  jest
-    .mocked(signInWithCredential)
-    .mockResolvedValue({
-      user: { uid: "x", email: null, phoneNumber: "+639171234567" },
-    } as any);
+  jest.mocked(signInWithCredential).mockResolvedValue({
+    user: { uid: "x", email: null, phoneNumber: "+639171234567" },
+  } as any);
   const pending = await getPhoneAuthService().requestCode(
     "+639171234567",
     true,
@@ -102,12 +100,9 @@ test("logout attempts both stores even on failure", async () => {
 });
 
 test("cancelling a session prevents an old code from signing in", async () => {
-  jest
-    .mocked(verifyPhoneNumber)
-    .mockReturnValue({
-      on: (_e: any, next: any) =>
-        next({ state: "sent", verificationId: "old" }),
-    } as any);
+  jest.mocked(verifyPhoneNumber).mockReturnValue({
+    on: (_e: any, next: any) => next({ state: "sent", verificationId: "old" }),
+  } as any);
   const pending = await getPhoneAuthService().requestCode("+639171234567");
   getPhoneAuthService().cancel();
   await expect(pending.confirm("123456")).rejects.toMatchObject({
@@ -121,20 +116,61 @@ test("a credential for a different number is never published", async () => {
   nativeNext(null);
   legacyNext(null);
   next.mockClear();
-  jest
-    .mocked(verifyPhoneNumber)
-    .mockReturnValue({
-      on: (_e: any, cb: any) => cb({ state: "sent", verificationId: "s" }),
-    } as any);
-  jest
-    .mocked(signInWithCredential)
-    .mockResolvedValue({
-      user: { uid: "wrong", email: null, phoneNumber: "+639189999999" },
-    } as any);
+  jest.mocked(verifyPhoneNumber).mockReturnValue({
+    on: (_e: any, cb: any) => cb({ state: "sent", verificationId: "s" }),
+  } as any);
+  jest.mocked(signInWithCredential).mockResolvedValue({
+    user: { uid: "wrong", email: null, phoneNumber: "+639189999999" },
+  } as any);
   const pending = await getPhoneAuthService().requestCode("+639171234567");
   await expect(pending.confirm("123456")).rejects.toMatchObject({
     code: "auth/session-expired",
   });
+  expect(next.mock.calls.every(([u]) => !u)).toBe(true);
+  stop();
+});
+test("automatic native verification still waits for explicit confirmation", async () => {
+  jest
+    .mocked(verifyPhoneNumber)
+    .mockReturnValue({
+      on: (_e: any, cb: any) =>
+        cb({ state: "verified", verificationId: null, code: null }),
+    } as any);
+  jest
+    .mocked(signInWithCredential)
+    .mockResolvedValue({
+      user: { uid: "auto", email: null, phoneNumber: "+639171234567" },
+    } as any);
+  const handle = await getPhoneAuthService().requestCode("+639171234567");
+  expect(handle.automatic).toBe(true);
+  expect(signInWithCredential).not.toHaveBeenCalled();
+  await handle.confirm("");
+  expect(PhoneAuthProvider.credential).toHaveBeenCalledWith(null, "");
+});
+test("a cancelled in-flight credential cannot publish a user to protected navigation", async () => {
+  const next = jest.fn();
+  const stop = getAuthService().observe(next, jest.fn());
+  nativeNext(null);
+  legacyNext(null);
+  next.mockClear();
+  jest
+    .mocked(verifyPhoneNumber)
+    .mockReturnValue({
+      on: (_e: any, cb: any) => cb({ state: "sent", verificationId: "late" }),
+    } as any);
+  let resolve!: (value: any) => void;
+  jest
+    .mocked(signInWithCredential)
+    .mockReturnValue(new Promise((r) => (resolve = r)));
+  const handle = await getPhoneAuthService().requestCode("+639171234567");
+  const pending = handle.confirm("123456");
+  const late = { uid: "late", email: null, phoneNumber: "+639171234567" };
+  nativeNext(late);
+  expect(next).not.toHaveBeenCalled();
+  getPhoneAuthService().cancel();
+  resolve({ user: late });
+  await expect(pending).rejects.toMatchObject({ code: "auth/session-expired" });
+  nativeNext(late);
   expect(next.mock.calls.every(([u]) => !u)).toBe(true);
   stop();
 });

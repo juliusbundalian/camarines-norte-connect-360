@@ -1,6 +1,6 @@
 # CAMARINES NORTE 360 CONNECT
 
-An Expo mobile foundation for Camarines Norte's future tourism, real estate, and community application. This phase contains only onboarding, email authentication, password recovery, and an authenticated placeholder. Onboarding follows the supplied Figma design; designs for other screens and additional modules remain deferred.
+An Expo mobile foundation for Camarines Norte's future tourism, real estate, and community application. This phase contains Figma onboarding, Figma-based phone login/signup, SMS verification, a pending-content native Terms page, and an authenticated placeholder. Additional modules remain deferred.
 
 ## Platform priority
 
@@ -8,21 +8,9 @@ Android is the primary target. Prioritize Android implementation, native builds,
 
 ## Start locally
 
-Requires **Node 24.12+** (Node 24 LTS recommended), npm, and Expo Go or native build tooling. Use `nvm use` if available.
+Requires **Node 24.12+** (Node 24 LTS recommended), npm, and native Android build tooling (Expo Go does not include native Firebase Auth). Use `nvm use` if available.
 
-```sh
-npm ci
-cp .env.example .env.local
-npm run emulators:auth
-```
-
-In a second terminal:
-
-```sh
-npm start
-```
-
-The example requires the local Auth Emulator. For real Firebase or device-specific host addresses, see [Firebase setup](docs/firebase-setup.md). Stop this project's emulator before running automated emulator tests.
+Set up the matching Android Firebase client config and environment before running. See [Firebase setup](docs/firebase-setup.md) for live-project steps and a complete isolated Auth Emulator workflow that sends no SMS.
 
 ```sh
 npm run android             # Primary: build/run with the Android SDK and Java 21
@@ -55,13 +43,15 @@ Use the Auth Emulator host `10.0.2.2:9098` from the Android emulator, or retain 
 ## Structure
 
 - `app/`: route wrappers, splash/readiness gate, and Expo Router protected groups.
-- `features/auth/`: observed auth context, schemas, safe errors, guarded actions, temporary forms and welcome screen.
+- `features/auth/`: observed auth context, schemas, safe errors, guarded actions, phone entry/code/Terms screens and the temporary welcome screen.
 - `features/onboarding/`: three Figma-based swipeable pages, local Poppins/assets, and shared locally persisted completion state.
-- `services/firebase/`: environment validation, native/browser persistence clients, centralized auth service, lazy Firestore getter.
+- `services/firebase/`: environment validation, native phone and legacy JS auth adapters, persistence, lazy Firestore getter.
 - `components/`, `theme/`, `constants/`: shared temporary presentation, Paper theme/tokens, and application name.
 
 Firebase's observer is the source of authenticated state. Onboarding uses a separate provider and `useOnboarding` hook. The native splash remains until both initial reads settle; setup/storage failures have a recovery screen. Authenticated sessions take priority over onboarding. Logout and route guards remove access to the previous session's screens.
 
-Onboarding uses the supplied Figma layout with the approved beach photo and Lucide palm tree, house, and users icons. Authentication forms and the welcome screen retain temporary Paper layouts. Further Figma work can replace presentation while preserving services, validation, state, and navigation. No Home Screen, tabs, feature portals, profile fields, or custom password-reset deep-link handling exist.
+Onboarding uses the supplied Figma layout with the approved beach photo and Lucide palm tree, house, and users icons. Authentication forms use the inspected Public Sans Figma tokens, adapted to the approved phone/SMS flow. The welcome screen remains temporary. Further Figma work can replace presentation while preserving services, validation, state, and navigation. No Home Screen, tabs, feature portals, profile fields, or custom password-reset deep-link handling exist.
 
 See the [approved specification](docs/superpowers/specs/2026-11-04-auth-foundation-design.md), [implementation plan](docs/superpowers/plans/2026-11-04-auth-foundation.md), and [verification record](docs/verification.md) for scope and evidence.
+
+Phone authentication requires `google-services.json` for package `ph.cn360connect.app`. The currently registered Firebase Android package differs; see setup before live SMS testing. Public Sans fonts come from [USWDS Public Sans](https://github.com/uswds/public-sans) under the included license. The OTP-named Figma frames contain profile setup; those are not part of this implementation.

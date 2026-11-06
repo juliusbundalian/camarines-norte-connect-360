@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { BackHandler, Text, TextInput, View } from "react-native";
 import { router, useFocusEffect } from "expo-router";
 import { usePhoneVerification } from "./PhoneVerificationProvider";
@@ -12,11 +12,13 @@ import {
 import { authTokens as t } from "../../theme/auth";
 export default function VerifyPhoneScreen() {
   const v = usePhoneVerification();
+  const leaving = useRef(false);
   const [code, setCode] = useState(""),
     [now, setNow] = useState(Date.now());
   const busy = v.sending || v.verifying;
   const change = useCallback(() => {
     if (busy) return;
+    leaving.current = true;
     const target = v.intent === "register" ? "/register" : "/login";
     v.cancel();
     router.replace(target);
@@ -31,7 +33,7 @@ export default function VerifyPhoneScreen() {
     }, [busy, change]),
   );
   useEffect(() => {
-    if (!v.phone) router.replace("/login");
+    if (!v.phone && !leaving.current) router.replace("/login");
   }, [v.phone]);
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 1000);

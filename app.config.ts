@@ -20,6 +20,7 @@ const config: ExpoConfig = {
   web: { bundler: "metro", output: "single", favicon: "./assets/brand.png" },
   plugins: [
     "expo-router",
+    ["expo-build-properties", { android: { kotlinVersion: "2.4.20" } }],
     "@react-native-firebase/app",
     "@react-native-firebase/auth",
     [

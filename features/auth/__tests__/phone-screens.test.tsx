@@ -147,3 +147,25 @@ test("Terms page explicitly shows pending content and has no agreement action", 
   expect(screen.getByText(/will be published here/)).toBeTruthy();
   expect(screen.queryByRole("checkbox")).toBeNull();
 });
+test("changing a signup number returns to registration without a stale missing-session redirect", async () => {
+  function Flow() {
+    const v = usePhoneVerification();
+    const [opened, setOpened] = require("react").useState(false);
+    return opened ? (
+      <VerifyPhoneScreen />
+    ) : (
+      <Button
+        title="Start"
+        onPress={() =>
+          void v.start("09171234567", "register").then(() => setOpened(true))
+        }
+      />
+    );
+  }
+  await show(<Flow />);
+  await fireEvent.press(screen.getByRole("button", { name: "Start" }));
+  await screen.findByText("Verify your number");
+  await fireEvent.press(screen.getByRole("button", { name: "Change number" }));
+  expect(router.replace).toHaveBeenLastCalledWith("/register");
+  expect(cancel).toHaveBeenCalled();
+});

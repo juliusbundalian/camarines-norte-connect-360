@@ -1,59 +1,80 @@
 # Firebase setup
 
-## Local demo project (no Firebase account required)
+## Android phone authentication
 
-Use Node 24.12 or newer; Node 24 LTS is recommended (`nvm use` reads `.nvmrc`).
+Phone login and signup use the native Firebase Android SDK through React Native Firebase. A successful SMS credential signs in an existing phone account or creates one on first verification. Password policies apply to email/password accounts, not this SMS flow. No custom backend, synthetic email address, profile collection, or custom password reset handler is used.
+
+Requires Node 24.12+, Java 21, Android SDK and a **native development build**. Expo Go does not include these Firebase native modules. `expo-build-properties` pins Kotlin 2.4.20, the latest version supported by the installed Expo compiler artifacts and compatible with Firebase Auth 25.
+
+1. In project `camarines-norte-connect-360`, register an Android app with package **`ph.cn360connect.app`**. The existing Firebase registration `com.camarinesnorteconnect` does not match this app. Preserve the installed application's package identity.
+2. Download that Android app's `google-services.json` to the repository root, or set `GOOGLE_SERVICES_JSON` to its local path. These files are ignored. Do not use a service-account key. `ANDROID_APP_ID` is only an optional override for isolated QA builds.
+3. Register the SHA-1 and SHA-256 fingerprints for the actual signing certificate(s). For local debug builds:
+
+   ```sh
+   keytool -list -v -alias androiddebugkey -keystore android/app/debug.keystore -storepass android -keypass android
+   ```
+
+   For distributed builds, register the relevant release and Google Play App Signing certificates too. Firebase uses SHA-256 for Play Integrity and SHA-1 for the reCAPTCHA fallback. Re-download the client config after Console changes as needed.
+4. Enable Authentication → Phone. Review SMS region policy to allow the Philippines. Review the project's current SMS quota/billing requirements before real SMS testing; no billing or security settings are changed by this app or its tests.
+5. Put the existing **web client config for the same project** into `.env.local` using `.env.example`. This supports legacy email-session restoration and configuration-only Firestore preparation. Remove `EXPO_PUBLIC_FIREBASE_AUTH_EMULATOR_URL` for the live project. Native initialization rejects mismatched project IDs; production builds reject emulator configuration.
+6. Run `npx expo prebuild --platform android` and `npm run android`. Rebuild after native configuration changes; Metro reload alone is insufficient.
+7. Verify SMS delivery on a physical Android device with a number you control. Verify Play Integrity/reCAPTCHA, incorrect/expired codes, resend/throttling, logout and relaunch. No real SMS was sent during local automated testing.
+
+The app obtains explicit SMS consent before requests and explains Google's spam/abuse processing. The native Terms page is **content pending**: it neither invents legal text nor records acceptance. Publish approved terms in a later approved task.
+
+## Isolated local Android QA (no real SMS)
+
+The checked-in `.firebaserc` targets only `demo-cn360-connect`. Local emulator accounts are disposable and disappear when the server stops. Auth listens at 127.0.0.1:9098; UI4001; hub4402; logging4502. Use `10.0.2.2:9098` from the Android emulator.
+
+Generate a **synthetic demo-only** Android client config, never a production config:
 
 ```sh
 npm ci
-cp .env.example .env.local
+node --test scripts/firebase-android-demo.test.mjs
+node scripts/firebase-android-demo.mjs /tmp/cn360-demo-google-services.json
 npm run emulators:auth
 ```
 
-In another terminal:
+Use a disposable checkout/copy for QA, with its own node_modules (or a local symlink) and **no live .env.local**. Expo 58 development virtual-env can read local env files even when EXPO_NO_DOTENV is set, so shell overrides alone are insufficient. Keep the existing live Metro server/config untouched. In that QA copy, create a demo .env.local and supply the same variables for prebuild, Metro and native build:
 
 ```sh
-npm start
+cp .env.example .env.local
+# Set its emulator URL to http://10.0.2.2:9098 for Android.
+export EXPO_NO_DOTENV=1
+export ANDROID_APP_ID=ph.cn360connect.app.phoneqa
+export GOOGLE_SERVICES_JSON=/tmp/cn360-demo-google-services.json
+export EXPO_PUBLIC_FIREBASE_API_KEY=AIzaSyDemoOnlyNotARealFirebaseKey123456789
+export EXPO_PUBLIC_FIREBASE_PROJECT_ID=demo-cn360-connect
+export EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN=demo-cn360-connect.firebaseapp.com
+export EXPO_PUBLIC_FIREBASE_APP_ID=demo-app
+export EXPO_PUBLIC_FIREBASE_AUTH_EMULATOR_URL=http://10.0.2.2:9098
+npx expo prebuild --platform android
+npx expo run:android --port 8083
+# Restart with npx expo start --clear --port 8083 if changing the QA env.
 ```
 
-The example points only to `demo-cn360-connect`. Auth listens on `127.0.0.1:9098`, Emulator UI on `127.0.0.1:4001`, hub on 4402, and logs on 4502. These ports avoid another emulator already present during development. Accounts are disposable and disappear when the emulator stops. The emulator prints password-reset links and exposes reset codes; it does not send email.
+Use fictional Philippine-format numbers only. The Auth Emulator's local verification-code endpoint (`/emulator/v1/projects/demo-cn360-connect/verificationCodes`) provides test codes; it never sends SMS. Do not log real numbers/codes or use production credentials against it. Native emulator routing additionally requires a `demo-` project. The emulator does not establish real SMS delivery or Android app verification behavior.
 
-For an automated real-SDK check, stop this project's emulator first, then run:
+For the existing JavaScript email-auth compatibility integration tests, stop this project's emulator and run `npm run test:emulator`. It starts/stops its own emulator. These tests check the real legacy service, hosted reset actions and JS persistence adapter; Android process-relaunch verification is separate.
 
-```sh
-npm run test:emulator
-```
+Restore normal local environment/config and regenerate Android after QA. Never install an isolated QA APK over the live app or clear the live app's data.
 
-This starts and stops its own Auth Emulator. It exercises the actual TypeScript auth service via the development-only `tsx` runner, including reset codes. The persistence integration test uses Firebase's native adapter with an AsyncStorage-shaped in-memory test store; this is distinct from a process relaunch with native AsyncStorage.
+## Sessions, data and deferred platforms
 
-### Simulator and physical-device hosts
+Native Firebase Auth manages phone sessions with its supported Android persistence. The app never manually stores phone credentials, SMS codes or confirmation handles. Pending verification exists only in memory; a cold OTP deep link returns to phone entry. Legacy Firebase JavaScript email sessions retain the supported React Native AsyncStorage adapter until logout; AsyncStorage is not encrypted keychain storage. The native observer takes precedence, startup waits for both stores, and logout attempts both.
 
-- iOS simulator: the example `http://127.0.0.1:9098` reaches the Mac host.
-- Android emulator: use `http://10.0.2.2:9098` in `.env.local`.
-- Physical devices: use the computer's LAN address, and bind the Auth Emulator to a reachable interface in `firebase.json` for that local session. Keep the emulator on a trusted development network; never use emulator tokens with production resources.
+Existing email accounts are not deleted, migrated, or automatically linked to phone accounts. Their restored sessions remain valid. After logout the new public UI is phone-only; linking or migrating existing email accounts requires a separately approved flow. Legacy email reset/service code remains available internally and through its existing route.
 
-Restart Metro after changing environment values (`npx expo start --clear` if values remain cached). Resolve port conflicts by changing both `firebase.json` and the local emulator URL.
+Firestore is still lazy configuration only. Native Auth and JavaScript Auth are distinct sessions: future Firestore/Storage features must use a compatible authenticated SDK or an explicitly planned bridge. Do not assume a native phone session authenticates the existing JavaScript Firestore instance. No collections, rules or Storage integration are created here.
 
-## Configure a real Firebase project
+Android is primary. iOS native Firebase registration/APNs/reCAPTCHA configuration and testing remain deferred. Web phone verification is explicitly unsupported; the web fallback reports that a native Android app is required.
 
-1. Create or select your Firebase project in the Firebase Console.
-2. Register a **web app**, even for the Expo mobile app: the Firebase JavaScript SDK uses its client configuration.
-3. Under Authentication, enable the **Email/Password** sign-in provider. Email-link login is outside this phase.
-4. Set the password-policy minimum to **8 characters**, matching registration validation. The client also displays Firebase failures for stronger server requirements; if you add complexity rules later, update the form guidance and validation at the same time.
-5. Enable **email enumeration protection**. Password-reset confirmation always uses neutral wording, including legacy account-not-found responses. This does not make Firebase's entire registration API anonymous: Firebase can still reject an already-registered email.
-6. Copy the web app's `apiKey`, `authDomain`, `projectId`, and `appId` into the corresponding `EXPO_PUBLIC_FIREBASE_*` entries in `.env.local`. Storage bucket and sender ID are optional for this phase. These are public client identifiers, not Admin SDK credentials.
-7. **Remove `EXPO_PUBLIC_FIREBASE_AUTH_EMULATOR_URL`** when using the real project. Do not set it in release-build environments: production initialization rejects emulator configuration.
-8. Review Authentication's password-reset email template, sender configuration, and authorized domains. Retain Firebase's default hosted action handler. Test delivery with a mailbox you control; check spam filtering and applicable Firebase quotas.
-9. Restart the app and verify registration, login, reset-email delivery, and logout in the intended project. No Console credentials or cloud project were provided during implementation, so live email delivery is a separate verification step.
-
-The checked-in `.firebaserc` intentionally remains a demo project for emulator commands. No cloud resources, security rules, Firestore collections, or Storage integration are provisioned by this project. `getFirestoreDb()` prepares lazy initialization for later approved features.
-
-Never put service-account JSON, Admin SDK keys, passwords, or private credentials in `EXPO_PUBLIC_*` values. Local environment files are ignored; `.env.example` is tracked. Firebase session data is managed by the SDK's supported React Native AsyncStorage persistence adapter; the app does not store credentials itself. AsyncStorage is not encrypted keychain storage.
+Never commit Admin SDK keys, passwords, or service-account files. `EXPO_PUBLIC_*` values and Firebase client JSON are public client identifiers, not server secrets. Keep local env/client files ignored and ensure proper Firebase rules when later data features are approved.
 
 ## References
 
-- [Expo Firebase setup](https://docs.expo.dev/guides/using-firebase/)
-- [Firebase password authentication and password policy](https://firebase.google.com/docs/auth/web/password-auth)
-- [Manage users and password-reset emails](https://firebase.google.com/docs/auth/web/manage-users)
+- [React Native Firebase phone authentication](https://rnfirebase.io/auth/phone-auth)
+- [Firebase Android phone setup and app verification](https://firebase.google.com/docs/auth/android/phone-auth)
 - [Auth Emulator](https://firebase.google.com/docs/emulator-suite/connect_auth)
-- [Firebase persistence API](https://firebase.google.com/docs/reference/js/auth.md#getreactnativepersistence)
+- [Expo native Firebase setup](https://docs.expo.dev/guides/using-firebase/)
+- [Expo build properties](https://docs.expo.dev/versions/latest/sdk/build-properties/)
