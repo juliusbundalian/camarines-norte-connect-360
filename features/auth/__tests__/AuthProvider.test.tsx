@@ -1,5 +1,5 @@
 import { act, renderHook } from "@testing-library/react-native";
-import type { User } from "firebase/auth";
+import type { AuthUser as User } from "../../../services/firebase/auth-types";
 import { AuthProvider, useAuth } from "../AuthProvider";
 import { getAuthService } from "../../../services/firebase/auth-service";
 jest.mock("../../../services/firebase/auth-service", () => ({

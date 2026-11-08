@@ -1,6 +1,6 @@
 # Post-registration Onboarding Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Implement the five inspected Figma states as required, Firebase-saved, resumable post-registration setup, ending at Home.
 
@@ -51,11 +51,11 @@ Shared types (Task1 defines, subsequent tasks import):
 
 **Interfaces:** Produce `validateGender(value:unknown):Gender`, `validateProfile(gender:Gender|null,draft:ProfileDraft,today:string):CompletedProfile` (throw safe field-ordered form error), `formatBirthdate(iso:string):string`, `parseBirthdate(text:string):string|null`, `normalizeMobile(text:string):string|null`, and `requiresSetup(user:AuthUser, profile:UserProfile|null, rolloutAtMs:number):boolean`. Invalid creation metadata is a recoverable error, not legacy eligibility. Also produce `AVATARS:ReadonlyArray<{id:AvatarId;source:number;label:string}>` and `defaultAvatarForGender(gender:Gender):AvatarId` from a visual comparison of supplied files with Figma; Female/Male match pictured defaults and Other uses avatar-1. These are available before Task3 consumes them.
 
-- [ ] Write failing tests: `validateProfile` accepts a newborn's valid birthday and Unicode/single-word names; trims name, rejects blank/>100 code points; accepts leap day2024-02-29, rejects2023-02-29/April31/future day; `formatBirthdate('2008-08-23') === '08/23/2008'`; empty phone→null; `09171234567`, `+63 917 123 4567`, `9171234567`→`+639171234567`; reject landline/extra digits; no age threshold. Test date-only conversion under different TZ settings without parsing through UTC Date.
-- [ ] Run `npm test -- --runInBand features/profile/__tests__/profile-validation.test.ts features/profile/__tests__/profile-cohort.test.ts`; confirm missing-module/assertion failure before implementation.
-- [ ] Implement the named functions with explicit date components/leap-year logic, limits and enums. Define `PROFILE_ONBOARDING_ROLLOUT_AT` once as the current UTC instant read at implementation start; record exact ISO literal and meaning in setup docs. Never recompute cutoff at runtime or move it on future releases.
-- [ ] Test cohort: no doc and creation before cutoff→false; equality/after→true; existing incomplete onboarding doc→true regardless of age; complete doc→false; invalid metadata with no doc→recovery error. Normalize native and JS creation metadata and source, updating all typed fixtures without changing observer precedence.
-- [ ] Run domain and existing Firebase service tests plus `npm run typecheck`; expected PASS. Commit only Task1 files: `feat(profile): define onboarding cohort and validation`.
+- [x] Write failing tests: `validateProfile` accepts a newborn's valid birthday and Unicode/single-word names; trims name, rejects blank/>100 code points; accepts leap day2024-02-29, rejects2023-02-29/April31/future day; `formatBirthdate('2008-08-23') === '08/23/2008'`; empty phone→null; `09171234567`, `+63 917 123 4567`, `9171234567`→`+639171234567`; reject landline/extra digits; no age threshold. Test date-only conversion under different TZ settings without parsing through UTC Date.
+- [x] Run `npm test -- --runInBand features/profile/__tests__/profile-validation.test.ts features/profile/__tests__/profile-cohort.test.ts`; confirm missing-module/assertion failure before implementation.
+- [x] Implement the named functions with explicit date components/leap-year logic, limits and enums. Define `PROFILE_ONBOARDING_ROLLOUT_AT` once as the current UTC instant read at implementation start; record exact ISO literal and meaning in setup docs. Never recompute cutoff at runtime or move it on future releases.
+- [x] Test cohort: no doc and creation before cutoff→false; equality/after→true; existing incomplete onboarding doc→true regardless of age; complete doc→false; invalid metadata with no doc→recovery error. Normalize native and JS creation metadata and source, updating all typed fixtures without changing observer precedence.
+- [x] Run domain and existing Firebase service tests plus `npm run typecheck`; expected PASS. Commit only Task1 files: `feat(profile): define onboarding cohort and validation`.
 
 ### Task 2: Firestore persistence and owner-only rules
 

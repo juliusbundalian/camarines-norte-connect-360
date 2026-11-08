@@ -12,7 +12,7 @@ import LoginScreen from "../LoginScreen";
 import RegisterScreen from "../RegisterScreen";
 import ForgotPasswordScreen from "../ForgotPasswordScreen";
 import WelcomeScreen from "../WelcomeScreen";
-import type { User } from "firebase/auth";
+import type { AuthUser as User } from "../../../services/firebase/auth-types";
 import { checkPasswordPolicy } from "../../../services/firebase/password-policy";
 import { authTokens } from "../../../theme/auth";
 jest.mock(

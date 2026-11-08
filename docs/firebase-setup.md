@@ -105,3 +105,7 @@ Never commit Admin SDK keys, passwords, or service-account files. `EXPO_PUBLIC_*
 - [Auth Emulator](https://firebase.google.com/docs/emulator-suite/connect_auth)
 - [Expo native Firebase setup](https://docs.expo.dev/guides/using-firebase/)
 - [Expo build properties](https://docs.expo.dev/versions/latest/sdk/build-properties/)
+
+### Profile onboarding rollout
+
+The fixed account-creation boundary is `2026-11-08T15:03:57.000Z` in `features/profile/profile-cohort.ts`. Accounts created before it with no required profile retain normal access; newer accounts must complete setup. Never move the boundary on subsequent releases or substitute last-sign-in time. This is a UX gate, not authorization for future features.

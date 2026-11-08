@@ -3,6 +3,7 @@ import {
   signInWithEmailAndPassword,
   sendPasswordResetEmail,
   signOut,
+  onAuthStateChanged,
 } from "firebase/auth";
 import { getAuthService } from "../auth-service.web";
 jest.mock("../client", () => ({
@@ -51,4 +52,11 @@ test("masks missing reset accounts while preserving actionable failures", async 
       getAuthService().requestPasswordReset("a@example.com"),
     ).rejects.toEqual({ code });
   }
+});
+
+test("observed JS identities preserve creation metadata for the rollout gate",()=>{
+ const next=jest.fn();getAuthService().observe(next,jest.fn());
+ const publish=jest.mocked(onAuthStateChanged).mock.calls.at(-1)![1] as (u:any)=>void;
+ publish({uid:'u',email:null,phoneNumber:null,metadata:{creationTime:'2026-01-01T00:00:00Z'}});
+ expect(next).toHaveBeenLastCalledWith({uid:'u',email:null,phoneNumber:null,source:'js',creationTimeMs:1767225600000});
 });

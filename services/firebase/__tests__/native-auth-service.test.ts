@@ -18,7 +18,7 @@ jest.mock("@react-native-firebase/auth", () => ({
   signOut: jest.fn().mockResolvedValue(undefined),
 }));
 jest.mock("../auth-service.web", () => ({ getAuthService: jest.fn() }));
-const user = { uid: "old", email: "old@example.invalid", phoneNumber: null };
+const user = { uid: "old", email: "old@example.invalid", phoneNumber: null, source:"js", creationTimeMs:123 };
 let nativeNext: (u: any) => void, legacyNext: (u: any) => void;
 const removeNative = jest.fn(),
   removeLegacy = jest.fn(),
@@ -52,6 +52,7 @@ test("waits for both stores and prefers native identity without dropping a legac
     uid: "new",
     email: null,
     phoneNumber: "+639171234567",
+    source:"native",creationTimeMs:null,
   });
   stop();
   expect(removeNative).toHaveBeenCalled();

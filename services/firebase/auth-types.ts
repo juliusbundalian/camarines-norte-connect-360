@@ -1,5 +1,7 @@
 export interface AuthUser {
   uid: string;
+  creationTimeMs: number | null;
+  source: "js" | "native";
   email: string | null;
   phoneNumber: string | null;
 }

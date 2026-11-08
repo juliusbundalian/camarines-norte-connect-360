@@ -16,9 +16,9 @@ import type {
 } from "./auth-types";
 export type { AuthService } from "./auth-types";
 const normalize = (
-  u: { uid: string; email: string | null; phoneNumber: string | null } | null,
+  u: { uid: string; email: string | null; phoneNumber: string | null; metadata?: {creationTime?:string} } | null,
 ): AuthUser | null =>
-  u ? { uid: u.uid, email: u.email, phoneNumber: u.phoneNumber } : null;
+  u ? { uid: u.uid, email: u.email, phoneNumber: u.phoneNumber, source:"native", creationTimeMs: u.metadata?.creationTime && Number.isFinite(Date.parse(u.metadata.creationTime)) ? Date.parse(u.metadata.creationTime) : null } : null;
 let generation = 0;
 let confirming = false;
 let hold = false;
@@ -148,7 +148,7 @@ const service: AuthService = {
         next(nativeUser ?? legacyUser);
     };
     const update = (u: AuthUser | null) => {
-      nativeUser = u && blockedUsers.has(u.uid) ? null : normalize(u);
+      nativeUser = u && blockedUsers.has(u.uid) ? null : u;
       nativeReady = true;
       emit();
     };
@@ -162,7 +162,7 @@ const service: AuthService = {
         error,
       );
       legacyStop = getLegacy().observe((u) => {
-        legacyUser = normalize(u);
+        legacyUser = u;
         legacyReady = true;
         emit();
       }, error);

@@ -7,7 +7,7 @@ import {
   fireEvent,
 } from "expo-router/testing-library";
 import { router } from "expo-router";
-import type { User } from "firebase/auth";
+import type { AuthUser as User } from "../../../services/firebase/auth-types";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Splash from "expo-splash-screen";
 import { getAuthService } from "../../../services/firebase/auth-service";
@@ -42,7 +42,7 @@ jest.mock("expo-splash-screen", () => ({
 }));
 let next: (user: User | null) => void;
 let fail: (error: unknown) => void;
-const user = { email: "a@example.com", uid: "local-user" } as User;
+const user = { email: "a@example.com", uid: "local-user", phoneNumber:null,source:"js",creationTimeMs:0 } as User;
 function OnboardingProbe() {
   const { complete } = useOnboarding();
   return <Button onPress={() => void complete()}>Complete onboarding</Button>;

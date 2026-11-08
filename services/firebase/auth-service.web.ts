@@ -39,7 +39,7 @@ const service: AuthService = {
     await signOut(getFirebaseAuth());
   },
   observe(next, error) {
-    return onAuthStateChanged(getFirebaseAuth(), next, error);
+    return onAuthStateChanged(getFirebaseAuth(), (user) => next(user ? {uid:user.uid,email:user.email,phoneNumber:user.phoneNumber,source:"js",creationTimeMs: user.metadata.creationTime && Number.isFinite(Date.parse(user.metadata.creationTime)) ? Date.parse(user.metadata.creationTime) : null} : null), error);
   },
 };
 export function getAuthService(): AuthService {

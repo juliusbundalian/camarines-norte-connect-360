@@ -8,7 +8,7 @@ jest.mock('expo-router',()=>({router:{push:jest.fn()}}));
 jest.mock('expo-constants',()=>({__esModule:true,default:{expoConfig:{version:'2.3.4',android:{versionCode:7}}}}));
 const logout=jest.fn();
 function auth(signedIn=false) {
-  jest.mocked(useAuth).mockReturnValue({user:signedIn?{uid:'test',email:'person@example.com',phoneNumber:null}:null,ready:true,error:null,logoutError:null,logoutPending:false,login:jest.fn(),register:jest.fn(),requestPasswordReset:jest.fn(),logout,retry:jest.fn()});
+  jest.mocked(useAuth).mockReturnValue({user:signedIn?{uid:'test',email:'person@example.com',phoneNumber:null,source:'js',creationTimeMs:0}:null,ready:true,error:null,logoutError:null,logoutPending:false,login:jest.fn(),register:jest.fn(),requestPasswordReset:jest.fn(),logout,retry:jest.fn()});
 }
 const show=()=>render(<PaperProvider><MenuScreen/></PaperProvider>);
 beforeEach(()=>{auth();logout.mockReset().mockResolvedValue(undefined);});
