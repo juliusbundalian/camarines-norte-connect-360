@@ -17,7 +17,7 @@
 
 ## Scope
 
-The onboarding foundation, Figma login/registration using email and password, password recovery, and pending-content native Terms page are approved. Email verification is intentionally omitted. Phone/SMS is retired from the public flow; preserve existing sessions and accounts. Wait for supplied Figma designs and explicit scope before implementing a Home Screen, tabs, tourism, real estate, or community modules.
+The onboarding foundation, Figma login/registration using email and password, password recovery, and pending-content native Terms page are approved. Email verification is intentionally omitted. Phone/SMS is retired from the public flow; preserve existing sessions and accounts. The guest/signed-in Menu and five-tab shell (Home, Explore, Properties, Community, Menu), with minimal placeholder destinations and guest browsing, are now approved under the 2026-11-08 navigation plan. Home is the default placeholder. Authentication is required at protected actions, not app entry. Actual Home content, profile editing, booking, wishlist storage, tourism, real estate, community modules and notification integrations still require supplied designs and explicit scope.
 
 ## Form feedback
 
