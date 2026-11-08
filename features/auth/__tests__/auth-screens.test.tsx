@@ -75,7 +75,10 @@ const fill = async (label: string, value: string) =>
 async function credentials(signup = false) {
   await fill("Email", " person@example.com ");
   await fill("Password", "Example123!");
-  if (signup) await fill("Confirm Password", "Example123!");
+  if (signup) {
+    await fill("Confirm Password", "Example123!");
+    await fireEvent.press(screen.getByRole("checkbox"));
+  }
 }
 test("login uses email and password without SMS and supports visibility and navigation", async () => {
   await show(<LoginScreen />);
@@ -101,11 +104,11 @@ test("login validates required fields and email without rejecting existing short
   expect(screen.queryByText("Enter your email address.")).toBeNull();
   await fireEvent(screen.getByLabelText("Email"), "blur");
   await fireEvent(screen.getByLabelText("Password"), "blur");
-  expect(await screen.findByText("Enter your email address.")).toBeTruthy();
-  expect(screen.getByText("Enter your password.")).toBeTruthy();
+  expect(screen.queryByText("Enter your email address.")).toBeNull();
+  expect(screen.queryByText("Enter your password.")).toBeNull();
   await fill("Email", "bad");
-  await fireEvent.press(screen.getByRole("button", { name: "Login" }));
-  expect(await screen.findByText("Enter a valid email address.")).toBeTruthy();
+  await fireEvent(screen.getByLabelText("Password"), "submitEditing");
+  expect(await screen.findByRole("alert")).toHaveTextContent("Enter a valid email address.");
   expect(login).not.toHaveBeenCalled();
   await fill("Email", "person@example.com");
   await fill("Password", "short");
@@ -163,10 +166,14 @@ test("registration rejects short or mismatched passwords before creating an acco
   await fill("Confirm Password", "short");
   expect(screen.getByRole("button", { name: "Register" })).toBeDisabled();
   await fireEvent(screen.getByLabelText("Password"), "blur");
-  expect(await screen.findByText("Use at least 8 characters.")).toBeTruthy();
+  expect(screen.queryByText("Use at least 8 characters.")).toBeNull();
+  expect(screen.getByLabelText("Password").props.accessibilityHint).toBeUndefined();
+  expect(screen.getByText("Password Requirements:")).toBeTruthy();
   await fill("Password", "Example123!");
   await fireEvent(screen.getByLabelText("Confirm Password"), "blur");
-  expect(await screen.findByText("Passwords must match.")).toBeTruthy();
+  expect(screen.queryByText("Passwords must match.")).toBeNull();
+  await fireEvent(screen.getByLabelText("Confirm Password"), "submitEditing");
+  expect(await screen.findByRole("alert")).toHaveTextContent("Passwords must match.");
   expect(register).not.toHaveBeenCalled();
 });
 test("policy rejection and lookup failure are retryable and do not create an account", async () => {
@@ -224,7 +231,7 @@ test("registration reports unavailable requirements and offers an independent re
   await fireEvent.press(
     screen.getByRole("button", { name: "Retry password requirements" }),
   );
-  expect(await screen.findByLabelText("An uppercase letter: met")).toBeTruthy();
+  expect(await screen.findByLabelText("Must include at least one uppercase letter (A–Z): met")).toBeTruthy();
   expect(screen.queryByRole("alert")).toBeNull();
   expect(screen.getByRole("button", { name: "Register" })).toBeEnabled();
 });
@@ -321,7 +328,7 @@ test("a server password-policy rejection refreshes requirements and gates the ol
   });
   await fireEvent.press(screen.getByRole("button", { name: "Register" }));
   expect(
-    await screen.findByLabelText("At least 12 characters: not met"),
+    await screen.findByLabelText("Must be at least 12 characters long: not met"),
   ).toBeTruthy();
   expect(screen.getByRole("button", { name: "Register" })).toBeDisabled();
   expect(await screen.findByRole("alert")).toHaveTextContent(
@@ -358,10 +365,10 @@ test("reset gate follows email edits and pending or failed requests", async () =
 test("registration blocks repeated taps while Firebase policy is pending and checklist reacts to input", async () => {
   await show(<RegisterScreen />);
   expect(
-    await screen.findByLabelText("An uppercase letter: not met"),
+    await screen.findByLabelText("Must include at least one uppercase letter (A–Z): not met"),
   ).toBeTruthy();
   await credentials(true);
-  expect(screen.getByLabelText("An uppercase letter: met")).toBeTruthy();
+  expect(screen.getByLabelText("Must include at least one uppercase letter (A–Z): met")).toBeTruthy();
   let resolve!: (
     value: Awaited<ReturnType<typeof checkPasswordPolicy>>,
   ) => void;
@@ -422,22 +429,90 @@ test("placeholder displays authenticated email and logout failures remain retrya
   expect(logout).toHaveBeenCalledTimes(2);
 });
 
-test("touched confirmation feedback follows a password change", async () => {
+test("confirmation mismatch is reported in an alert only after submission", async () => {
   await show(<RegisterScreen />);
   await credentials(true);
   await fireEvent(screen.getByLabelText("Confirm Password"), "blur");
   await fill("Password", "OtherExample123!");
   expect(screen.getByRole("button", { name: "Register" })).toBeDisabled();
-  expect(screen.getByText("Passwords must match.")).toBeTruthy();
+  expect(screen.queryByText("Passwords must match.")).toBeNull();
+  await fireEvent(screen.getByLabelText("Confirm Password"), "submitEditing");
+  expect(await screen.findByRole("alert")).toHaveTextContent("Passwords must match.");
 });
 
-test("correcting password to match clears touched confirmation feedback", async () => {
+test("correcting password to match clears the validation alert", async () => {
   await show(<RegisterScreen />);
   await credentials(true);
   await fill("Confirm Password", "OtherExample123!");
   await fireEvent(screen.getByLabelText("Confirm Password"), "blur");
-  expect(screen.getByText("Passwords must match.")).toBeTruthy();
+  expect(screen.queryByText("Passwords must match.")).toBeNull();
+  await fireEvent(screen.getByLabelText("Confirm Password"), "submitEditing");
+  expect(await screen.findByRole("alert")).toHaveTextContent("Passwords must match.");
   await fill("Password", "OtherExample123!");
   expect(screen.getByRole("button", { name: "Register" })).toBeEnabled();
   expect(screen.queryByText("Passwords must match.")).toBeNull();
+});
+
+
+test.each([
+  ["Login", LoginScreen, ["Email", "Password"]],
+  ["Register", RegisterScreen, ["Email", "Password", "Confirm Password"]],
+  ["Send Reset Link", ForgotPasswordScreen, ["Email"]],
+] as const)("%s keeps empty fields neutral after blur and clearing", async (button, Component, labels) => {
+  await show(<Component />);
+  for (const label of labels) {
+    await fireEvent(screen.getByLabelText(label), "blur");
+    expect(screen.getByLabelText(label).props.accessibilityHint).toBeUndefined();
+    await fill(label, "invalid");
+    await fill(label, "");
+    expect(screen.getByLabelText(label).props.accessibilityHint).toBeUndefined();
+  }
+  expect(screen.getByRole("button", { name: button })).toBeDisabled();
+  expect(login).not.toHaveBeenCalled();
+  expect(register).not.toHaveBeenCalled();
+  expect(reset).not.toHaveBeenCalled();
+});
+
+test.each([LoginScreen, RegisterScreen, ForgotPasswordScreen])(
+  "%p uses an alert after submission without inline email feedback",
+  async (Component) => {
+    await show(<Component />);
+    const email = () => screen.getByLabelText("Email");
+    await fireEvent(email(), "focus");
+    await fill("Email", "unfinished");
+    expect(screen.queryByText("Enter a valid email address.")).toBeNull();
+    await fireEvent(email(), "blur");
+    expect(screen.queryByText("Enter a valid email address.")).toBeNull();
+    await fireEvent(email(), "focus");
+    await fill("Email", "unfinished@");
+    expect(screen.queryByText("Enter a valid email address.")).toBeNull();
+    expect(email().props.accessibilityHint).toBeUndefined();
+    const submitLabel = Component === LoginScreen ? "Password" : Component === RegisterScreen ? "Confirm Password" : "Email";
+    await fireEvent(screen.getByLabelText(submitLabel), "submitEditing");
+    expect(await screen.findByRole("alert")).toHaveTextContent("Enter a valid email address.");
+    expect(email().props.accessibilityHint).toBeUndefined();
+    await fill("Email", "person@example.com");
+    await fireEvent(email(), "blur");
+    expect(screen.queryByText("Enter a valid email address.")).toBeNull();
+  },
+);
+
+
+test("registration requires the terms checkbox and keeps the Terms link independent", async () => {
+  await show(<RegisterScreen />);
+  await fill("Email", "person@example.com");
+  await fill("Password", "Example123!");
+  await fill("Confirm Password", "Example123!");
+  expect(screen.getByRole("checkbox")).not.toBeChecked();
+  expect(screen.getByRole("button", { name: "Register" })).toBeDisabled();
+  await fireEvent(screen.getByLabelText("Confirm Password"), "submitEditing");
+  expect(await screen.findByRole("alert")).toHaveTextContent("Please agree to the Terms & conditions to register.");
+  expect(register).not.toHaveBeenCalled();
+  await fireEvent.press(screen.getByRole("button", { name: "Terms & conditions" }));
+  expect(router.push).toHaveBeenCalledWith("/terms");
+  expect(screen.getByRole("checkbox")).not.toBeChecked();
+  await fireEvent.press(screen.getByRole("checkbox"));
+  expect(screen.getByRole("button", { name: "Register" })).toBeEnabled();
+  await fireEvent.press(screen.getByRole("checkbox"));
+  expect(screen.getByRole("button", { name: "Register" })).toBeDisabled();
 });

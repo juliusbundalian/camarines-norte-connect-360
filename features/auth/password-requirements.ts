@@ -14,7 +14,7 @@ export function getPasswordRequirements(
   const rules: PasswordRequirement[] = [
     {
       key: "minLength",
-      label: `At least ${minimum} characters`,
+      label: `Must be at least ${minimum} characters long`,
       met: password.length >= minimum,
     },
   ];
@@ -27,25 +27,25 @@ export function getPasswordRequirements(
   if (options.containsUppercaseLetter)
     rules.push({
       key: "uppercase",
-      label: "An uppercase letter",
+      label: "Must include at least one uppercase letter (A–Z)",
       met: /[A-Z]/.test(password),
     });
   if (options.containsLowercaseLetter)
     rules.push({
       key: "lowercase",
-      label: "A lowercase letter",
+      label: "Must include at least one lowercase letter (a–z)",
       met: /[a-z]/.test(password),
     });
   if (options.containsNumericCharacter)
     rules.push({
       key: "number",
-      label: "A number",
+      label: "Must include at least one number (0–9)",
       met: /[0-9]/.test(password),
     });
   if (options.containsNonAlphanumericCharacter)
     rules.push({
       key: "symbol",
-      label: "A special character",
+      label: "Must include at least one special character (e.g., !@#$%^&*)",
       met: [...password].some((c) =>
         policy.allowedNonAlphanumericCharacters.includes(c),
       ),

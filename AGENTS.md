@@ -11,3 +11,7 @@
 ## Scope
 
 The onboarding foundation, Figma login/registration using email and password, password recovery, and pending-content native Terms page are approved. Email verification is intentionally omitted. Phone/SMS is retired from the public flow; preserve existing sessions and accounts. Wait for supplied Figma designs and explicit scope before implementing a Home Screen, tabs, tourism, real estate, or community modules.
+
+## Form feedback
+
+Use form-level error alerts for validation and submission failures. Do not add inline field-validation messages or validation-driven red field borders. Do not show validation alerts merely while typing or on blur; show them after a submission attempt. Preserve validation gates, duplicate-submit protection, and the registration password requirements checklist.

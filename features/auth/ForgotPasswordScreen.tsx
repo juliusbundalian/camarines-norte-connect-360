@@ -23,7 +23,7 @@ export default function ForgotPasswordScreen() {
     handleSubmit,
     getValues,
     watch,
-    formState: { errors, isValid, touchedFields, submitCount },
+    formState: { errors, isValid, submitCount },
   } = useForm<ResetPasswordFields>({
     mode: "all",
     resolver: zodResolver(resetPasswordSchema),
@@ -55,7 +55,7 @@ export default function ForgotPasswordScreen() {
         </Text>
       ) : (
         <>
-          <AuthAlert message={action.error} />
+          <AuthAlert message={action.error ?? (submitCount > 0 ? errors.email?.message : undefined)} />
           <Controller
             control={control}
             name="email"
@@ -70,11 +70,6 @@ export default function ForgotPasswordScreen() {
                 onChangeText={field.onChange}
                 onBlur={field.onBlur}
                 editable={!action.pending}
-                error={
-                  touchedFields.email || submitCount > 0
-                    ? errors.email?.message
-                    : undefined
-                }
                 returnKeyType="done"
                 onSubmitEditing={() => void submit()}
               />

@@ -14,9 +14,12 @@ export function PasswordRequirements({
   password: string;
 }) {
   if (!policy) return null;
-  const rules = getPasswordRequirements(policy, password);
+  const rules = getPasswordRequirements(policy, password).filter(
+    ({ key }) => key !== "maxLength",
+  );
   return (
     <View style={styles.list}>
+      <Text style={s.body}>Password Requirements:</Text>
       {rules.map(({ key, label, met }) => (
         <View
           key={key}

@@ -39,7 +39,7 @@ test("only configured optional rules apply, with the app's eight-character floor
     },
   };
   expect(getPasswordRequirements(relaxed, "1234567")).toEqual([
-    { key: "minLength", label: "At least 8 characters", met: false },
+    { key: "minLength", label: "Must be at least 8 characters long", met: false },
   ]);
   expect(
     getPasswordRequirements(relaxed, "12345678").every((rule) => rule.met),

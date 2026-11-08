@@ -2,6 +2,14 @@
 
 Recorded 2026-11-08, Asia/Manila. This file describes the current implementation, not an instruction to expand scope.
 
+## Latest continuation update — 2026-11-08
+
+This update supersedes older current-behavior and next-task statements below. The user authorized committing all completed work, merging to main and pushing origin/main. Confirm integration state with Git rather than relying on the older unmerged status. Preserve this worktree and ignored Firebase/native configuration.
+
+Latest auth refinements: all forms use form-level alerts after a submission attempt, with no inline validation messages or red validation borders. Password validation and disabled-action gates remain active. The registration checklist hides maximum length only in presentation, retains its validation, and includes a Password Requirements heading. A required, initially unchecked Terms checkbox is validated by both the registration gate and submit boundary. Its independent inline green Terms link and compact checkbox match the Figma agreement row; prefix text uses secondary color and Public Sans Medium14/20. Terms legal content remains pending; checkbox state is not a persisted legal acceptance record. No email verification or public SMS flow.
+
+Latest verification before integration:140 Jest/RNTL tests, TypeScript, and two installed-SDK password-policy tests passed. Native ARM64 build and Android15/API35 Diorama_API_35 checkbox/link/rendering checks passed during this session. Actual Terms content, full TalkBack/autofill and remaining live reset-delivery checks are still pending. Future modules require supplied designs and explicit scope; the user's intention to move on does not authorize inventing those modules.
+
 ## Workspace and workflow
 
 Worktree: `/Users/juliusjervinbundalian/.codex/worktrees/auth-foundation/camarines-norte-connect-360`.

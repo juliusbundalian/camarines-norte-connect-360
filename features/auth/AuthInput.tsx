@@ -14,21 +14,19 @@ import { authTokens as t } from "../../theme/auth";
 
 export function AuthInput({
   label,
-  error,
   password = false,
   ...props
-}: TextInputProps & { label: string; error?: string; password?: boolean }) {
+}: TextInputProps & { label: string; password?: boolean }) {
   const [visible, setVisible] = useState(false);
   const visibilityName =
     label === "Confirm Password" ? "confirm password" : "password";
   return (
     <View style={styles.group}>
       <Text style={s.label}>{label}</Text>
-      <View style={[styles.container, error ? s.fieldError : undefined]}>
+      <View style={styles.container}>
         <TextInput
           {...props}
           accessibilityLabel={label}
-          accessibilityHint={error}
           secureTextEntry={password && !visible}
           placeholderTextColor={t.colors.muted}
           autoCapitalize="none"
@@ -51,11 +49,6 @@ export function AuthInput({
           </Pressable>
         ) : null}
       </View>
-      {error ? (
-        <Text accessibilityLiveRegion="polite" style={s.error}>
-          {error}
-        </Text>
-      ) : null}
     </View>
   );
 }
