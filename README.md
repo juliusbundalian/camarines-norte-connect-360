@@ -1,6 +1,6 @@
 # CAMARINES NORTE 360 CONNECT
 
-An Expo mobile foundation for Camarines Norte's future tourism, real estate, and community application. This phase contains Figma onboarding, Figma-based phone login/signup, SMS verification, a pending-content native Terms page, and an authenticated placeholder. Additional modules remain deferred.
+An Expo mobile foundation for Camarines Norte's future tourism, real estate, and community application. This phase contains Figma onboarding, Figma-based email/password login/signup, password recovery, a pending-content native Terms page, and an authenticated placeholder. Additional modules remain deferred.
 
 ## Platform priority
 
@@ -43,15 +43,15 @@ Use the Auth Emulator host `10.0.2.2:9098` from the Android emulator, or retain 
 ## Structure
 
 - `app/`: route wrappers, splash/readiness gate, and Expo Router protected groups.
-- `features/auth/`: observed auth context, schemas, safe errors, guarded actions, phone entry/code/Terms screens and the temporary welcome screen.
+- `features/auth/`: observed auth context, schemas, safe errors, guarded actions, email/password/reset/Terms screens and the temporary welcome screen.
 - `features/onboarding/`: three Figma-based swipeable pages, local Poppins/assets, and shared locally persisted completion state.
-- `services/firebase/`: environment validation, native phone and legacy JS auth adapters, persistence, lazy Firestore getter.
+- `services/firebase/`: environment validation, Firebase JavaScript email auth and native session compatibility adapters, persistence, lazy Firestore getter.
 - `components/`, `theme/`, `constants/`: shared temporary presentation, Paper theme/tokens, and application name.
 
 Firebase's observer is the source of authenticated state. Onboarding uses a separate provider and `useOnboarding` hook. The native splash remains until both initial reads settle; setup/storage failures have a recovery screen. Authenticated sessions take priority over onboarding. Logout and route guards remove access to the previous session's screens.
 
-Onboarding uses the supplied Figma layout with the approved beach photo and Lucide palm tree, house, and users icons. Authentication forms use the inspected Public Sans Figma tokens, adapted to the approved phone/SMS flow. The welcome screen remains temporary. Further Figma work can replace presentation while preserving services, validation, state, and navigation. No Home Screen, tabs, feature portals, profile fields, or custom password-reset deep-link handling exist.
+Onboarding uses the supplied Figma layout with the approved beach photo and Lucide palm tree, house, and users icons. Authentication forms use the inspected Public Sans Figma tokens, adapted to email/password with no email verification. The welcome screen remains temporary. Further Figma work can replace presentation while preserving services, validation, state, and navigation. No Home Screen, tabs, feature portals, profile fields, or custom password-reset deep-link handling exist.
 
 See the [approved specification](docs/superpowers/specs/2026-11-04-auth-foundation-design.md), [implementation plan](docs/superpowers/plans/2026-11-04-auth-foundation.md), and [verification record](docs/verification.md) for scope and evidence.
 
-Phone authentication requires `google-services.json` for package `ph.cn360connect.app`. The matching Firebase Android app and local debug fingerprints are registered; the downloaded client JSON is local and Git-ignored. See setup before live SMS testing. Public Sans fonts come from [USWDS Public Sans](https://github.com/uswds/public-sans) under the included license. The OTP-named Figma frames contain profile setup; those are not part of this implementation.
+The retained native session-compatibility adapter requires `google-services.json` for package `ph.cn360connect.app`. Email/password uses the existing Firebase JavaScript SDK with supported React Native session persistence. Enable Email/Password in Firebase Console; real SMS and a Blaze upgrade are not required for this flow. The matching Firebase Android app and local debug fingerprints are registered; the downloaded client JSON is local and Git-ignored. Public phone/SMS login has been retired. Existing sessions and accounts are preserved; phone-only account linking/migration remains deferred. Public Sans fonts come from [USWDS Public Sans](https://github.com/uswds/public-sans) under the included license. The OTP-named Figma frames contain profile setup; those are not part of this implementation.

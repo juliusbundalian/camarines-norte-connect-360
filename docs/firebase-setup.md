@@ -1,8 +1,20 @@
 # Firebase setup
 
-## Android phone authentication
+## Current email/password authentication (2026-11-08)
 
-Phone login and signup use the native Firebase Android SDK through React Native Firebase. A successful SMS credential signs in an existing phone account or creates one on first verification. Password policies apply to email/password accounts, not this SMS flow. No custom backend, synthetic email address, profile collection, or custom password reset handler is used.
+The public Login/Register screens use email and password with the existing Firebase JavaScript SDK. In Firebase Console → Authentication → Sign-in method, enable **Email/Password** (email-link sign-in is not needed). Keep the existing web-client values in `.env.local`; Email/Password does not require a Blaze upgrade or verification SMS. Do not change billing for this flow.
+
+Registration checks the project password policy through Firebase `validatePassword` and then calls `createUserWithEmailAndPassword`; Login uses `signInWithEmailAndPassword`. The app minimum is 8 characters for new accounts, while existing users may sign in with older passwords. Policy indicators reflect Firebase's configured requirements; the server remains authoritative. The app does not call `sendEmailVerification` or require `emailVerified`. New accounts proceed directly to the authenticated placeholder.
+
+Forgot Password uses `sendPasswordResetEmail`, account-neutral confirmation, and Firebase's default hosted reset action. Password-reset email remains part of account recovery; it is separate from email verification. No custom reset-link handler or account/profile records are created.
+
+Firebase's supported React Native AsyncStorage persistence restores email sessions; the app never manually stores passwords. Existing native phone sessions are retained until logout, and logout still attempts both stores. Public phone entry, SMS consent and code screens are removed; old `/verify-phone` links return to Login. Existing phone-only accounts are not automatically converted or linked to email accounts. After logout, those users need an email account; migration/linking needs a separately approved flow. Existing Firebase providers/accounts remain unchanged in the Console.
+
+Native builds still include the existing React Native Firebase compatibility adapter and require the matching local Android client JSON, as documented below. Do not remove native modules or credentials from an installed app without planning session compatibility. Android is primary; iOS testing remains deferred.
+
+## Historical Android phone authentication (public flow retired)
+
+The previous phone login and signup used the native Firebase Android SDK through React Native Firebase. A successful SMS credential signs in an existing phone account or creates one on first verification. Password policies apply to email/password accounts, not this SMS flow. No custom backend, synthetic email address, profile collection, or custom password reset handler is used.
 
 Requires Node 24.12+, Java 21, Android SDK and a **native development build**. Expo Go does not include these Firebase native modules. `expo-build-properties` pins Kotlin 2.4.20, the latest version supported by the installed Expo compiler artifacts and compatible with Firebase Auth 25.
 
@@ -74,9 +86,9 @@ Restore normal local environment/config and regenerate Android after QA. Never i
 
 ## Sessions, data and deferred platforms
 
-Native Firebase Auth manages phone sessions with its supported Android persistence. The app never manually stores phone credentials, SMS codes or confirmation handles. Pending verification exists only in memory; a cold OTP deep link returns to phone entry. Legacy Firebase JavaScript email sessions retain the supported React Native AsyncStorage adapter until logout; AsyncStorage is not encrypted keychain storage. The native observer takes precedence, startup waits for both stores, and logout attempts both.
+Native Firebase Auth preserves pre-existing phone sessions with its supported Android persistence. The app never manually stores phone credentials, SMS codes or confirmation handles. Pending verification exists only in memory; a cold OTP deep link returns to phone entry. Legacy Firebase JavaScript email sessions retain the supported React Native AsyncStorage adapter until logout; AsyncStorage is not encrypted keychain storage. The native observer takes precedence, startup waits for both stores, and logout attempts both.
 
-Existing email accounts are not deleted, migrated, or automatically linked to phone accounts. Their restored sessions remain valid. After logout the new public UI is phone-only; linking or migrating existing email accounts requires a separately approved flow. Legacy email reset/service code remains available internally and through its existing route.
+Existing email accounts are not deleted, migrated, or automatically linked to phone accounts. Their restored sessions remain valid. The historical phone-only UI has been replaced again by email/password; linking or migrating phone-only accounts requires a separately approved flow. Legacy email reset/service code remains available internally and through its existing route.
 
 Firestore is still lazy configuration only. Native Auth and JavaScript Auth are distinct sessions: future Firestore/Storage features must use a compatible authenticated SDK or an explicitly planned bridge. Do not assume a native phone session authenticates the existing JavaScript Firestore instance. No collections, rules or Storage integration are created here.
 
