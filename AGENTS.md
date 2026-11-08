@@ -22,3 +22,7 @@ The onboarding foundation, Figma login/registration using email and password, pa
 ## Form feedback
 
 Use form-level error alerts for validation and submission failures. Do not add inline field-validation messages or validation-driven red field borders. Do not show validation alerts merely while typing or on blur; show them after a submission attempt. Preserve validation gates, duplicate-submit protection, and the registration password requirements checklist.
+
+## Post-registration profiles
+
+The 2026-11-08 post-registration onboarding design/plan is approved: three-second account-success modal, required gender then profile, nine supplied avatars, name and nonfuture birthdate required with no minimum age, optional Philippine mobile contact only, owner-only Firestore saved drafts/completion and Menu identity. New accounts from the fixed2026-11-08T15:03:57.000Z cutoff resume setup; older accounts keep normal access. No SMS or profile editing is added. Production Firestore enablement/rules deployment is a separate release prerequisite; never infer deployment from emulator checks.
