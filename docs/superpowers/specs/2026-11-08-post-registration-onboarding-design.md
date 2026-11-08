@@ -1,6 +1,6 @@
 # Post-registration onboarding design
 
-Status: proposed for approval. Planning only; no product implementation yet.
+Status: approved by the user on 2026-11-08. Planning only; no product implementation yet.
 
 ## Intent and approved decisions
 
@@ -14,7 +14,7 @@ The user selected a two-step gender → profile flow, a three-second account-suc
 - Local-only setup: smaller integration but cannot reliably resume across devices or supply an authoritative shared profile; ruled out by the user's choice.
 - Separate male/female profile screens: duplicates the same fields and behavior; use one screen with variant data instead.
 
-The following technical and interaction details are proposals by the implementer, not additional decisions attributed to the user.
+The following technical and interaction details originated as implementer proposals and were included in the approved design.
 
 ## Screens and interactions
 
@@ -66,4 +66,4 @@ Plan meaningful tests for auth-observer timing, failed initialization without du
 
 ## Approval
 
-User approval of this design is pending. After approval, use Superpowers writing-plans to produce the ordered implementation tasks and validation commands. No product code or dependencies have changed during this design pass.
+The user approved this design on 2026-11-08. The implementation plan is `docs/superpowers/plans/2026-11-08-post-registration-onboarding.md`. No product code or dependencies changed during the design/planning pass; implementation awaits review of that plan.
