@@ -194,6 +194,14 @@ test("registration exposes recoverable existing-account errors", async () => {
   );
   expect(screen.getByRole("button", { name: "Register" })).toBeEnabled();
 });
+test("registration reports unavailable requirements and offers an independent retry", async () => {
+  jest.mocked(checkPasswordPolicy).mockRejectedValueOnce({ code: "auth/network-request-failed" });
+  await show(<RegisterScreen />);
+  expect(await screen.findByRole("alert")).toHaveTextContent(/connection/);
+  await fireEvent.press(screen.getByRole("button", { name: "Retry password requirements" }));
+  expect(await screen.findByLabelText("An uppercase letter: not met")).toBeTruthy();
+  expect(screen.queryByRole("alert")).toBeNull();
+});
 test("registration blocks repeated taps while Firebase policy is pending and checklist reacts to input", async () => {
   await show(<RegisterScreen />);
   expect(

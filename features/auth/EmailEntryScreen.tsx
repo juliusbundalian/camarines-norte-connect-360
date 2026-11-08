@@ -1,10 +1,9 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback } from "react";
 import { BackHandler, StyleSheet, Text, View } from "react-native";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { router, useFocusEffect } from "expo-router";
-import type { PasswordPolicy } from "firebase/auth";
 import { checkPasswordPolicy } from "../../services/firebase/password-policy";
 import {
   AuthAction,
@@ -23,6 +22,7 @@ import {
   type RegistrationFields,
 } from "./schemas";
 import { authTokens as t } from "../../theme/auth";
+import { usePasswordPolicy } from "./usePasswordPolicy";
 
 const loginFieldsSchema = loginSchema.extend({ confirmPassword: z.string() });
 export default function EmailEntryScreen({
@@ -32,7 +32,7 @@ export default function EmailEntryScreen({
 }) {
   const auth = useAuth();
   const action = useAsyncAction();
-  const [policy, setPolicy] = useState<PasswordPolicy | null>(null);
+  const policyState = usePasswordPolicy(signup);
   const {
     control,
     handleSubmit,
@@ -42,18 +42,6 @@ export default function EmailEntryScreen({
     resolver: zodResolver(signup ? registrationSchema : loginFieldsSchema),
     defaultValues: { email: "", password: "", confirmPassword: "" },
   });
-  useEffect(() => {
-    if (!signup) return;
-    let active = true;
-    void checkPasswordPolicy("")
-      .then((result) => {
-        if (active) setPolicy(result.passwordPolicy);
-      })
-      .catch(() => {});
-    return () => {
-      active = false;
-    };
-  }, [signup]);
   useFocusEffect(
     useCallback(() => {
       const sub = BackHandler.addEventListener(
@@ -67,7 +55,7 @@ export default function EmailEntryScreen({
     await action.run(async () => {
       if (signup) {
         const status = await checkPasswordPolicy(password);
-        setPolicy(status.passwordPolicy);
+        policyState.accept(status.passwordPolicy);
         if (!status.isValid)
           throw { code: "auth/password-does-not-meet-requirements" };
         await auth.register(email, password);
@@ -163,7 +151,10 @@ export default function EmailEntryScreen({
               />
             )}
           />
-          <PasswordRequirements policy={policy} password={watch("password")} />
+          {policyState.loading ? <Text accessibilityLiveRegion="polite" style={s.small}>Loading password requirements...</Text> : null}
+          <AuthAlert message={policyState.error} />
+          {policyState.error ? <AuthTextLink label="Retry password requirements" onPress={policyState.retry} disabled={action.pending} /> : null}
+          <PasswordRequirements policy={policyState.policy} password={watch("password")} />
           <AuthTextLink
             label="Terms & conditions"
             disabled={action.pending}
