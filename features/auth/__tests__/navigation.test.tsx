@@ -225,3 +225,17 @@ test.each(['/account','/wishlist','/notifications','/privacy-policy'])("guest de
   await waitFor(() => expect(screen).toHavePathname(path));
   expect(screen.queryByText('Login destination')).toBeNull();
 });
+
+test('successful Logout preserves the selected Menu while its pending overlay is visible', async () => {
+  const logout=jest.mocked(getAuthService().logout);
+  let finish!:()=>void;
+  logout.mockReturnValueOnce(new Promise<void>(resolve=>{finish=resolve;}));
+  function LogoutProbe(){const auth=useAuth();return <Button onPress={()=>void auth.logout()}>Sign out probe</Button>;}
+  await renderRouter({...routes,'(main)/(tabs)/menu':LogoutProbe},{initialUrl:'/menu'});
+  await act(()=>next(user));
+  await fireEvent.press(await screen.findByRole('button',{name:'Sign out probe'}));
+  await act(()=>next(null));
+  await act(()=>finish());
+  await waitFor(()=>expect(screen).toHavePathname('/menu'));
+  expect(await screen.findByRole('button',{name:'Sign out probe'})).toBeTruthy();
+});

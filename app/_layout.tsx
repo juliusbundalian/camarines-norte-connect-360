@@ -24,25 +24,13 @@ function Navigation() {
     if (ready) void SplashScreen.hideAsync().catch(() => {});
   }, [ready]);
   // During retry the native splash has already gone; show a neutral loader.
-  if (!ready || auth.logoutPending)
+  if (!ready)
     return (
       <View style={styles.loading}>
         <ActivityIndicator
-          accessibilityLabel={
-            auth.logoutPending ? "Signing out" : "Restoring application state"
-          }
+          accessibilityLabel="Restoring application state"
         />
       </View>
-    );
-  if (auth.logoutError)
-    return (
-      <StartupError
-        title="Sign-out incomplete"
-        message={auth.logoutError}
-        retry={() => {
-          void auth.logout().catch(() => {});
-        }}
-      />
     );
   if (error)
     return (
@@ -54,7 +42,10 @@ function Navigation() {
         }}
       />
     );
+  const signingOut = auth.logoutPending || !!auth.logoutError;
   return (
+    <View style={styles.container}>
+    <View style={styles.container} accessibilityElementsHidden={signingOut} importantForAccessibility={signingOut ? "no-hide-descendants" : "auto"}>
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="index" />
       <Stack.Protected guard={!!auth.user || onboarding.completed}>
@@ -69,6 +60,13 @@ function Navigation() {
         <Stack.Screen name="(auth)" />
       </Stack.Protected>
     </Stack>
+    </View>
+    {auth.logoutPending ? <View style={[StyleSheet.absoluteFill, styles.loading]}><ActivityIndicator accessibilityLabel="Signing out" /></View> : auth.logoutError ? (
+      <View style={StyleSheet.absoluteFill}>
+        <StartupError title="Sign-out incomplete" message={auth.logoutError} retry={() => { void auth.logout().catch(() => {}); }} />
+      </View>
+    ) : null}
+    </View>
   );
 }
 export default function RootLayout() {
@@ -86,6 +84,7 @@ export default function RootLayout() {
   );
 }
 const styles = StyleSheet.create({
+  container: { flex: 1 },
   loading: {
     flex: 1,
     alignItems: "center",
