@@ -1,12 +1,14 @@
 import {Pressable,StyleSheet,Text,View} from 'react-native';
 import UserRound from 'lucide-react-native/icons/user-round';
 import ChevronRight from 'lucide-react-native/icons/chevron-right';
+import {ProfileAvatar} from '../profile/ProfileAvatar';
+import type {AvatarId} from '../profile/profile-types';
 import {menuTokens as t} from '../../theme/menu';
-export function MenuHeader({signedIn,pending,onLogin,onRegister,onAccount}:{signedIn:boolean;pending:boolean;onLogin():void;onRegister():void;onAccount():void}){
+export function MenuHeader({signedIn,pending,onLogin,onRegister,onAccount,displayName,avatarId}:{displayName?:string;avatarId?:AvatarId;signedIn:boolean;pending:boolean;onLogin():void;onRegister():void;onAccount():void}){
   return <View style={styles.header}>
-    <View style={styles.avatar} accessible={false}><UserRound size={56} strokeWidth={1.6} color={t.colors.secondary}/></View>
+    <View style={styles.avatar} accessible={false}>{signedIn&&avatarId?<ProfileAvatar id={avatarId} size={t.size.avatar}/>:<UserRound size={56} strokeWidth={1.6} color={t.colors.secondary}/>}</View>
     <View style={styles.copy}>
-      <Text accessibilityRole="header" style={styles.title}>{signedIn?'Hello, User':'Hello, Guest'}</Text>
+      <Text accessibilityRole="header" style={styles.title}>{signedIn?`Hello, ${displayName||'User'}`:'Hello, Guest'}</Text>
       {signedIn?<Pressable accessibilityRole="button" accessibilityLabel="Update personal info" disabled={pending} style={[styles.action,styles.profileAction]} onPress={onAccount}><Text style={styles.secondary}>Update personal info</Text><ChevronRight size={18} color={t.colors.secondary}/></Pressable>:
         <View style={styles.actions}>
           <Pressable accessibilityRole="button" accessibilityLabel="Login" disabled={pending} style={styles.action} onPress={onLogin}><Text style={styles.link}>Login</Text></Pressable>

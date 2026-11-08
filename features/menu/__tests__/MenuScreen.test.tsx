@@ -3,6 +3,8 @@ import {PaperProvider} from 'react-native-paper';
 import {router} from 'expo-router';
 import {useAuth} from '../../auth/AuthProvider';
 import MenuScreen from '../MenuScreen';
+import {useProfile} from '../../profile/ProfileProvider';
+jest.mock('../../profile/ProfileProvider',()=>({useProfile:jest.fn()}));
 jest.mock('../../auth/AuthProvider',()=>({useAuth:jest.fn()}));
 jest.mock('expo-router',()=>({router:{push:jest.fn()}}));
 jest.mock('expo-constants',()=>({__esModule:true,default:{expoConfig:{version:'2.3.4',android:{versionCode:7}}}}));
@@ -11,7 +13,7 @@ function auth(signedIn=false) {
   jest.mocked(useAuth).mockReturnValue({user:signedIn?{uid:'test',email:'person@example.com',phoneNumber:null,source:'js',creationTimeMs:0}:null,ready:true,error:null,logoutError:null,logoutPending:false,login:jest.fn(),register:jest.fn(),requestPasswordReset:jest.fn(),logout,retry:jest.fn(),registrationPhase:"idle",registrationUid:null,finishRegistrationPresentation:jest.fn()});
 }
 const show=()=>render(<PaperProvider><MenuScreen/></PaperProvider>);
-beforeEach(()=>{auth();logout.mockReset().mockResolvedValue(undefined);});
+beforeEach(()=>{jest.mocked(useProfile).mockReturnValue({phase:'guest',profile:null} as any);auth();logout.mockReset().mockResolvedValue(undefined);});
 test('guest Menu exposes separate auth links and no Logout',async()=>{
   await show();
   expect(screen.getByText('Hello, Guest')).toBeTruthy();
@@ -59,4 +61,10 @@ test('Cancel dismisses Logout confirmation without signing out',async()=>{
   expect(screen.getByText('Are you sure you want to sign out? You can log in again anytime.')).toBeTruthy();
   await fireEvent.press(screen.getByRole('button',{name:'Cancel'}));
   expect(screen.queryByText('Logout?')).toBeNull();expect(logout).not.toHaveBeenCalled();
+});
+
+test('shows the current completed profile name and avatar while retaining Account navigation',async()=>{
+ auth(true);jest.mocked(useProfile).mockReturnValue({phase:'complete',uid:'test',profile:{status:'complete',displayName:'Alex',avatarId:'avatar-6'}} as any);
+ await show();expect(screen.getByText('Hello, Alex')).toBeTruthy();
+ await fireEvent.press(screen.getByText('Update personal info'));expect(router.push).toHaveBeenCalledWith('/account');
 });

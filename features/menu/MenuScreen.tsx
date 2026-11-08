@@ -6,6 +6,7 @@ import {Image} from 'expo-image';
 import Constants from 'expo-constants';
 import {router} from 'expo-router';
 import LogOut from 'lucide-react-native/icons/log-out';
+import {useProfile} from '../profile/ProfileProvider';
 import {useAuth} from '../auth/AuthProvider';
 import {useAsyncAction} from '../auth/useAsyncAction';
 import {MenuHeader} from './MenuHeader';
@@ -14,6 +15,8 @@ import {MENU_SECTIONS} from './menu-content';
 import {menuTokens as t} from '../../theme/menu';
 export default function MenuScreen(){
   const auth=useAuth();
+  const profile=useProfile();
+  const identity=profile.uid===auth.user?.uid&&profile.phase==='complete'?profile.profile:null;
   const [confirming,setConfirming]=useState(false);
   const confirmingRef=useRef(false);
   useEffect(()=>{if(!auth.user){confirmingRef.current=false;setConfirming(false);}},[auth.user]);
@@ -25,7 +28,7 @@ export default function MenuScreen(){
   const build=Constants.expoConfig?.android?.versionCode;
   return <SafeAreaView edges={['top','left','right']} style={styles.screen}>
     <ScrollView contentContainerStyle={styles.content}>
-      <MenuHeader signedIn={!!auth.user} pending={pending} onLogin={()=>openAuth('/login')} onRegister={()=>openAuth('/register')} onAccount={()=>router.push('/account')}/>
+      <MenuHeader displayName={identity?.displayName??undefined} avatarId={identity?.avatarId} signedIn={!!auth.user} pending={pending} onLogin={()=>openAuth('/login')} onRegister={()=>openAuth('/register')} onAccount={()=>router.push('/account')}/>
       {MENU_SECTIONS.map(section=><View key={section.key} style={styles.card}>
         {'title' in section?<Text style={styles.section}>{section.title}</Text>:null}
         {section.rows.map(row=><MenuRow key={row.path} label={row.label} description={'description' in row?row.description:undefined} icon={row.icon} disabled={pending} onPress={()=>router.push(row.path)}/>)}
