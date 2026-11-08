@@ -98,6 +98,11 @@ test("logout attempts both stores even on failure", async () => {
   await expect(getAuthService().logout()).rejects.toThrow("native logout");
   expect(logout).toHaveBeenCalled();
 });
+test("email-only logout succeeds when native Auth already has no user", async () => {
+  jest.mocked(signOut).mockRejectedValueOnce({ code: "auth/no-current-user" });
+  await expect(getAuthService().logout()).resolves.toBeUndefined();
+  expect(logout).toHaveBeenCalled();
+});
 
 test("cancelling a session prevents an old code from signing in", async () => {
   jest.mocked(verifyPhoneNumber).mockReturnValue({
@@ -130,17 +135,13 @@ test("a credential for a different number is never published", async () => {
   stop();
 });
 test("automatic native verification still waits for explicit confirmation", async () => {
-  jest
-    .mocked(verifyPhoneNumber)
-    .mockReturnValue({
-      on: (_e: any, cb: any) =>
-        cb({ state: "verified", verificationId: null, code: null }),
-    } as any);
-  jest
-    .mocked(signInWithCredential)
-    .mockResolvedValue({
-      user: { uid: "auto", email: null, phoneNumber: "+639171234567" },
-    } as any);
+  jest.mocked(verifyPhoneNumber).mockReturnValue({
+    on: (_e: any, cb: any) =>
+      cb({ state: "verified", verificationId: null, code: null }),
+  } as any);
+  jest.mocked(signInWithCredential).mockResolvedValue({
+    user: { uid: "auto", email: null, phoneNumber: "+639171234567" },
+  } as any);
   const handle = await getPhoneAuthService().requestCode("+639171234567");
   expect(handle.automatic).toBe(true);
   expect(signInWithCredential).not.toHaveBeenCalled();
@@ -153,11 +154,9 @@ test("a cancelled in-flight credential cannot publish a user to protected naviga
   nativeNext(null);
   legacyNext(null);
   next.mockClear();
-  jest
-    .mocked(verifyPhoneNumber)
-    .mockReturnValue({
-      on: (_e: any, cb: any) => cb({ state: "sent", verificationId: "late" }),
-    } as any);
+  jest.mocked(verifyPhoneNumber).mockReturnValue({
+    on: (_e: any, cb: any) => cb({ state: "sent", verificationId: "late" }),
+  } as any);
   let resolve!: (value: any) => void;
   jest
     .mocked(signInWithCredential)

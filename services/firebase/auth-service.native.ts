@@ -7,6 +7,7 @@ import {
 } from "@react-native-firebase/auth";
 import { getAuthService as getLegacy } from "./auth-service.web";
 import { getNativeAuth } from "./native-auth";
+import { getErrorCode } from "../../features/auth/errors";
 import type {
   AuthService,
   AuthUser,
@@ -123,7 +124,15 @@ const service: AuthService = {
   async logout() {
     phoneService.cancel();
     const results = await Promise.allSettled([
-      Promise.resolve().then(() => signOut(getNativeAuth())),
+      Promise.resolve().then(async () => {
+        try {
+          await signOut(getNativeAuth());
+        } catch (error) {
+          // RNFB rejects signOut for an already-empty native store. Email sessions
+          // live in the JS store; that native result already meets logout's goal.
+          if (getErrorCode(error) !== "auth/no-current-user") throw error;
+        }
+      }),
       Promise.resolve().then(() => getLegacy().logout()),
     ]);
     for (const r of results) if (r.status === "rejected") throw r.reason;

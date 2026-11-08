@@ -14,10 +14,19 @@ import ForgotPasswordScreen from "../ForgotPasswordScreen";
 import WelcomeScreen from "../WelcomeScreen";
 import type { User } from "firebase/auth";
 import { checkPasswordPolicy } from "../../../services/firebase/password-policy";
-jest.mock("../../../services/firebase/password-policy", () => ({ checkPasswordPolicy: jest.fn() }), { virtual: true });
+jest.mock(
+  "../../../services/firebase/password-policy",
+  () => ({ checkPasswordPolicy: jest.fn() }),
+  { virtual: true },
+);
 jest.mock("../AuthProvider", () => ({ useAuth: jest.fn() }));
 jest.mock("expo-router", () => ({
-  router: { push: jest.fn(), replace: jest.fn(), back: jest.fn(), canGoBack: () => false },
+  router: {
+    push: jest.fn(),
+    replace: jest.fn(),
+    back: jest.fn(),
+    canGoBack: () => false,
+  },
   useFocusEffect: (cb: () => void) => require("react").useEffect(cb, [cb]),
 }));
 const login = jest.fn(),
@@ -25,10 +34,24 @@ const login = jest.fn(),
   reset = jest.fn(),
   logout = jest.fn();
 beforeEach(() => {
-  jest.mocked(checkPasswordPolicy).mockReset().mockResolvedValue({
-    isValid: true,
-    passwordPolicy: { customStrengthOptions: { minPasswordLength: 8, containsUppercaseLetter: true, containsLowercaseLetter: true, containsNumericCharacter: true, containsNonAlphanumericCharacter: true }, allowedNonAlphanumericCharacters: "!@#$%^&*", enforcementState: "ENFORCE", forceUpgradeOnSignin: false },
-  });
+  jest
+    .mocked(checkPasswordPolicy)
+    .mockReset()
+    .mockResolvedValue({
+      isValid: true,
+      passwordPolicy: {
+        customStrengthOptions: {
+          minPasswordLength: 8,
+          containsUppercaseLetter: true,
+          containsLowercaseLetter: true,
+          containsNumericCharacter: true,
+          containsNonAlphanumericCharacter: true,
+        },
+        allowedNonAlphanumericCharacters: "!@#$%^&*",
+        enforcementState: "ENFORCE",
+        forceUpgradeOnSignin: false,
+      },
+    });
   for (const fn of [login, register, reset, logout])
     fn.mockReset().mockResolvedValue(undefined);
   jest.mocked(useAuth).mockReturnValue({
@@ -61,8 +84,12 @@ test("login uses email and password without SMS and supports visibility and navi
   await fireEvent.press(screen.getByRole("button", { name: "Show password" }));
   expect(screen.getByLabelText("Password").props.secureTextEntry).toBe(false);
   await fireEvent.press(screen.getByRole("button", { name: "Login" }));
-  await waitFor(() => expect(login).toHaveBeenCalledWith("person@example.com", "Example123!"));
-  await fireEvent.press(screen.getByRole("button", { name: "Forgot Password?" }));
+  await waitFor(() =>
+    expect(login).toHaveBeenCalledWith("person@example.com", "Example123!"),
+  );
+  await fireEvent.press(
+    screen.getByRole("button", { name: "Forgot Password?" }),
+  );
   expect(router.push).toHaveBeenCalledWith("/forgot-password");
   await fireEvent.press(screen.getByRole("button", { name: "Sign up" }));
   expect(router.push).toHaveBeenCalledWith("/register");
@@ -79,20 +106,32 @@ test("login validates required fields and email without rejecting existing short
   await fill("Email", "person@example.com");
   await fill("Password", "short");
   await fireEvent.press(screen.getByRole("button", { name: "Login" }));
-  await waitFor(() => expect(login).toHaveBeenCalledWith("person@example.com", "short"));
+  await waitFor(() =>
+    expect(login).toHaveBeenCalledWith("person@example.com", "short"),
+  );
 });
 test("pending login blocks duplicates and failures retain fields for retry", async () => {
   let reject!: (error: unknown) => void;
-  login.mockReturnValueOnce(new Promise((_, fail) => { reject = fail; }));
+  login.mockReturnValueOnce(
+    new Promise((_, fail) => {
+      reject = fail;
+    }),
+  );
   await show(<LoginScreen />);
   await credentials();
   const button = screen.getByRole("button", { name: "Login" });
   await fireEvent.press(button);
   await fireEvent.press(button);
   expect(login).toHaveBeenCalledTimes(1);
-  await act(() => reject({ code: "auth/invalid-credential", message: "private" }));
-  expect(await screen.findByRole("alert")).toHaveTextContent(/Email or password is incorrect/);
-  expect(screen.getByLabelText("Email").props.value).toBe(" person@example.com ");
+  await act(() =>
+    reject({ code: "auth/invalid-credential", message: "private" }),
+  );
+  expect(await screen.findByRole("alert")).toHaveTextContent(
+    /Email or password is incorrect/,
+  );
+  expect(screen.getByLabelText("Email").props.value).toBe(
+    " person@example.com ",
+  );
   await fireEvent.press(screen.getByRole("button", { name: "Login" }));
   await waitFor(() => expect(login).toHaveBeenCalledTimes(2));
 });
@@ -100,12 +139,18 @@ test("registration checks Firebase policy and signs in without an email verifica
   await show(<RegisterScreen />);
   await credentials(true);
   await fireEvent.press(screen.getByRole("button", { name: "Register" }));
-  await waitFor(() => expect(register).toHaveBeenCalledWith("person@example.com", "Example123!"));
+  await waitFor(() =>
+    expect(register).toHaveBeenCalledWith("person@example.com", "Example123!"),
+  );
   expect(checkPasswordPolicy).toHaveBeenCalledWith("Example123!");
   expect(router.push).not.toHaveBeenCalledWith("/verify-phone");
   expect(screen.queryByText(/verify your email/i)).toBeNull();
-  await fireEvent.press(screen.getByRole("button", { name: "Show confirm password" }));
-  expect(screen.getByLabelText("Confirm Password").props.secureTextEntry).toBe(false);
+  await fireEvent.press(
+    screen.getByRole("button", { name: "Show confirm password" }),
+  );
+  expect(screen.getByLabelText("Confirm Password").props.secureTextEntry).toBe(
+    false,
+  );
 });
 test("registration rejects short or mismatched passwords before creating an account", async () => {
   await show(<RegisterScreen />);
@@ -122,11 +167,17 @@ test("registration rejects short or mismatched passwords before creating an acco
 test("policy rejection and lookup failure are retryable and do not create an account", async () => {
   await show(<RegisterScreen />);
   await credentials(true);
-  jest.mocked(checkPasswordPolicy).mockResolvedValueOnce({ isValid: false } as never);
+  jest
+    .mocked(checkPasswordPolicy)
+    .mockResolvedValueOnce({ isValid: false } as never);
   await fireEvent.press(screen.getByRole("button", { name: "Register" }));
-  expect(await screen.findByRole("alert")).toHaveTextContent(/password.*requirements/i);
+  expect(await screen.findByRole("alert")).toHaveTextContent(
+    /password.*requirements/i,
+  );
   expect(register).not.toHaveBeenCalled();
-  jest.mocked(checkPasswordPolicy).mockRejectedValueOnce({ code: "auth/network-request-failed" });
+  jest
+    .mocked(checkPasswordPolicy)
+    .mockRejectedValueOnce({ code: "auth/network-request-failed" });
   await fireEvent.press(screen.getByRole("button", { name: "Register" }));
   expect(await screen.findByRole("alert")).toHaveTextContent(/connection/);
   expect(register).not.toHaveBeenCalled();
@@ -138,17 +189,27 @@ test("registration exposes recoverable existing-account errors", async () => {
   await show(<RegisterScreen />);
   await credentials(true);
   await fireEvent.press(screen.getByRole("button", { name: "Register" }));
-  expect(await screen.findByRole("alert")).toHaveTextContent(/already registered/);
+  expect(await screen.findByRole("alert")).toHaveTextContent(
+    /already registered/,
+  );
   expect(screen.getByRole("button", { name: "Register" })).toBeEnabled();
 });
 test("registration blocks repeated taps while Firebase policy is pending and checklist reacts to input", async () => {
   await show(<RegisterScreen />);
-  expect(await screen.findByLabelText("An uppercase letter: not met")).toBeTruthy();
+  expect(
+    await screen.findByLabelText("An uppercase letter: not met"),
+  ).toBeTruthy();
   await credentials(true);
   expect(screen.getByLabelText("An uppercase letter: met")).toBeTruthy();
-  let resolve!: (value: Awaited<ReturnType<typeof checkPasswordPolicy>>) => void;
+  let resolve!: (
+    value: Awaited<ReturnType<typeof checkPasswordPolicy>>,
+  ) => void;
   const valid = await checkPasswordPolicy("Example123!");
-  jest.mocked(checkPasswordPolicy).mockReturnValueOnce(new Promise(done => { resolve = done; }));
+  jest.mocked(checkPasswordPolicy).mockReturnValueOnce(
+    new Promise((done) => {
+      resolve = done;
+    }),
+  );
   const button = screen.getByRole("button", { name: "Register" });
   await fireEvent.press(button);
   await fireEvent.press(button);
