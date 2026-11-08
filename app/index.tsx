@@ -5,6 +5,6 @@ export default function Index() {
   const { user } = useAuth();
   const { completed } = useOnboarding();
   return (
-    <Redirect href={user ? "/welcome" : completed ? "/login" : "/onboarding"} />
+    <Redirect href={user ? "/home" : completed ? "/home" : "/onboarding"} />
   );
 }

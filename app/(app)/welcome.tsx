@@ -1,1 +1,2 @@
-export { default } from "../../features/auth/WelcomeScreen";
+import {Redirect} from "expo-router";
+export default function Welcome(){return <Redirect href="/home"/>;}

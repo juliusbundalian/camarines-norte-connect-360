@@ -1,8 +1,9 @@
+import {getSafeAuthReturnPath} from "../navigation/auth-return";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Text } from "react-native";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import {
   AuthAction,
   AuthAlert,
@@ -15,6 +16,10 @@ import { useAuth } from "./AuthProvider";
 import { useAsyncAction } from "./useAsyncAction";
 import { resetPasswordSchema, type ResetPasswordFields } from "./schemas";
 export default function ForgotPasswordScreen() {
+  const params=useLocalSearchParams<{returnTo?:string|string[]}>();
+  const returnTo=getSafeAuthReturnPath(params.returnTo);
+  const authLink=(pathname:'/login'|'/register'|'/forgot-password')=>({pathname,params:{returnTo}});
+
   const { requestPasswordReset } = useAuth();
   const action = useAsyncAction();
   const [sent, setSent] = useState(false);
@@ -37,7 +42,7 @@ export default function ForgotPasswordScreen() {
       setSent(true);
   });
   const back = () => {
-    if (!action.pending) router.replace("/login");
+    if (!action.pending) router.replace(authLink("/login"));
   };
   return (
     <AuthScaffold

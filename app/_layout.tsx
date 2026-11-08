@@ -57,13 +57,15 @@ function Navigation() {
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="index" />
-      <Stack.Protected guard={!!auth.user}>
+      <Stack.Protected guard={!!auth.user || onboarding.completed}>
+        <Stack.Screen name="(main)" />
+        <Stack.Screen name="terms" />
         <Stack.Screen name="(app)" />
       </Stack.Protected>
       <Stack.Protected guard={!auth.user && !onboarding.completed}>
         <Stack.Screen name="onboarding" />
       </Stack.Protected>
-      <Stack.Protected guard={!auth.user && onboarding.completed}>
+      <Stack.Protected guard={!!auth.user || onboarding.completed}>
         <Stack.Screen name="(auth)" />
       </Stack.Protected>
     </Stack>

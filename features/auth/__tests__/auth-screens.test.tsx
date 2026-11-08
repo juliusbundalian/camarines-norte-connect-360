@@ -6,7 +6,7 @@ import {
   act,
 } from "@testing-library/react-native";
 import { PaperProvider } from "react-native-paper";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useAuth } from "../AuthProvider";
 import LoginScreen from "../LoginScreen";
 import RegisterScreen from "../RegisterScreen";
@@ -28,6 +28,7 @@ jest.mock("expo-router", () => ({
     back: jest.fn(),
     canGoBack: () => false,
   },
+  useLocalSearchParams: jest.fn(() => ({})),
   useFocusEffect: (cb: () => void) => require("react").useEffect(cb, [cb]),
 }));
 const login = jest.fn(),
@@ -35,6 +36,7 @@ const login = jest.fn(),
   reset = jest.fn(),
   logout = jest.fn();
 beforeEach(() => {
+  jest.mocked(useLocalSearchParams).mockReturnValue({});
   jest
     .mocked(checkPasswordPolicy)
     .mockReset()
@@ -94,9 +96,9 @@ test("login uses email and password without SMS and supports visibility and navi
   await fireEvent.press(
     screen.getByRole("button", { name: "Forgot Password?" }),
   );
-  expect(router.push).toHaveBeenCalledWith("/forgot-password");
+  expect(router.push).toHaveBeenCalledWith({pathname:"/forgot-password",params:{returnTo:"/menu"}});
   await fireEvent.press(screen.getByRole("button", { name: "Sign up" }));
-  expect(router.push).toHaveBeenCalledWith("/register");
+  expect(router.push).toHaveBeenCalledWith({pathname:"/register",params:{returnTo:"/menu"}});
 });
 test("login validates required fields and email without rejecting existing short passwords", async () => {
   await show(<LoginScreen />);
@@ -402,7 +404,7 @@ test("reset validates email and shows generic confirmation", async () => {
     ),
   ).toBeTruthy();
   await fireEvent.press(screen.getByRole("button", { name: "Back to Login" }));
-  expect(router.replace).toHaveBeenCalledWith("/login");
+  expect(router.replace).toHaveBeenCalledWith({pathname:"/login",params:{returnTo:"/menu"}});
 });
 test("reset request failures remain retryable without showing confirmation", async () => {
   reset.mockRejectedValueOnce({ code: "auth/network-request-failed" });
@@ -515,4 +517,22 @@ test("registration requires the terms checkbox and keeps the Terms link independ
   expect(screen.getByRole("button", { name: "Register" })).toBeEnabled();
   await fireEvent.press(screen.getByRole("checkbox"));
   expect(screen.getByRole("button", { name: "Register" })).toBeDisabled();
+});
+
+
+test("auth navigation preserves its safe source and cold Back returns to that source", async () => {
+  jest.mocked(useLocalSearchParams).mockReturnValue({returnTo:'/account'});
+  await show(<LoginScreen/>);
+  await fireEvent.press(screen.getByRole('button',{name:'Back'}));
+  expect(router.replace).toHaveBeenCalledWith('/account');
+  await fireEvent.press(screen.getByRole('button',{name:'Sign up'}));
+  expect(router.push).toHaveBeenCalledWith({pathname:'/register',params:{returnTo:'/account'}});
+  await fireEvent.press(screen.getByRole('button',{name:'Forgot Password?'}));
+  expect(router.push).toHaveBeenCalledWith({pathname:'/forgot-password',params:{returnTo:'/account'}});
+});
+test("password recovery Back preserves the safe auth return path", async () => {
+  jest.mocked(useLocalSearchParams).mockReturnValue({returnTo:'/wishlist'});
+  await show(<ForgotPasswordScreen/>);
+  await fireEvent.press(screen.getByRole('button',{name:'Back to Login'}));
+  expect(router.replace).toHaveBeenCalledWith({pathname:'/login',params:{returnTo:'/wishlist'}});
 });

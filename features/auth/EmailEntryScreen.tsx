@@ -1,10 +1,11 @@
+import {getSafeAuthReturnPath} from "../navigation/auth-return";
 import { useCallback, useEffect } from "react";
 import { BackHandler, Pressable, StyleSheet, Text, View } from "react-native";
 import Check from "lucide-react-native/icons/check";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { router, useFocusEffect } from "expo-router";
+import { router, useLocalSearchParams, useFocusEffect } from "expo-router";
 import { checkPasswordPolicy } from "../../services/firebase/password-policy";
 import {
   AuthAction,
@@ -40,6 +41,9 @@ export default function EmailEntryScreen({
 }: {
   signup?: boolean;
 }) {
+  const params=useLocalSearchParams<{returnTo?:string|string[]}>();
+  const returnTo=getSafeAuthReturnPath(params.returnTo);
+  const authLink=(pathname:'/login'|'/register'|'/forgot-password')=>({pathname,params:{returnTo}});
   const auth = useAuth();
   const action = useAsyncAction();
   const policyState = usePasswordPolicy(signup);
@@ -123,9 +127,9 @@ export default function EmailEntryScreen({
   });
   const back = () => {
     if (action.pending) return;
-    if (signup) router.replace("/login");
+    if (signup) router.replace(authLink("/login"));
     else if (router.canGoBack()) router.back();
-    else BackHandler.exitApp();
+    else router.replace(returnTo);
   };
   return (
     <AuthScaffold
@@ -181,7 +185,7 @@ export default function EmailEntryScreen({
             <AuthTextLink
               label="Forgot Password?"
               disabled={action.pending}
-              onPress={() => router.push("/forgot-password")}
+              onPress={() => router.push(authLink("/forgot-password"))}
             />
           </View>
         ) : null}
@@ -274,7 +278,7 @@ export default function EmailEntryScreen({
           label={signup ? "Log in" : "Sign up"}
           disabled={action.pending}
           onPress={() =>
-            signup ? router.replace("/login") : router.push("/register")
+            signup ? router.replace(authLink("/login")) : router.push(authLink("/register"))
           }
         />
       </View>
