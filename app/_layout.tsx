@@ -32,7 +32,7 @@ function Navigation() {
         />
       </View>
     );
-  if (error)
+  if (error && !auth.logoutPending && !auth.logoutError)
     return (
       <StartupError
         message={error}

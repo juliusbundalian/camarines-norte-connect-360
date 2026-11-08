@@ -239,3 +239,20 @@ test('successful Logout preserves the selected Menu while its pending overlay is
   await waitFor(()=>expect(screen).toHavePathname('/menu'));
   expect(await screen.findByRole('button',{name:'Sign out probe'})).toBeTruthy();
 });
+
+test('partial logout recovery takes priority over an ignored onboarding storage error', async () => {
+  jest.mocked(AsyncStorage.getItem).mockRejectedValue(new Error('storage unavailable'));
+  const logout=jest.mocked(getAuthService().logout);
+  let reject!:(error:unknown)=>void;
+  logout.mockReturnValueOnce(new Promise<void>((_,fail)=>{reject=fail;}));
+  await renderRouter(routes,{initialUrl:'/menu'});
+  await act(()=>next(user));
+  await fireEvent.press(await screen.findByRole('button',{name:'Logout'}));
+  await act(()=>next(null));
+  expect(await screen.findByLabelText('Signing out')).toBeTruthy();
+  await act(()=>reject({code:'auth/network-request-failed'}));
+  expect(await screen.findByRole('header',{name:'Sign-out incomplete'})).toBeTruthy();
+  logout.mockResolvedValueOnce(undefined);
+  await fireEvent.press(screen.getByRole('button',{name:'Retry'}));
+  expect(logout).toHaveBeenCalledTimes(2);
+});
