@@ -16,3 +16,15 @@ it('retains failed pending content for retry and drops future work after disposa
  fail=false;await writer.flush();expect(written).toEqual(['Alex']);
  writer.dispose();writer.schedule({...emptyDraft(),displayName:'Wrong account'});await writer.flush();expect(written).toEqual(['Alex']);
 });
+it('allows an explicit operation to retry after its previous failure',async()=>{
+ const writer=new DraftWriter(async()=>{});let attempts=0;
+ const save=async()=>{attempts++;if(attempts===1)throw new Error('offline');};
+ await expect(writer.run(save)).rejects.toThrow('offline');await writer.run(save);expect(attempts).toBe(2);
+});
+it('does not resurrect a failed old snapshot after a newer queued snapshot succeeds',async()=>{
+ const written:string[]=[];let reject!:(e:Error)=>void;
+ const writer=new DraftWriter(async d=>{written.push(d.displayName);if(written.length===1)await new Promise<void>((_r,j)=>reject=j);});
+ writer.schedule({...emptyDraft(),displayName:'Old'});const old=writer.flush();await Promise.resolve();await Promise.resolve();
+ writer.schedule({...emptyDraft(),displayName:'New'});const newer=writer.flush();reject(new Error('offline'));
+ await expect(old).rejects.toThrow('offline');await newer;await writer.flush();expect(written).toEqual(['Old','New']);
+});

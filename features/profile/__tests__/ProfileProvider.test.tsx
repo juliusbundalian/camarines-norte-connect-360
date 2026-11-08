@@ -69,3 +69,20 @@ it('refreshes a conflicting revision and retains the local draft',async()=>{
  await act(()=>result.current.setDraft({displayName:'Local draft'}));await act(()=>result.current.flushDraft());
  expect(s.data?.draft.displayName).toBe('Local draft');expect(result.current.saveState).toBe('saved');
 });
+it('adopts another device completion instead of retrying obsolete drafts',async()=>{
+ const s=service();const {result}=await renderHook(useProfile,{wrapper:({children})=><ProfileProvider service={s}>{children}</ProfileProvider>});
+ await act(()=>result.current.saveGender('male'));
+ await act(()=>result.current.setDraft({displayName:'Local',birthdateText:'01/01/2000'}));
+ s.saveDraft.mockRejectedValueOnce(new Error('Profile setup is already complete.'));
+ s.load.mockResolvedValueOnce({...seed(),status:'complete',gender:'male',displayName:'Remote',revision:7});
+ await act(()=>result.current.finish('2026-11-08'));expect(result.current.phase).toBe('complete');expect(result.current.profile?.displayName).toBe('Remote');
+ expect(s.complete).not.toHaveBeenCalled();
+});
+it('reloads revision conflicts for explicit gender and completion saves',async()=>{
+ const s=service();const {result}=await renderHook(useProfile,{wrapper:({children})=><ProfileProvider service={s}>{children}</ProfileProvider>});
+ s.saveGender.mockRejectedValueOnce(new Error('Your profile was updated elsewhere. Please retry.'));
+ await act(()=>result.current.saveGender('male'));expect(result.current.step).toBe('profile');
+ await act(()=>result.current.setDraft({displayName:'Alex',birthdateText:'01/01/2000'}));await act(()=>result.current.flushDraft());
+ s.complete.mockRejectedValueOnce(new Error('Your profile was updated elsewhere. Please retry.'));
+ await act(()=>result.current.finish('2026-11-08'));expect(result.current.phase).toBe('complete');
+});

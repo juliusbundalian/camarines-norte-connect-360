@@ -17,6 +17,20 @@ export function ProfileProvider({children,service=profileService}:PropsWithChild
  const profileRef=useRef<UserProfile|null>(null),draftRef=useRef(emptyDraft());
  const writerRef=useRef<DraftWriter|null>(null);const session=useRef(0);const dirty=useRef(false);const currentUid=useRef<string|null>(null);
  const finishing=useRef<Promise<void>|null>(null);
+ const reconcile=async(uid:string,alive:()=>boolean,operation:(p:UserProfile)=>Promise<UserProfile>):Promise<UserProfile>=>{
+  const current=profileRef.current;if(!current)throw new Error('Please retry profile setup.');
+  try{return await operation(current);}catch(error){
+   if(!(error instanceof Error)||!/(updated elsewhere|already complete)/.test(error.message))throw error;
+   const latest=await service.load(uid);if(!alive()||!latest)throw error;
+   profileRef.current=latest;
+   if(latest.status==='complete')return latest;
+   return operation(latest);
+  }
+ };
+ const adoptCompleted=(saved:UserProfile)=>{
+  writerRef.current?.dispose();profileRef.current=saved;draftRef.current=saved.draft;dirty.current=false;
+  patch({profile:saved,draft:saved.draft,phase:'complete',step:saved.currentStep,saveState:'saved'});
+ };
  const patch=(value:Partial<State>)=>setState(previous=>({...previous,...value}));
  useEffect(()=>{
   const user=auth.user,uid=user?.uid??null;const generation=++session.current;let active=true;
@@ -41,14 +55,9 @@ export function ProfileProvider({children,service=profileService}:PropsWithChild
     accept(p);draftRef.current=preserved??p.draft;
     const writer=new DraftWriter(async draft=>{
      if(!alive()||!profileRef.current)throw new Error('The active account changed.');
-     let saved:UserProfile;
-     try{saved=await service.saveDraft(user.uid,draft,profileRef.current.revision);}
-     catch(error){
-      if(!(error instanceof Error)||!error.message.includes('updated elsewhere'))throw error;
-      const latest=await service.load(user.uid);if(!alive()||!latest)throw error;
-      if(latest.status==='complete'){accept(latest);patch({phase:'complete'});return;}
-      profileRef.current=latest;saved=await service.saveDraft(user.uid,draft,latest.revision);
-     }
+     const saved=await reconcile(user.uid,alive,p=>service.saveDraft(user.uid,draft,p.revision));
+     if(!alive())return;
+     if(saved.status==='complete'){adoptCompleted(saved);return;}
      accept(saved);
      if(alive()&&JSON.stringify(draftRef.current)===JSON.stringify(draft))dirty.current=false;
     },saveState=>{if(alive())patch({saveState});});
@@ -66,11 +75,14 @@ export function ProfileProvider({children,service=profileService}:PropsWithChild
  const flushDraft=()=>writerRef.current?.flush()??Promise.resolve();
  const saveGender=async(gender:Gender)=>{
   const user=auth.user,writer=writerRef.current,generation=session.current;if(!user||!writer)throw new Error('Please wait for profile setup to load.');
+  await writer.flush();if(generation!==session.current)return;
+  if(profileRef.current?.status==='complete')return;
   await writer.run(async()=>{
    const p=profileRef.current;if(!p)throw new Error('Please retry profile setup.');
    const draft={...draftRef.current};if(draft.avatarSelectionSource==='default')draft.avatarId=defaultAvatarForGender(gender);
-   const saved=await service.saveGender(user.uid,gender,draft,p.revision);
+   const saved=await reconcile(user.uid,()=>generation===session.current,current=>service.saveGender(user.uid,gender,draft,current.revision));
    if(generation!==session.current)return;
+   if(saved.status==='complete'){adoptCompleted(saved);return;}
    profileRef.current=saved;draftRef.current=draft;dirty.current=false;patch({profile:saved,draft,step:'profile',saveState:'saved'});
   });
  };
@@ -80,12 +92,14 @@ export function ProfileProvider({children,service=profileService}:PropsWithChild
   const user=auth.user,writer=writerRef.current,generation=session.current;
   if(!user||!writer)return Promise.reject(new Error('Please wait for profile setup to load.'));
   let completed;try{completed=validateProfile(profileRef.current?.gender??null,draftRef.current,today);}catch(error){return Promise.reject(error);}
-  const request=writer.run(async()=>{
-   if(!profileRef.current)throw new Error('Please retry profile setup.');
-   const saved=await service.complete(user.uid,completed,profileRef.current.revision);
-   if(generation!==session.current)return;
-   writer.dispose();profileRef.current=saved;dirty.current=false;patch({profile:saved,phase:'complete',saveState:'saved'});
-  }).finally(()=>{if(generation===session.current)finishing.current=null;});
+  const request=(async()=>{
+   await writer.flush();if(generation!==session.current||profileRef.current?.status==='complete')return;
+   await writer.run(async()=>{
+    const saved=await reconcile(user.uid,()=>generation===session.current,p=>service.complete(user.uid,completed,p.revision));
+    if(generation!==session.current)return;
+    adoptCompleted(saved);
+   });
+  })().finally(()=>{if(generation===session.current)finishing.current=null;});
   finishing.current=request;return request;
  };
  // A changed UID is hidden synchronously, before the effect resets its state.
