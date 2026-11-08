@@ -36,6 +36,18 @@ export function getAuthErrorMessage(error: unknown): string {
 }
 
 export function getPhoneErrorMessage(error: unknown): string {
+  // Android can wrap this configuration failure as auth/internal-error.
+  // Recognize only the known marker; never display the server payload.
+  if (
+    getErrorCode(error) === "auth/internal-error" &&
+    error !== null &&
+    typeof error === "object" &&
+    "message" in error &&
+    typeof error.message === "string" &&
+    /\bBILLING_NOT_ENABLED\b/.test(error.message)
+  ) {
+    return "SMS verification is not configured. Please contact support.";
+  }
   switch (getErrorCode(error)) {
     case "auth/invalid-phone-number":
     case "auth/missing-phone-number":

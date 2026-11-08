@@ -31,3 +31,11 @@ test("unknown errors do not leak backend messages or account existence", () => {
     }),
   ).toBe("We could not complete verification. Please try again.");
 });
+test("native internal billing failures show configuration guidance without server details", () => {
+  expect(
+    getPhoneErrorMessage({
+      code: "auth/internal-error",
+      message: "An internal error has occurred. [ BILLING_NOT_ENABLED ]",
+    }),
+  ).toBe("SMS verification is not configured. Please contact support.");
+});
