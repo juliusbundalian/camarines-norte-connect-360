@@ -15,7 +15,8 @@
     "test": "jest",
     "test:emulator": "firebase emulators:exec --project demo-cn360-connect --only auth 'node --import tsx --test scripts/auth-emulator.test.mjs'",
     "emulators:auth": "firebase emulators:start --project demo-cn360-connect --only auth",
-    "test:policy": "node --import tsx --test scripts/password-policy.test.mjs"
+    "test:policy": "node --import tsx --test scripts/password-policy.test.mjs",
+    "test:profile-emulator": "firebase emulators:exec --project demo-cn360-connect --only auth,firestore 'node --import tsx --test scripts/profile-emulator.test.mjs'"
   },
   "dependencies": {
     "@hookform/resolvers": "^7.0.2",

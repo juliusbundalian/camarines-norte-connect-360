@@ -1,0 +1,57 @@
+rules_version = '2';
+service cloud.firestore {
+ match /databases/{database}/documents {
+  function avatar(v) {return v is string && v.matches('avatar-[1-9]');}
+  function gender(v) {return v in ['male','female','other'];}
+  function source(v) {return v in ['default','manual'];}
+  function draft(d) {
+   return d is map && d.keys().hasAll(['displayName','birthdateText','mobileText','avatarId','avatarSelectionSource']) && d.keys().hasOnly(['displayName','birthdateText','mobileText','avatarId','avatarSelectionSource'])
+    && d.displayName is string && d.displayName.size()<=200
+    && d.birthdateText is string && d.birthdateText.size()<=10
+    && d.mobileText is string && d.mobileText.size()<=32
+    && avatar(d.avatarId) && source(d.avatarSelectionSource);
+  }
+  function dateValid(v) {
+   let parts=v.split('-');
+   let y=int(parts[0]); let m=int(parts[1]); let day=int(parts[2]);
+   let leap=y%4==0 && (y%100!=0 || y%400==0);
+   let maxday=m==2 ? (leap?29:28) : (m in [4,6,9,11]?30:31);
+   // Maximum local calendar day anywhere in the world; the client additionally
+   // enforces the user's actual local today without transmitting a timezone.
+   let latest=request.time+duration.value(14,'h');
+   return y>=1 && m>=1 && m<=12 && day>=1 && day<=maxday
+    && (y<latest.year() || (y==latest.year() && (m<latest.month() || (m==latest.month() && day<=latest.day()))));
+  }
+  function dateDisplay(v) {let p=v.split('-');return p[1]+'/'+p[2]+'/'+p[0];}
+  function valid(d) {
+   return d.keys().hasAll(['schemaVersion','onboardingVersion','status','currentStep','gender','draft','avatarId','avatarSelectionSource','displayName','birthdate','mobileNumber','createdAt','updatedAt','completedAt','revision'])
+    && d.keys().hasOnly(['schemaVersion','onboardingVersion','status','currentStep','gender','draft','avatarId','avatarSelectionSource','displayName','birthdate','mobileNumber','createdAt','updatedAt','completedAt','revision'])
+    && d.schemaVersion==1 && d.onboardingVersion==1 && d.revision is int && d.revision>=0
+    && d.status in ['incomplete','complete'] && d.currentStep in ['gender','profile']
+    && (d.gender==null || gender(d.gender)) && draft(d.draft)
+    && avatar(d.avatarId) && source(d.avatarSelectionSource)
+    && d.avatarId==d.draft.avatarId && d.avatarSelectionSource==d.draft.avatarSelectionSource
+    && d.createdAt is timestamp && d.updatedAt==request.time
+    && (d.currentStep=='gender' || gender(d.gender))
+    && (d.status=='incomplete'
+      ? d.displayName==null && d.birthdate==null && d.mobileNumber==null && d.completedAt==null
+      : gender(d.gender) && d.currentStep=='profile' && d.displayName is string
+        && d.displayName.size()>0 && d.displayName.size()<=200 && d.displayName.matches('.*[^\\s].*')
+        && d.birthdate is string && d.birthdate.matches('[0-9]{4}-[0-9]{2}-[0-9]{2}') && dateValid(d.birthdate)
+        && (d.mobileNumber==null || (d.mobileNumber is string && d.mobileNumber.matches('\\+639[0-9]{9}')))
+        && d.completedAt==request.time && d.draft.displayName==d.displayName
+        && d.draft.birthdateText==dateDisplay(d.birthdate)
+        && d.draft.mobileText==(d.mobileNumber==null?'':d.mobileNumber));
+  }
+  match /users/{uid} {
+   allow get: if request.auth!=null && request.auth.uid==uid;
+   allow create: if request.auth!=null && request.auth.uid==uid && valid(request.resource.data)
+    && request.resource.data.status=='incomplete' && request.resource.data.revision==0
+    && request.resource.data.currentStep=='gender' && request.resource.data.gender==null
+    && request.resource.data.createdAt==request.time;
+   allow update: if request.auth!=null && request.auth.uid==uid && resource.data.status=='incomplete'
+    && valid(request.resource.data) && request.resource.data.createdAt==resource.data.createdAt
+    && request.resource.data.revision==resource.data.revision+1;
+  }
+ }
+}

@@ -6,7 +6,7 @@ import {
   type Auth,
   type Persistence,
 } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
 import { getFirebaseConfiguration } from "./config";
 
 export function getFirebaseApp() {
@@ -37,6 +37,13 @@ export function initializePersistentAuth(
     connectAuthEmulator(auth, emulatorUrl, { disableWarnings: true });
   return auth;
 }
+const connectedFirestore=new WeakSet<object>();
 export function getFirestoreDb() {
-  return getFirestore(getFirebaseApp());
+  const {firestoreEmulator}=getFirebaseConfiguration();
+  const db=getFirestore(getFirebaseApp());
+  if(firestoreEmulator&&!connectedFirestore.has(db)){
+    connectFirestoreEmulator(db,firestoreEmulator.host,firestoreEmulator.port);
+    connectedFirestore.add(db);
+  }
+  return db;
 }

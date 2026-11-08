@@ -54,3 +54,9 @@ test("rejects emulator configuration in production", () => {
 test("permits production configuration without an emulator", () => {
   expect(readFirebaseConfig(env, false).emulatorUrl).toBeUndefined();
 });
+test('validates paired Firestore emulator settings and prohibits production use',()=>{
+ const dev={...env,EXPO_PUBLIC_FIRESTORE_EMULATOR_HOST:'10.0.2.2',EXPO_PUBLIC_FIRESTORE_EMULATOR_PORT:'8088'};
+ expect(readFirebaseConfig(dev,true)).toMatchObject({firestoreEmulator:{host:'10.0.2.2',port:8088}});
+ expect(()=>readFirebaseConfig({...env,EXPO_PUBLIC_FIRESTORE_EMULATOR_HOST:'localhost'},true)).toThrow(/Firestore/i);
+ expect(()=>readFirebaseConfig(dev,false)).toThrow(/production/i);
+});

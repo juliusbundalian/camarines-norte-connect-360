@@ -15,6 +15,13 @@
     },
     "logging": {
       "port": 4502
+    },
+    "firestore": {
+      "host": "127.0.0.1",
+      "port": 8088
     }
+  },
+  "firestore": {
+    "rules": "firestore.rules"
   }
 }

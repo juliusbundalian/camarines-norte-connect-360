@@ -109,3 +109,9 @@ Never commit Admin SDK keys, passwords, or service-account files. `EXPO_PUBLIC_*
 ### Profile onboarding rollout
 
 The fixed account-creation boundary is `2026-11-08T15:03:57.000Z` in `features/profile/profile-cohort.ts`. Accounts created before it with no required profile retain normal access; newer accounts must complete setup. Never move the boundary on subsequent releases or substitute last-sign-in time. This is a UX gate, not authorization for future features.
+
+### Resumable profile storage
+
+Profiles use owner-only `users/{uid}` Firestore documents and `firestore.rules`. Run `npm run test:profile-emulator` for actual Auth/Firestore lifecycle and rules checks (demo-cn360-connect, Auth9098, Firestore8088). Optional paired `EXPO_PUBLIC_FIRESTORE_EMULATOR_HOST`/`EXPO_PUBLIC_FIRESTORE_EMULATOR_PORT` are development-only; use10.0.2.2 on Android. Never mix ESM and CommonJS Firestore instances in Node emulator tests; the test uses the same CommonJS Firebase distribution as tsx-transpiled project modules.
+
+Before production release, enable/configure Cloud Firestore in the existing Firebase project and deploy the reviewed rules through the normal release process. Local implementation does not perform this deployment. Reads and acknowledged writes are required for setup; offline drafts are not claimed saved. Rules validate real dates and allow at most the latest local day worldwide (UTC+14); the app additionally checks the user's local today. This avoids rejecting valid birthdays around timezone midnight without collecting timezone data.

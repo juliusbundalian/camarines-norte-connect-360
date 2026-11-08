@@ -2,6 +2,8 @@ import type { FirebaseOptions } from "firebase/app";
 
 export type FirebaseEnvironment = Partial<
   Record<
+    | "EXPO_PUBLIC_FIRESTORE_EMULATOR_HOST"
+    | "EXPO_PUBLIC_FIRESTORE_EMULATOR_PORT"
     | "EXPO_PUBLIC_FIREBASE_API_KEY"
     | "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN"
     | "EXPO_PUBLIC_FIREBASE_PROJECT_ID"
@@ -15,6 +17,7 @@ export type FirebaseEnvironment = Partial<
 export interface FirebaseConfiguration {
   options: FirebaseOptions;
   emulatorUrl?: string;
+  firestoreEmulator?: {host:string;port:number};
 }
 export function readFirebaseConfig(
   env: FirebaseEnvironment,
@@ -63,12 +66,22 @@ export function readFirebaseConfig(
       );
     }
   }
-  return { options, emulatorUrl };
+  const host=env.EXPO_PUBLIC_FIRESTORE_EMULATOR_HOST?.trim();
+  const rawPort=env.EXPO_PUBLIC_FIRESTORE_EMULATOR_PORT?.trim();
+  let firestoreEmulator: FirebaseConfiguration["firestoreEmulator"];
+  if(host||rawPort){
+    if(!development)throw new Error("Firestore emulator configuration is forbidden in production builds.");
+    if(!host||!rawPort||!/^[a-zA-Z0-9.-]+$/.test(host)||!/^\d+$/.test(rawPort)||Number(rawPort)<1||Number(rawPort)>65535)throw new Error("Firestore emulator requires a valid host and port.");
+    firestoreEmulator={host,port:Number(rawPort)};
+  }
+  return { options, emulatorUrl, firestoreEmulator };
 }
 // Expo replaces only static dot-property references to EXPO_PUBLIC variables.
 export function getFirebaseConfiguration(): FirebaseConfiguration {
   return readFirebaseConfig(
     {
+      EXPO_PUBLIC_FIRESTORE_EMULATOR_HOST:process.env.EXPO_PUBLIC_FIRESTORE_EMULATOR_HOST,
+      EXPO_PUBLIC_FIRESTORE_EMULATOR_PORT:process.env.EXPO_PUBLIC_FIRESTORE_EMULATOR_PORT,
       EXPO_PUBLIC_FIREBASE_API_KEY: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
       EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN:
         process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
