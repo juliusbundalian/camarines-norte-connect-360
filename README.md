@@ -19,6 +19,7 @@ npm run web                 # Optional browser smoke-test target
 npm run typecheck
 npm test -- --runInBand
 npm run test:emulator        # Real SDK + demo Auth Emulator
+npm run test:policy          # Real SDK policy-cache regression; all HTTP intercepted
 npx expo install --check
 npx expo-doctor
 ```

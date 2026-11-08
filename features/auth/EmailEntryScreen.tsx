@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { BackHandler, StyleSheet, Text, View } from "react-native";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -39,6 +39,7 @@ export default function EmailEntryScreen({
     control,
     handleSubmit,
     getValues,
+    trigger,
     watch,
     formState: { errors, isValid, touchedFields, submitCount },
   } = useForm<RegistrationFields>({
@@ -47,6 +48,10 @@ export default function EmailEntryScreen({
     defaultValues: { email: "", password: "", confirmPassword: "" },
   });
   const values = watch();
+  useEffect(() => {
+    if (signup && touchedFields.confirmPassword)
+      void trigger("confirmPassword");
+  }, [signup, values.password, touchedFields.confirmPassword, trigger]);
   const schema = signup ? registrationSchema : loginFieldsSchema;
   const policyAllows = (password: string) =>
     !signup ||

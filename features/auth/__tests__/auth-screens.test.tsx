@@ -173,19 +173,17 @@ test("policy rejection and lookup failure are retryable and do not create an acc
   await show(<RegisterScreen />);
   await credentials(true);
   const previous = await checkPasswordPolicy("Example123!");
-  jest
-    .mocked(checkPasswordPolicy)
-    .mockResolvedValueOnce({
-      ...previous,
-      isValid: false,
-      passwordPolicy: {
-        ...previous.passwordPolicy,
-        customStrengthOptions: {
-          ...previous.passwordPolicy.customStrengthOptions,
-          minPasswordLength: 12,
-        },
+  jest.mocked(checkPasswordPolicy).mockResolvedValueOnce({
+    ...previous,
+    isValid: false,
+    passwordPolicy: {
+      ...previous.passwordPolicy,
+      customStrengthOptions: {
+        ...previous.passwordPolicy.customStrengthOptions,
+        minPasswordLength: 12,
       },
-    });
+    },
+  });
   await fireEvent.press(screen.getByRole("button", { name: "Register" }));
   expect(await screen.findByRole("alert")).toHaveTextContent(
     /password.*requirements/i,
@@ -422,4 +420,24 @@ test("placeholder displays authenticated email and logout failures remain retrya
   expect(await screen.findByRole("alert")).toHaveTextContent(/connection/i);
   await fireEvent.press(screen.getByRole("button", { name: "Logout" }));
   expect(logout).toHaveBeenCalledTimes(2);
+});
+
+test("touched confirmation feedback follows a password change", async () => {
+  await show(<RegisterScreen />);
+  await credentials(true);
+  await fireEvent(screen.getByLabelText("Confirm Password"), "blur");
+  await fill("Password", "OtherExample123!");
+  expect(screen.getByRole("button", { name: "Register" })).toBeDisabled();
+  expect(screen.getByText("Passwords must match.")).toBeTruthy();
+});
+
+test("correcting password to match clears touched confirmation feedback", async () => {
+  await show(<RegisterScreen />);
+  await credentials(true);
+  await fill("Confirm Password", "OtherExample123!");
+  await fireEvent(screen.getByLabelText("Confirm Password"), "blur");
+  expect(screen.getByText("Passwords must match.")).toBeTruthy();
+  await fill("Password", "OtherExample123!");
+  expect(screen.getByRole("button", { name: "Register" })).toBeEnabled();
+  expect(screen.queryByText("Passwords must match.")).toBeNull();
 });
