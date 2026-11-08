@@ -25,7 +25,7 @@ Inspected directly in Figma desktop, file `Y9XPx697YfMPFKkQzblkqc`, CamNorteConn
 - Inspected text styles: profile title22/28 emphasized, row title16/24 medium with0.15 tracking, profile action14/20 emphasized, tab labels14/20. Style-variable inspection confirms **Poppins**; Title Medium uses Medium weight and Title Large emphasized uses Medium. Reuse bundled Poppins Regular/Medium; do not reuse Public Sans auth typography for Menu.
 - Native Android status/navigation bars replace the drawn device chrome. Figma prototype arrows, screenshot dimming/selection outlines, sample personal details and mock version1.0.1(12345) are not application content.
 
-At implementation, inspect container/icon bounds in these exact frames for the final spacing, radii and local asset exports; record measurements rather than treating screenshot estimates as exact design tokens. Current screenshot proportions suggest16dp section spacing/padding,64dp avatar and40dp icon tiles; these are initial estimates, not measured acceptance claims.
+Execution inspection measured bar y804/h64, cards x16/w380/radius16/padding4, inner rows x4/y4/w372/h56/padding4/gap10/radius12, supporting text14/20 and section headings12/16. Icon slots are48dp with40dp tiles; generic avatar is64dp. Native labels use a slightly wider centered visual box to preserve14/20 at the reference viewport; they wrap and grow with accessibility text rather than shrinking it.
 
 ## Approach and alternatives
 

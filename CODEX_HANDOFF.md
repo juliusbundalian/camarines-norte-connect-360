@@ -2,9 +2,17 @@
 
 Recorded 2026-11-08, Asia/Manila. This file describes the current implementation, not an instruction to expand scope.
 
+## Current Menu/navigation implementation — 2026-11-08
+
+The approved Menu/navigation plan is being executed on `codex/main-navigation-menu`; branding6ee4b75 is already merged/pushed to main. Main Menu implementation and Android QA/review are complete. Final174 tests/18 suites, TypeScript, policy2/2 and real SDK emulator3/3 passed. Native production build45s and isolated QA23s passed on Android15/API35 Diorama_API_35. An independent review found one Important error-precedence issue, reproduced RED then fixed; see verification docs for three deferred Minors (missing-marker logout onboarding, cold Login Back default Home, and narrow guest Login target). Do not restart completed implementation tasks. Home is now the default placeholder after onboarding and for returning guests/users. The five-tab shell is guest-accessible; auth belongs at future protected actions, not at app entry. Guest and signed-in Menu match Authentication Flow frames4005:13901 and4005:14053, using Poppins and a generic identity/avatar until profile data is separately implemented. Guest Login/Sign up are independent; Logout appears only when signed in. Wishlist/Account/Notifications/Privacy are public, honest placeholders; Terms stays pending and is now a root route available in both states. /welcome redirects to /home.
+
+Auth returnTo is strictly allowlisted. Existing auth/reset links carry it, cold Login Back returns to the safe source, and a centralized auth layout redirects observed signed-in users. Freeze the validated redirect target during route replacement: Expo58 can replace parameters before its pathname/focus updates. Logout progress/error uses a blocking, accessibility-isolated overlay above a retained navigator; unmounting it resets Menu to Home. Preserve the corresponding router regressions.
+
+No bookings, data modules, private profile data, saved-item storage or notification permission/settings changes were added. Production Firebase policy helpers have no QA bypass. Native demo QA may use the synthetic policy fixture only in its isolated temporary copy because Auth Emulator has no getPasswordPolicy endpoint. User approved inline execution and commits; do not merge/push this feature until separately requested.
+
 ## Current branding and geographic scope — 2026-11-08
 
-The official display name is CamNorte 360. Geographic coverage is exclusively Daet, Camarines Norte, Philippines. This overrides older province-wide wording and visual reference copy. Onboarding now describes Daet tourism, property opportunities and community updates. Do not include other municipalities without explicit request. Existing package identifiers, Firebase configuration, Expo slug, URL scheme and storage keys are unchanged. Existing approved phase and Figma requirements still apply; no new modules are authorized. The foundation was committed, fast-forward merged to main and pushed at b9987b8 before this branding update; branding work is isolated on `codex/camnorte-360-branding` in the preserved worktree. Use git status for current changes.
+The official display name is CamNorte 360. Geographic coverage is exclusively Daet, Camarines Norte, Philippines. This overrides older province-wide wording and visual reference copy. Onboarding now describes Daet tourism, property opportunities and community updates. Do not include other municipalities without explicit request. Existing package identifiers, Firebase configuration, Expo slug, URL scheme and storage keys are unchanged. Existing approved phase and Figma requirements still apply; no new modules are authorized. The foundation was committed, fast-forward merged to main and pushed at b9987b8 before this branding update; branding6ee4b75 was subsequently merged/pushed to main. Current navigation work uses `codex/main-navigation-menu` in the preserved worktree; use git status for current changes.
 
 ## Latest continuation update — 2026-11-08
 
@@ -115,7 +123,7 @@ Figma file `Y9XPx697YfMPFKkQzblkqc`, CamNorteConnect page4004:12526. Login4005:1
 
 ## Exact next task
 
-The requested validation task is COMPLETE. The next action was this handoff, followed by waiting for the user's next approved task/Figma designs. There is no unfinished feature to silently resume. Keep the branch/worktree in place; user has not approved merge or push. Do not implement Home or other modules, reinstate verification/SMS, or create a new implementation plan without a new task. If the user requests continuation/status, report completion and the limits above, rather than asking them to re-explain the project.
+The approved Menu/navigation plan is complete and committed on `codex/main-navigation-menu`, with no feature merge/push. Read its execution-closure section and the newest verification record for results and the three deferred Minors. Branding is already on main at6ee4b75. The next action is user review, a requested follow-up on the documented Minors, or a new explicitly approved feature/Figma scope. Do not silently implement real Home/content, profile, booking, wishlist storage or notifications. Preserve this worktree and local config.
 
 ## Exact next-session commands
 
