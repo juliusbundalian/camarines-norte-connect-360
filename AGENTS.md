@@ -1,5 +1,12 @@
 # Project development guidance
 
+## Branding and geographic coverage
+
+- Official application name: **CamNorte 360**. Use this exact name in display configuration, documentation, and user-facing text.
+- Exclusive geographic coverage: **Daet, Camarines Norte, Philippines**. Tourism destinations, real estate, community information, events, sample data, and location-specific features must focus only on Daet. Other municipalities require an explicit user request.
+- Preserve existing package/bundle identifiers, Firebase configuration/project IDs, Expo slug, deep-link scheme, and storage keys unless a technical change is explicitly necessary.
+- Existing architecture, Figma workflow, approved development phase, and other requirements remain in effect. Branding/scope updates do not authorize new screens or modules.
+
 ## Platform priority
 
 - Android is the primary target device/platform for this application.

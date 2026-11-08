@@ -39,11 +39,11 @@ const swipe = (x: number) =>
 test("Figma copy, Next, reverse swipe and Finish preserve completion", async () => {
   await show();
   expect(screen.getByRole("header")).toHaveTextContent(
-    "Discover the\nCamarines Norte",
+    "Discover\nDaet, Camarines Norte",
   );
   expect(
     screen.getByText(
-      "Explore stunning beaches, heritage sites, & hidden gems across the province",
+      "Explore beaches, heritage sites, & hidden gems in Daet, Camarines Norte",
     ),
   ).toBeTruthy();
   await fireEvent.press(screen.getByRole("button", { name: "Next" }));
@@ -149,7 +149,7 @@ test("inactive pages are hidden from assistive technology", async () => {
   expect(screen.queryByText("Explore Property Opportunities")).toBeNull();
   await fireEvent.press(screen.getByRole("button", { name: "Next" }));
   expect(screen.getByText("Explore Property Opportunities")).toBeTruthy();
-  expect(screen.queryByText("Discover the\nCamarines Norte")).toBeNull();
+  expect(screen.queryByText("Discover\nDaet, Camarines Norte")).toBeNull();
 });
 test("font loading prevents fallback typography and font failures provide Retry", async () => {
   jest.mocked(useFonts).mockReturnValue([false, null]);
@@ -165,7 +165,7 @@ test("font loading prevents fallback typography and font failures provide Retry"
   expect(screen.getByRole("alert")).toHaveTextContent(/font/i);
   jest.mocked(useFonts).mockReturnValue([true, null]);
   await fireEvent.press(screen.getByRole("button", { name: "Retry" }));
-  expect(screen.getByRole("header")).toHaveTextContent(/Discover the/);
+  expect(screen.getByRole("header")).toHaveTextContent(/Discover/);
 });
 test("at 320dp and enlarged text, copy and Finish remain in a scrollable page", async () => {
   jest

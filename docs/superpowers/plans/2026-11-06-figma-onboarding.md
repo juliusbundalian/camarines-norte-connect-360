@@ -10,6 +10,8 @@
 
 **Spec:** User-approved visual target: [CamNorteConnect onboarding](https://www.figma.com/design/Y9XPx697YfMPFKkQzblkqc/Rewards-Appv--Copy-?node-id=4004-13065), frames `4004:13065`, `4004:13083`, `4004:13101`. Existing functional requirements: `docs/superpowers/specs/2026-11-04-auth-foundation-design.md`. High-fidelity design context and screenshots for all three frames were inspected on 2026-11-06.
 
+Branding/scope amendment2026-11-08: the copy below now reflects CamNorte 360 and Daet-only coverage, superseding the original province-wide Figma wording. Layout, assets, behavior and existing technical identifiers remain unchanged.
+
 ## Global Constraints
 
 - Implement the three onboarding pages only; Finish/Skip retain completion persistence and continue to the existing Login flow. Do not add location permissions, Home, registration/profile redesigns, OTP, or other modules shown elsewhere in the Figma file.
@@ -18,9 +20,9 @@
 - Poppins Medium: headings 28/36, tracking 0; next/finish 16/24, tracking 0.5. Poppins Regular: descriptions/Skip 16/24, tracking 0.5.
 - White panel; heading rgba(34,48,62,0.9), description rgba(34,48,62,0.7), Skip rgba(34,48,62,0.4), action #FFAB00, badge #39B54A. Scope these tokens to onboarding; retain other screen styling.
 - At reference size: photo frame x=-33,y=0,w=445,h=594; wave x=0,y=556.303,w=412,h=41.697; white body y=598,h=270; horizontal content padding32; title y=614; body gap8; action text row y=774; badge x=32,y=542,size64,border8,radius12.
-- Page 1: `Discover the\nCamarines Norte`; `Explore stunning beaches, heritage sites, & hidden gems across the province`.
-- Page 2: `Explore Property Opportunities`; `Find homes, lots, & investment properties around Camarines Norte`.
-- Page 3: `Stay Connected \nwith the Community`; `Get local updates, join events, & share your voice through surveys & feedbacks`.
+- Page 1: `Discover\nDaet, Camarines Norte`; `Explore beaches, heritage sites, & hidden gems in Daet, Camarines Norte`.
+- Page 2: `Explore Property Opportunities`; `Find homes, lots, & investment properties in Daet, Camarines Norte`.
+- Page 3: `Stay Connected \nwith the Community`; `Get updates from Daet, join local events, & share your voice through surveys & feedbacks`.
 - Controls follow Figma: Skip/Next on pages1–2, Finish on page3 with Skip hidden. Preserve backward navigation through reverse swipe and Android Back, avoiding an extra visible Back button absent from Figma. Finish fulfills the original temporary Get Started action.
 - Keep at least48dp touch areas around the24px text row without moving its visual baseline. Keep pending/error/retry feedback functional. Do not mark Skip disabled merely because its design color uses the disabled-text token.
 - Fit other sizes with responsive geometry and actual safe-area insets; use scrolling when landscape or enlarged text cannot fit. Never shrink accessible text to force a screenshot match.

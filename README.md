@@ -1,6 +1,6 @@
-# CAMARINES NORTE 360 CONNECT
+# CamNorte 360
 
-An Expo mobile foundation for Camarines Norte's future tourism, real estate, and community application. This phase contains Figma onboarding, Figma-based email/password login/signup, password recovery, a pending-content native Terms page, and an authenticated placeholder. Additional modules remain deferred.
+An Expo mobile foundation for CamNorte 360, a future tourism, real estate, and community application exclusively for Daet, Camarines Norte. This phase contains Figma onboarding, Figma-based email/password login/signup, password recovery, a pending-content native Terms page, and an authenticated placeholder. Additional modules remain deferred. Geographic coverage is exclusively Daet, Camarines Norte, Philippines; other municipalities are excluded unless explicitly requested. The Expo slug, package identifiers, Firebase project IDs, deep-link scheme and storage keys retain their existing technical names.
 
 ## Platform priority
 

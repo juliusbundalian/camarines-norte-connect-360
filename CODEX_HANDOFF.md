@@ -1,6 +1,10 @@
-# CAMARINES NORTE 360 CONNECT — Codex handoff
+# CamNorte 360 — Codex handoff
 
 Recorded 2026-11-08, Asia/Manila. This file describes the current implementation, not an instruction to expand scope.
+
+## Current branding and geographic scope — 2026-11-08
+
+The official display name is CamNorte 360. Geographic coverage is exclusively Daet, Camarines Norte, Philippines. This overrides older province-wide wording and visual reference copy. Onboarding now describes Daet tourism, property opportunities and community updates. Do not include other municipalities without explicit request. Existing package identifiers, Firebase configuration, Expo slug, URL scheme and storage keys are unchanged. Existing approved phase and Figma requirements still apply; no new modules are authorized. The foundation was committed, fast-forward merged to main and pushed at b9987b8 before this branding update; branding work is isolated on `codex/camnorte-360-branding` in the preserved worktree. Use git status for current changes.
 
 ## Latest continuation update — 2026-11-08
 
@@ -22,7 +26,7 @@ Use installed Superpowers skills and their actual instructions. User selected na
 
 ## Original goal and strict scope
 
-Build a clean Expo/React Native TypeScript foundation for a local real-estate, tourism and community application for Camarines Norte, Philippines. Initial scope: splash, three-page onboarding, email/password login, registration, password recovery, persistent sessions, centralized authentication and protected navigation, and a minimal authenticated placeholder. Official screens come from Figma. STOP before Home, tabs, tourism, real estate, community, profile or other modules without supplied designs and explicit approval.
+Build a clean Expo/React Native TypeScript foundation for a local real-estate, tourism and community application for Daet, Camarines Norte, Philippines only. Initial scope: splash, three-page onboarding, email/password login, registration, password recovery, persistent sessions, centralized authentication and protected navigation, and a minimal authenticated placeholder. Official screens come from Figma. STOP before Home, tabs, tourism, real estate, community, profile or other modules without supplied designs and explicit approval.
 
 ## Completed work and pivots
 

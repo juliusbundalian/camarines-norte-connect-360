@@ -1,6 +1,6 @@
 import type { ExpoConfig } from "expo/config";
 const config: ExpoConfig = {
-  name: "Camarines Norte 360 Connect",
+  name: "CamNorte 360",
   slug: "camarines-norte-connect-360",
   version: "1.0.0",
   scheme: "cn360connect",

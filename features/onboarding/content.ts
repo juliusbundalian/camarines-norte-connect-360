@@ -1,22 +1,22 @@
 export const onboardingPages = [
   {
-    title: "Discover the\nCamarines Norte",
+    title: "Discover\nDaet, Camarines Norte",
     description:
-      "Explore stunning beaches, heritage sites, & hidden gems across the province",
+      "Explore beaches, heritage sites, & hidden gems in Daet, Camarines Norte",
     icon: "palm",
     steps: require("../../assets/onboarding/steps-1.svg"),
   },
   {
     title: "Explore Property Opportunities",
     description:
-      "Find homes, lots, & investment properties around Camarines Norte",
+      "Find homes, lots, & investment properties in Daet, Camarines Norte",
     icon: "home",
     steps: require("../../assets/onboarding/steps-2.svg"),
   },
   {
     title: "Stay Connected \nwith the Community",
     description:
-      "Get local updates, join events, & share your voice through surveys & feedbacks",
+      "Get updates from Daet, join local events, & share your voice through surveys & feedbacks",
     icon: "community",
     steps: require("../../assets/onboarding/steps-3.svg"),
   },

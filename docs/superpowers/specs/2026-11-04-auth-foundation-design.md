@@ -1,11 +1,13 @@
-# CAMARINES NORTE 360 CONNECT — Initial foundation
+# CamNorte 360 — Initial foundation
 
 Date: 2026-11-04 (Asia/Manila)
 Status: Approved by the user on 2026-11-04; implementation plan approved; user selected Native execution.
 
+Branding/scope amendment (2026-11-08): official name **CamNorte 360**; exclusive coverage **Daet, Camarines Norte, Philippines**. This amendment applies to all tourism, property and community descriptions while preserving technical identifiers and the approved implementation boundary.
+
 ## Intent and boundaries
 
-Build a maintainable Expo mobile foundation for Camarines Norte's future real estate, tourism, and community application. This phase delivers only native splash management, three onboarding pages, email/password login and registration, password recovery, session restoration, protected navigation, and an authenticated placeholder with logout.
+Build a maintainable Expo mobile foundation for CamNorte 360, a future real estate, tourism, and community application exclusively for Daet, Camarines Norte. This phase delivers only native splash management, three onboarding pages, email/password login and registration, password recovery, session restoration, protected navigation, and an authenticated placeholder with logout.
 
 No Home Screen, tabs, tourism, real estate, community modules, profiles, email-verification gate, social login, custom password-reset links, backend, or feature-level plans. Official Figma designs will replace temporary presentation later without rewriting authentication logic. Do not invent those future designs.
 
@@ -63,8 +65,8 @@ Use Paper inputs/buttons and reusable safe-area, keyboard-aware scrolling layout
 
 Use a horizontally paged React Native list with three pages:
 
-- **Discover Camarines Norte:** local destinations, attractions, and cultural experiences.
-- **Explore Real Estate Opportunities:** convenient exploration of property opportunities throughout Camarines Norte.
+- **Discover Daet, Camarines Norte:** destinations, attractions, and cultural experiences exclusively in Daet.
+- **Explore Real Estate Opportunities:** convenient exploration of property opportunities exclusively in Daet, Camarines Norte.
 - **Connect with the Community:** local news, community information, events, and surveys.
 
 Provide swipe navigation, Next, Back after page one, Skip, accessible page indicators, and Get Started on page three. Keep the visible page and controls synchronized after swipes and layout changes. Skip and Get Started share the same persistent completion operation and prevent duplicate writes. Buttons remain a usable alternative to gestures.
