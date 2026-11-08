@@ -16,7 +16,6 @@ import type { User } from "firebase/auth";
 import { checkPasswordPolicy } from "../../../services/firebase/password-policy";
 jest.mock("../../../services/firebase/password-policy", () => ({ checkPasswordPolicy: jest.fn() }), { virtual: true });
 jest.mock("../AuthProvider", () => ({ useAuth: jest.fn() }));
-jest.mock("../PhoneVerificationProvider", () => ({ usePhoneVerification: () => ({ sending: false, verifying: false, error: null, start: jest.fn() }) }));
 jest.mock("expo-router", () => ({
   router: { push: jest.fn(), replace: jest.fn(), back: jest.fn(), canGoBack: () => false },
   useFocusEffect: (cb: () => void) => require("react").useEffect(cb, [cb]),

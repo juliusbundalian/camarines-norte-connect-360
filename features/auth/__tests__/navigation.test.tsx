@@ -15,6 +15,7 @@ import * as RootLayout from "../../../app/_layout";
 import Index from "../../../app/index";
 import * as AuthLayout from "../../../app/(auth)/_layout";
 import * as AppLayout from "../../../app/(app)/_layout";
+import RetiredVerification from "../../../app/(auth)/verify-phone";
 import { useAuth } from "../AuthProvider";
 import { useOnboarding } from "../../onboarding/OnboardingProvider";
 import { Button } from "react-native-paper";
@@ -42,6 +43,7 @@ const routes = {
   "(auth)/login": () => <Text>Login destination</Text>,
   "(auth)/register": () => <Text>Registration destination</Text>,
   "(auth)/forgot-password": () => <Text>Reset destination</Text>,
+  "(auth)/verify-phone": RetiredVerification,
   "(app)/welcome": () => {
     const { logout } = useAuth();
     return (
@@ -68,6 +70,17 @@ beforeEach(() => {
   });
 });
 afterEach(() => jest.useRealTimers());
+test("retired SMS deep link returns to email Login without initializing verification", async () => {
+  await renderRouter(routes, { initialUrl: "/verify-phone" });
+  await act(() => next(null));
+  await waitFor(() => expect(screen).toHavePathname("/login"));
+  expect(screen.getByText("Login destination")).toBeTruthy();
+});
+test("an email user without verification has immediate protected access", async () => {
+  await renderRouter(routes, { initialUrl: "/register" });
+  await act(() => next({ ...user, emailVerified: false } as User));
+  await waitFor(() => expect(screen).toHavePathname("/welcome"));
+});
 test("does not expose a route or hide splash before auth restoration", async () => {
   await renderRouter(routes);
   expect(screen.queryByText(/destination/)).toBeNull();
