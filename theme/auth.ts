@@ -14,8 +14,16 @@ export const authTokens = {
   },
   fonts: { regular: "PublicSans-Regular", medium: "PublicSans-Medium" },
   space: { xxs: 2, xs: 4, sm: 8, md: 16, lg: 24 },
-  size: { appBar: 64, action: 48, input: 56, icon: 24, ruleIcon: 16, prefix: 62 },
+  size: {
+    appBar: 64,
+    action: 48,
+    input: 56,
+    icon: 24,
+    ruleIcon: 16,
+    prefix: 62,
+  },
   radius: { button: 12, field: 16 },
+  opacity: { disabled: 0.4 },
   type: {
     heading: { fontSize: 24, lineHeight: 32 },
     body: { fontSize: 16, lineHeight: 24, letterSpacing: 0.5 },

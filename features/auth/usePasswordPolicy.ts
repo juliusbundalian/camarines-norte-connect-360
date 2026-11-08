@@ -4,7 +4,11 @@ import { checkPasswordPolicy } from "../../services/firebase/password-policy";
 import { getAuthErrorMessage } from "./errors";
 
 export function usePasswordPolicy(enabled: boolean) {
-  const [state, setState] = useState<{ policy: PasswordPolicy | null; loading: boolean; error: string | null }>({ policy: null, loading: enabled, error: null });
+  const [state, setState] = useState<{
+    policy: PasswordPolicy | null;
+    loading: boolean;
+    error: string | null;
+  }>({ policy: null, loading: enabled, error: null });
   const active = useRef(false);
   const generation = useRef(0);
   const pending = useRef(false);
@@ -14,16 +18,24 @@ export function usePasswordPolicy(enabled: boolean) {
     const version = ++generation.current;
     setState({ policy: null, loading: true, error: null });
     void checkPasswordPolicy("").then(
-      result => {
+      (result) => {
         if (active.current && version === generation.current) {
           pending.current = false;
-          setState({ policy: result.passwordPolicy, loading: false, error: null });
+          setState({
+            policy: result.passwordPolicy,
+            loading: false,
+            error: null,
+          });
         }
       },
-      error => {
+      (error) => {
         if (active.current && version === generation.current) {
           pending.current = false;
-          setState({ policy: null, loading: false, error: getAuthErrorMessage(error) });
+          setState({
+            policy: null,
+            loading: false,
+            error: getAuthErrorMessage(error),
+          });
         }
       },
     );

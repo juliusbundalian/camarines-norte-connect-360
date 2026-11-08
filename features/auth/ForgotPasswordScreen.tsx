@@ -21,13 +21,20 @@ export default function ForgotPasswordScreen() {
   const {
     control,
     handleSubmit,
-    formState: { errors },
+    getValues,
+    watch,
+    formState: { errors, isValid, touchedFields, submitCount },
   } = useForm<ResetPasswordFields>({
+    mode: "all",
     resolver: zodResolver(resetPasswordSchema),
     defaultValues: { email: "" },
   });
-  const submit = handleSubmit(async ({ email }) => {
-    if (await action.run(() => requestPasswordReset(email))) setSent(true);
+  const canSubmit = isValid && resetPasswordSchema.safeParse(watch()).success;
+  const submit = handleSubmit(async () => {
+    const current = resetPasswordSchema.safeParse(getValues());
+    if (!current.success) return;
+    if (await action.run(() => requestPasswordReset(current.data.email)))
+      setSent(true);
   });
   const back = () => {
     if (!action.pending) router.replace("/login");
@@ -63,7 +70,11 @@ export default function ForgotPasswordScreen() {
                 onChangeText={field.onChange}
                 onBlur={field.onBlur}
                 editable={!action.pending}
-                error={errors.email?.message}
+                error={
+                  touchedFields.email || submitCount > 0
+                    ? errors.email?.message
+                    : undefined
+                }
                 returnKeyType="done"
                 onSubmitEditing={() => void submit()}
               />
@@ -73,6 +84,7 @@ export default function ForgotPasswordScreen() {
             label="Send Reset Link"
             onPress={() => void submit()}
             busy={action.pending}
+            disabled={!canSubmit}
           />
         </>
       )}

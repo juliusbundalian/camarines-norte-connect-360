@@ -122,12 +122,13 @@ export function AuthAction({
   return (
     <Button
       mode="contained"
+      testID="auth-primary-action"
       buttonColor={t.colors.action}
       textColor={t.colors.text}
       loading={busy}
       disabled={busy || disabled}
       onPress={onPress}
-      style={s.action}
+      style={[s.action, (busy || disabled) && s.actionDisabled]}
       contentStyle={s.actionContent}
       labelStyle={s.actionLabel}
     >
@@ -270,8 +271,17 @@ const s = StyleSheet.create({
     fontFamily: t.fonts.regular,
     color: t.colors.error,
   },
-  action: { borderRadius: t.radius.button },
+  action: {
+    borderRadius: t.radius.button,
+    backgroundColor: t.colors.action,
+    opacity: 1,
+  },
+  actionDisabled: { opacity: t.opacity.disabled },
   actionContent: { minHeight: t.size.action },
-  actionLabel: { ...t.type.body, fontFamily: t.fonts.medium },
+  actionLabel: {
+    ...t.type.body,
+    fontFamily: t.fonts.medium,
+    color: t.colors.text,
+  },
   linkLabel: { ...t.type.label, fontFamily: t.fonts.medium },
 });

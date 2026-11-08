@@ -14,6 +14,7 @@ import ForgotPasswordScreen from "../ForgotPasswordScreen";
 import WelcomeScreen from "../WelcomeScreen";
 import type { User } from "firebase/auth";
 import { checkPasswordPolicy } from "../../../services/firebase/password-policy";
+import { authTokens } from "../../../theme/auth";
 jest.mock(
   "../../../services/firebase/password-policy",
   () => ({ checkPasswordPolicy: jest.fn() }),
@@ -96,7 +97,10 @@ test("login uses email and password without SMS and supports visibility and navi
 });
 test("login validates required fields and email without rejecting existing short passwords", async () => {
   await show(<LoginScreen />);
-  await fireEvent.press(screen.getByRole("button", { name: "Login" }));
+  expect(screen.getByRole("button", { name: "Login" })).toBeDisabled();
+  expect(screen.queryByText("Enter your email address.")).toBeNull();
+  await fireEvent(screen.getByLabelText("Email"), "blur");
+  await fireEvent(screen.getByLabelText("Password"), "blur");
   expect(await screen.findByText("Enter your email address.")).toBeTruthy();
   expect(screen.getByText("Enter your password.")).toBeTruthy();
   await fill("Email", "bad");
@@ -157,24 +161,39 @@ test("registration rejects short or mismatched passwords before creating an acco
   await credentials(true);
   await fill("Password", "short");
   await fill("Confirm Password", "short");
-  await fireEvent.press(screen.getByRole("button", { name: "Register" }));
+  expect(screen.getByRole("button", { name: "Register" })).toBeDisabled();
+  await fireEvent(screen.getByLabelText("Password"), "blur");
   expect(await screen.findByText("Use at least 8 characters.")).toBeTruthy();
   await fill("Password", "Example123!");
-  await fireEvent.press(screen.getByRole("button", { name: "Register" }));
+  await fireEvent(screen.getByLabelText("Confirm Password"), "blur");
   expect(await screen.findByText("Passwords must match.")).toBeTruthy();
   expect(register).not.toHaveBeenCalled();
 });
 test("policy rejection and lookup failure are retryable and do not create an account", async () => {
   await show(<RegisterScreen />);
   await credentials(true);
+  const previous = await checkPasswordPolicy("Example123!");
   jest
     .mocked(checkPasswordPolicy)
-    .mockResolvedValueOnce({ isValid: false } as never);
+    .mockResolvedValueOnce({
+      ...previous,
+      isValid: false,
+      passwordPolicy: {
+        ...previous.passwordPolicy,
+        customStrengthOptions: {
+          ...previous.passwordPolicy.customStrengthOptions,
+          minPasswordLength: 12,
+        },
+      },
+    });
   await fireEvent.press(screen.getByRole("button", { name: "Register" }));
   expect(await screen.findByRole("alert")).toHaveTextContent(
     /password.*requirements/i,
   );
   expect(register).not.toHaveBeenCalled();
+  expect(screen.getByRole("button", { name: "Register" })).toBeDisabled();
+  await fill("Password", "Example123!xx");
+  await fill("Confirm Password", "Example123!xx");
   jest
     .mocked(checkPasswordPolicy)
     .mockRejectedValueOnce({ code: "auth/network-request-failed" });
@@ -195,12 +214,148 @@ test("registration exposes recoverable existing-account errors", async () => {
   expect(screen.getByRole("button", { name: "Register" })).toBeEnabled();
 });
 test("registration reports unavailable requirements and offers an independent retry", async () => {
-  jest.mocked(checkPasswordPolicy).mockRejectedValueOnce({ code: "auth/network-request-failed" });
+  jest
+    .mocked(checkPasswordPolicy)
+    .mockRejectedValueOnce({ code: "auth/network-request-failed" });
   await show(<RegisterScreen />);
   expect(await screen.findByRole("alert")).toHaveTextContent(/connection/);
-  await fireEvent.press(screen.getByRole("button", { name: "Retry password requirements" }));
-  expect(await screen.findByLabelText("An uppercase letter: not met")).toBeTruthy();
+  await credentials(true);
+  expect(screen.getByRole("button", { name: "Register" })).toBeDisabled();
+  await fireEvent(screen.getByLabelText("Confirm Password"), "submitEditing");
+  expect(register).not.toHaveBeenCalled();
+  await fireEvent.press(
+    screen.getByRole("button", { name: "Retry password requirements" }),
+  );
+  expect(await screen.findByLabelText("An uppercase letter: met")).toBeTruthy();
   expect(screen.queryByRole("alert")).toBeNull();
+  expect(screen.getByRole("button", { name: "Register" })).toBeEnabled();
+});
+test.each([
+  [LoginScreen, "Login"],
+  [RegisterScreen, "Register"],
+  [ForgotPasswordScreen, "Send Reset Link"],
+] as const)(
+  "empty %s action %s is disabled at 40 percent opacity with original colors",
+  async (Screen, label) => {
+    await show(<Screen />);
+    expect(screen.getByRole("button", { name: label })).toBeDisabled();
+    expect(
+      screen.getByTestId("auth-primary-action-container-outer-layer"),
+    ).toHaveStyle({ opacity: 0.4 });
+    expect(screen.getByTestId("auth-primary-action-container")).toHaveStyle({
+      backgroundColor: authTokens.colors.action,
+    });
+    expect(screen.getByTestId("auth-primary-action-text")).toHaveStyle({
+      color: authTokens.colors.text,
+    });
+  },
+);
+test("login disables immediately on invalid edits and keyboard cannot bypass validation", async () => {
+  await show(<LoginScreen />);
+  await credentials();
+  expect(screen.getByRole("button", { name: "Login" })).toBeEnabled();
+  expect(
+    screen.getByTestId("auth-primary-action-container-outer-layer"),
+  ).toHaveStyle({ opacity: 1 });
+  expect(checkPasswordPolicy).not.toHaveBeenCalled();
+  await fill("Email", "   ");
+  expect(screen.getByRole("button", { name: "Login" })).toBeDisabled();
+  await fireEvent(screen.getByLabelText("Password"), "submitEditing");
+  expect(login).not.toHaveBeenCalled();
+  await fill("Email", "person@example.com");
+  await fill("Password", "");
+  expect(screen.getByRole("button", { name: "Login" })).toBeDisabled();
+  await fill("Password", "short");
+  expect(screen.getByRole("button", { name: "Login" })).toBeEnabled();
+});
+test.each([
+  "abcdefgh1!",
+  "ABCDEFGH1!",
+  "Abcdefghi!",
+  "Abcdefgh12",
+  "Abcdefgh1?",
+])("registration gates an unmet policy for %s", async (password) => {
+  await show(<RegisterScreen />);
+  await fill("Email", "person@example.com");
+  await fill("Password", password);
+  await fill("Confirm Password", password);
+  expect(screen.getByRole("button", { name: "Register" })).toBeDisabled();
+  await fireEvent(screen.getByLabelText("Confirm Password"), "submitEditing");
+  expect(register).not.toHaveBeenCalled();
+});
+test("changing a compliant password invalidates confirmation immediately", async () => {
+  await show(<RegisterScreen />);
+  await credentials(true);
+  expect(screen.getByRole("button", { name: "Register" })).toBeEnabled();
+  await fill("Password", "OtherExample123!");
+  expect(screen.getByRole("button", { name: "Register" })).toBeDisabled();
+  await fill("Confirm Password", "OtherExample123!");
+  expect(screen.getByRole("button", { name: "Register" })).toBeEnabled();
+});
+test("policy loading blocks registration without locking navigation or visibility", async () => {
+  jest.mocked(checkPasswordPolicy).mockReturnValueOnce(new Promise(() => {}));
+  await show(<RegisterScreen />);
+  await credentials(true);
+  expect(screen.getByText("Loading password requirements...")).toBeTruthy();
+  expect(screen.getByRole("button", { name: "Register" })).toBeDisabled();
+  expect(screen.getByRole("button", { name: "Log in" })).toBeEnabled();
+  expect(screen.getByRole("button", { name: "Show password" })).toBeEnabled();
+  await fireEvent(screen.getByLabelText("Confirm Password"), "submitEditing");
+  expect(register).not.toHaveBeenCalled();
+});
+test("a server password-policy rejection refreshes requirements and gates the old candidate", async () => {
+  await show(<RegisterScreen />);
+  await credentials(true);
+  const previous = await checkPasswordPolicy("Example123!");
+  jest
+    .mocked(checkPasswordPolicy)
+    .mockResolvedValueOnce(previous)
+    .mockResolvedValueOnce({
+      ...previous,
+      isValid: false,
+      passwordPolicy: {
+        ...previous.passwordPolicy,
+        customStrengthOptions: { minPasswordLength: 12 },
+      },
+    });
+  register.mockRejectedValueOnce({
+    code: "auth/password-does-not-meet-requirements",
+  });
+  await fireEvent.press(screen.getByRole("button", { name: "Register" }));
+  expect(
+    await screen.findByLabelText("At least 12 characters: not met"),
+  ).toBeTruthy();
+  expect(screen.getByRole("button", { name: "Register" })).toBeDisabled();
+  expect(await screen.findByRole("alert")).toHaveTextContent(
+    /password.*requirements/i,
+  );
+});
+test("reset gate follows email edits and pending or failed requests", async () => {
+  let reject!: (error: unknown) => void;
+  reset.mockReturnValueOnce(
+    new Promise((_, fail) => {
+      reject = fail;
+    }),
+  );
+  await show(<ForgotPasswordScreen />);
+  await fill("Email", "a@example.com");
+  expect(screen.getByRole("button", { name: "Send Reset Link" })).toBeEnabled();
+  await fill("Email", "bad");
+  expect(
+    screen.getByRole("button", { name: "Send Reset Link" }),
+  ).toBeDisabled();
+  await fireEvent(screen.getByLabelText("Email"), "submitEditing");
+  expect(reset).not.toHaveBeenCalled();
+  await fill("Email", " a@example.com ");
+  const button = screen.getByRole("button", { name: "Send Reset Link" });
+  await fireEvent.press(button);
+  await fireEvent.press(button);
+  expect(reset).toHaveBeenCalledTimes(1);
+  expect(button).toBeDisabled();
+  await act(() => reject({ code: "auth/network-request-failed" }));
+  expect(await screen.findByRole("alert")).toHaveTextContent(/connection/);
+  expect(screen.getByRole("button", { name: "Send Reset Link" })).toBeEnabled();
+  expect(screen.getByLabelText("Email").props.value).toBe(" a@example.com ");
 });
 test("registration blocks repeated taps while Firebase policy is pending and checklist reacts to input", async () => {
   await show(<RegisterScreen />);

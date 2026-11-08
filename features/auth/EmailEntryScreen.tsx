@@ -23,6 +23,8 @@ import {
 } from "./schemas";
 import { authTokens as t } from "../../theme/auth";
 import { usePasswordPolicy } from "./usePasswordPolicy";
+import { getPasswordRequirements } from "./password-requirements";
+import { getErrorCode } from "./errors";
 
 const loginFieldsSchema = loginSchema.extend({ confirmPassword: z.string() });
 export default function EmailEntryScreen({
@@ -36,12 +38,33 @@ export default function EmailEntryScreen({
   const {
     control,
     handleSubmit,
+    getValues,
     watch,
-    formState: { errors },
+    formState: { errors, isValid, touchedFields, submitCount },
   } = useForm<RegistrationFields>({
+    mode: "all",
     resolver: zodResolver(signup ? registrationSchema : loginFieldsSchema),
     defaultValues: { email: "", password: "", confirmPassword: "" },
   });
+  const values = watch();
+  const schema = signup ? registrationSchema : loginFieldsSchema;
+  const policyAllows = (password: string) =>
+    !signup ||
+    !!(
+      !policyState.loading &&
+      !policyState.error &&
+      policyState.policy &&
+      getPasswordRequirements(policyState.policy, password).every(
+        (rule) => rule.met,
+      )
+    );
+  // The synchronous schema check closes the gap before RHF's async resolver settles.
+  const canSubmit =
+    isValid &&
+    schema.safeParse(values).success &&
+    policyAllows(values.password);
+  const fieldError = (name: keyof RegistrationFields) =>
+    touchedFields[name] || submitCount > 0 ? errors[name]?.message : undefined;
   useFocusEffect(
     useCallback(() => {
       const sub = BackHandler.addEventListener(
@@ -51,14 +74,36 @@ export default function EmailEntryScreen({
       return () => sub.remove();
     }, [action.pending]),
   );
-  const submit = handleSubmit(async ({ email, password }) => {
+  const submit = handleSubmit(async () => {
+    const current = schema.safeParse(getValues());
+    if (!current.success || !policyAllows(current.data.password)) return;
+    const { email, password } = current.data;
     await action.run(async () => {
       if (signup) {
         const status = await checkPasswordPolicy(password);
         policyState.accept(status.passwordPolicy);
         if (!status.isValid)
           throw { code: "auth/password-does-not-meet-requirements" };
-        await auth.register(email, password);
+        // Ignore a candidate edited while its authoritative SDK check was in flight.
+        const latest = getValues();
+        if (
+          latest.email.trim() !== email ||
+          latest.password !== password ||
+          latest.confirmPassword !== password
+        )
+          return;
+        try {
+          await auth.register(email, password);
+        } catch (error) {
+          if (
+            [
+              "auth/weak-password",
+              "auth/password-does-not-meet-requirements",
+            ].includes(getErrorCode(error) ?? "")
+          )
+            policyState.retry();
+          throw error;
+        }
       } else await auth.login(email, password);
     });
   });
@@ -94,7 +139,7 @@ export default function EmailEntryScreen({
             onChangeText={field.onChange}
             onBlur={field.onBlur}
             editable={!action.pending}
-            error={errors.email?.message}
+            error={fieldError("email")}
           />
         )}
       />
@@ -113,7 +158,7 @@ export default function EmailEntryScreen({
               onChangeText={field.onChange}
               onBlur={field.onBlur}
               editable={!action.pending}
-              error={errors.password?.message}
+              error={fieldError("password")}
               returnKeyType={signup ? "next" : "done"}
               onSubmitEditing={signup ? undefined : () => void submit()}
             />
@@ -145,16 +190,29 @@ export default function EmailEntryScreen({
                 onChangeText={field.onChange}
                 onBlur={field.onBlur}
                 editable={!action.pending}
-                error={errors.confirmPassword?.message}
+                error={fieldError("confirmPassword")}
                 returnKeyType="done"
                 onSubmitEditing={() => void submit()}
               />
             )}
           />
-          {policyState.loading ? <Text accessibilityLiveRegion="polite" style={s.small}>Loading password requirements...</Text> : null}
+          {policyState.loading ? (
+            <Text accessibilityLiveRegion="polite" style={s.small}>
+              Loading password requirements...
+            </Text>
+          ) : null}
           <AuthAlert message={policyState.error} />
-          {policyState.error ? <AuthTextLink label="Retry password requirements" onPress={policyState.retry} disabled={action.pending} /> : null}
-          <PasswordRequirements policy={policyState.policy} password={watch("password")} />
+          {policyState.error ? (
+            <AuthTextLink
+              label="Retry password requirements"
+              onPress={policyState.retry}
+              disabled={action.pending}
+            />
+          ) : null}
+          <PasswordRequirements
+            policy={policyState.policy}
+            password={values.password}
+          />
           <AuthTextLink
             label="Terms & conditions"
             disabled={action.pending}
@@ -165,6 +223,7 @@ export default function EmailEntryScreen({
       <AuthAction
         label={signup ? "Register" : "Login"}
         busy={action.pending}
+        disabled={!canSubmit}
         onPress={() => void submit()}
       />
       <View style={s.row}>
