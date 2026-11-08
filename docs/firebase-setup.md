@@ -6,6 +6,8 @@ The public Login/Register screens use email and password with the existing Fireb
 
 Registration checks the project password policy through Firebase `validatePassword` and then calls `createUserWithEmailAndPassword`; Login uses `signInWithEmailAndPassword`. The app minimum is 8 characters for new accounts, while existing users may sign in with older passwords. Policy indicators reflect Firebase's configured requirements; the server remains authoritative. The app does not call `sendEmailVerification` or require `emailVerified`. New accounts proceed directly to the authenticated placeholder.
 
+Register stays disabled until Firebase password requirements load and the inputs satisfy them. If requirements cannot load, use **Retry password requirements**; no default policy bypass is used. Login and password-reset validity do not depend on this registration lookup.
+
 Forgot Password uses `sendPasswordResetEmail`, account-neutral confirmation, and Firebase's default hosted reset action. Password-reset email remains part of account recovery; it is separate from email verification. No custom reset-link handler or account/profile records are created.
 
 Firebase's supported React Native AsyncStorage persistence restores email sessions; the app never manually stores passwords. Existing native phone sessions are retained until logout, and logout still attempts both stores. Public phone entry, SMS consent and code screens are removed; old `/verify-phone` links return to Login. Existing phone-only accounts are not automatically converted or linked to email accounts. After logout, those users need an email account; migration/linking needs a separately approved flow. Existing Firebase providers/accounts remain unchanged in the Console.

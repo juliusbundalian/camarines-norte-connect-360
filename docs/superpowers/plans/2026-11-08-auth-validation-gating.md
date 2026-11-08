@@ -1,6 +1,6 @@
 # Authentication Validation Gating Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Disable Login, Register and Send Reset Link until their current inputs meet the applicable validation requirements.
 
@@ -48,10 +48,10 @@ Keep the current layout/tokens. As explicitly requested at approval, disabled pr
 
 **Interfaces:** `getPasswordRequirements(policy: PasswordPolicy, password: string): readonly { key: string; label: string; met: boolean }[]` supplies both checklist rendering and `every(rule => rule.met)` gating. Registration policy state explicitly distinguishes loading, available and failed; the existing SDK helper remains `checkPasswordPolicy(password: string): Promise<PasswordValidationStatus>`.
 
-- [ ] Write helper tests for minimum length, maximum length, each enabled character requirement, Firebase's allowed symbol set, disabled optional requirements and the app's minimum8 floor. Expected criteria must be literal, independent of the implementation. Add RNTL tests proving policy failure is displayed, Retry succeeds, a late older result cannot replace newer state, and unmounting does not update abandoned state.
-- [ ] Run `npm test -- --runInBand features/auth/__tests__/password-requirements.test.ts features/auth/__tests__/auth-screens.test.tsx`; expect failures for the missing shared helper and missing policy recovery behavior.
-- [ ] Extract the existing checklist evaluation into the helper and consume it from PasswordRequirements. Add explicit initial-policy loading/error/retry state in EmailEntryScreen; ignore stale/unmounted results and duplicate retry presses. Retain successful submission's latest policy update.
-- [ ] Run the focused suites; expect passing. Commit Task 1 files.
+- [x] Write helper tests for minimum length, maximum length, each enabled character requirement, Firebase's allowed symbol set, disabled optional requirements and the app's minimum8 floor. Expected criteria must be literal, independent of the implementation. Add RNTL tests proving policy failure is displayed, Retry succeeds, a late older result cannot replace newer state, and unmounting does not update abandoned state.
+- [x] Run `npm test -- --runInBand features/auth/__tests__/password-requirements.test.ts features/auth/__tests__/auth-screens.test.tsx`; expect failures for the missing shared helper and missing policy recovery behavior.
+- [x] Extract the existing checklist evaluation into the helper and consume it from PasswordRequirements. Add explicit initial-policy loading/error/retry state in EmailEntryScreen; ignore stale/unmounted results and duplicate retry presses. Retain successful submission's latest policy update.
+- [x] Run the focused suites; expect passing. Commit Task 1 files.
 
 ### Task 2: Gate the three primary actions and preserve feedback/recovery
 
@@ -59,10 +59,10 @@ Keep the current layout/tokens. As explicitly requested at approval, disabled pr
 
 **Interfaces:** Existing `useAuth().login(email,password)`, `.register(email,password)`, `.requestPasswordReset(email)` remain unchanged. React Hook Form subscribes to on-change validity, touched fields and current values; action.pending remains the submission lock. No authentication-context or router contract changes.
 
-- [ ] Replace tests that submit empty forms by pressing enabled actions: assert all primary actions start disabled at opacity0.4 with original colors; blur invalid fields and assert helpful errors; fill valid values and assert enabled. Run tests and confirm intended failures against current gating behavior.
-- [ ] Add cases for Login with a valid email and existing short password; malformed/whitespace-only email; clearing a valid password; signup mismatch and confirmation becoming invalid after a password edit; each loaded Firebase requirement blocking Register; requirements loading/failure/retry; reset valid → invalid edits; pending/error recovery. Assert invalid button presses and keyboard submission invoke no auth actions. Run the focused screen suite again and confirm these new gating tests fail before implementation.
-- [ ] Configure on-change form validation and touched/submission feedback. Pass disabled conditions to AuthAction. Register additionally requires available policy and every shared requirement met. Add equivalent guards at the handler boundary; retain the authoritative SDK policy recheck, current duplicate-submit guard and safe server errors. Do not trim passwords or disable navigation merely because inputs are invalid.
-- [ ] Run `npm test -- --runInBand` and `npm run typecheck`; expect all passing. Confirm existing session/navigation/reset regressions still pass. Commit Task 2 files.
+- [x] Replace tests that submit empty forms by pressing enabled actions: assert all primary actions start disabled at opacity0.4 with original colors; blur invalid fields and assert helpful errors; fill valid values and assert enabled. Run tests and confirm intended failures against current gating behavior.
+- [x] Add cases for Login with a valid email and existing short password; malformed/whitespace-only email; clearing a valid password; signup mismatch and confirmation becoming invalid after a password edit; each loaded Firebase requirement blocking Register; requirements loading/failure/retry; reset valid → invalid edits; pending/error recovery. Assert invalid button presses and keyboard submission invoke no auth actions. Run the focused screen suite again and confirm these new gating tests fail before implementation.
+- [x] Configure on-change form validation and touched/submission feedback. Pass disabled conditions to AuthAction. Register additionally requires available policy and every shared requirement met. Add equivalent guards at the handler boundary; retain the authoritative SDK policy recheck, current duplicate-submit guard and safe server errors. Do not trim passwords or disable navigation merely because inputs are invalid.
+- [x] Run `npm test -- --runInBand` and `npm run typecheck`; expect all passing. Confirm existing session/navigation/reset regressions still pass. Commit Task 2 files.
 
 ### Task 3: Native Android verification and final review
 
@@ -70,10 +70,10 @@ Keep the current layout/tokens. As explicitly requested at approval, disabled pr
 
 **Interfaces:** Existing Android package `ph.cn360connect.app` and isolated demo QA configuration. Preserve live data and credentials.
 
-- [ ] Build/install the native Android app without clearing its data. Check initial disabled state, valid/invalid transitions, keyboard Done/autofill, password visibility, policy retry, pending/retry behavior and small-screen scrolling on Android15/API35 (or record the actual available device).
-- [ ] Use a disposable QA copy and documented fixture for native policy-loading/failure scenarios, since Auth Emulator lacks that endpoint; actual account actions use Auth Emulator. Do not weaken production checks, change live network/configuration permanently or create live accounts automatically.
-- [ ] Run full Jest/RNTL and strict TypeScript checks; run the real SDK Auth Emulator integration when service/integration behavior changes. Record commands, native results and any unverified live behavior. Inspect the changed screens against the existing Figma styling without expanding design scope.
-- [ ] Run `git diff --check` and the executing-plans workflow's single independent final review; address blocking findings through regression tests. Commit verification documentation. Stop before further application features.
+- [x] Build/install the native Android app without clearing its data. Check initial disabled state, valid/invalid transitions, keyboard Done/autofill, password visibility, policy retry, pending/retry behavior and small-screen scrolling on Android15/API35 (or record the actual available device).
+- [x] Use a disposable QA copy and documented fixture for native policy-loading/failure scenarios, since Auth Emulator lacks that endpoint; actual account actions use Auth Emulator. Do not weaken production checks, change live network/configuration permanently or create live accounts automatically.
+- [x] Run full Jest/RNTL and strict TypeScript checks; run the real SDK Auth Emulator integration when service/integration behavior changes. Record commands, native results and any unverified live behavior. Inspect the changed screens against the existing Figma styling without expanding design scope.
+- [x] Run `git diff --check` and the executing-plans workflow's single independent final review; address blocking findings through regression tests. Commit verification documentation. Stop before further application features.
 
 ## Plan review
 

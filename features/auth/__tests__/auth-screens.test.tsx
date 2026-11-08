@@ -231,12 +231,12 @@ test("registration reports unavailable requirements and offers an independent re
   expect(screen.getByRole("button", { name: "Register" })).toBeEnabled();
 });
 test.each([
-  [LoginScreen, "Login"],
-  [RegisterScreen, "Register"],
-  [ForgotPasswordScreen, "Send Reset Link"],
+  { Screen: LoginScreen, label: "Login" },
+  { Screen: RegisterScreen, label: "Register" },
+  { Screen: ForgotPasswordScreen, label: "Send Reset Link" },
 ] as const)(
-  "empty %s action %s is disabled at 40 percent opacity with original colors",
-  async (Screen, label) => {
+  "$label is initially disabled at 40 percent opacity with original colors",
+  async ({ Screen, label }) => {
     await show(<Screen />);
     expect(screen.getByRole("button", { name: label })).toBeDisabled();
     expect(
