@@ -1,4 +1,4 @@
-import PhoneEntryScreen from "./PhoneEntryScreen";
+import EmailEntryScreen from "./EmailEntryScreen";
 export default function LoginScreen() {
-  return <PhoneEntryScreen intent="login" />;
+  return <EmailEntryScreen />;
 }

@@ -1,4 +1,4 @@
-import PhoneEntryScreen from "./PhoneEntryScreen";
+import EmailEntryScreen from "./EmailEntryScreen";
 export default function RegisterScreen() {
-  return <PhoneEntryScreen intent="register" />;
+  return <EmailEntryScreen signup />;
 }

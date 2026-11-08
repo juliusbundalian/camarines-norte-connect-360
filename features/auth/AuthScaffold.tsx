@@ -2,6 +2,7 @@ import { useState, type PropsWithChildren } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -81,10 +82,10 @@ export function AuthScaffold({
             />
           </View>
           <View style={s.content}>
-            <Text accessibilityRole="header" style={s.heading}>
+            <View style={s.headingGroup}><Text accessibilityRole="header" style={s.heading}>
               {title}
             </Text>
-            {subtitle ? <Text style={s.subtitle}>{subtitle}</Text> : null}
+            {subtitle ? <Text style={s.subtitle}>{subtitle}</Text> : null}</View>
             {children}
           </View>
         </ScrollView>
@@ -154,6 +155,9 @@ export function AuthLink({
     </Button>
   );
 }
+export function AuthTextLink({ label, onPress, disabled = false }: { label: string; onPress(): void; disabled?: boolean }) {
+  return <Pressable accessibilityRole="button" accessibilityState={{ disabled }} disabled={disabled} hitSlop={t.space.sm} onPress={onPress}><Text style={[s.textLink, disabled && s.disabledLink]}>{label}</Text></Pressable>;
+}
 export const authStyles = StyleSheet.create({
   label: { ...t.type.label, fontFamily: t.fonts.medium, color: t.colors.text },
   body: {
@@ -213,6 +217,9 @@ const s = StyleSheet.create({
     backgroundColor: t.colors.subtle,
   },
   content: { padding: t.space.md, gap: t.space.md },
+  headingGroup: { gap: t.space.xs },
+  textLink: { ...t.type.label, fontFamily: t.fonts.medium, color: t.colors.primary },
+  disabledLink: { color: t.colors.muted },
   heading: {
     ...t.type.heading,
     fontFamily: t.fonts.regular,
