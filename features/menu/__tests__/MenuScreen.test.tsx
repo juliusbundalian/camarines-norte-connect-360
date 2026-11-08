@@ -44,8 +44,19 @@ test('observed identity controls the header and Logout; signing out reveals gues
 test('pending Logout locks controls and prevents duplicate requests',async()=>{
   auth(true);let finish!:()=>void;logout.mockReturnValue(new Promise<void>(resolve=>{finish=resolve;}));
   await show();const button=screen.getByRole('button',{name:'Logout'});
-  await fireEvent.press(button);await fireEvent.press(button);
+  await fireEvent.press(button);
+  expect(logout).not.toHaveBeenCalled();
+  const confirm=screen.getByRole('button',{name:'Confirm'});
+  await fireEvent.press(confirm);await fireEvent.press(confirm);
   expect(logout).toHaveBeenCalledTimes(1);
   expect(screen.getByRole('button',{name:'Account'})).toBeDisabled();
   await act(()=>finish());
+});
+
+test('Cancel dismisses Logout confirmation without signing out',async()=>{
+  auth(true);await show();await fireEvent.press(screen.getByRole('button',{name:'Logout'}));
+  expect(screen.getByText('Logout?')).toBeTruthy();
+  expect(screen.getByText('Are you sure you want to sign out? You can log in again anytime.')).toBeTruthy();
+  await fireEvent.press(screen.getByRole('button',{name:'Cancel'}));
+  expect(screen.queryByText('Logout?')).toBeNull();expect(logout).not.toHaveBeenCalled();
 });

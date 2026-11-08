@@ -1,3 +1,5 @@
+import {useEffect,useRef,useState} from "react";
+import {LogoutConfirmation} from "./LogoutConfirmation";
 import {ScrollView,StyleSheet,Text,View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {Image} from 'expo-image';
@@ -12,6 +14,10 @@ import {MENU_SECTIONS} from './menu-content';
 import {menuTokens as t} from '../../theme/menu';
 export default function MenuScreen(){
   const auth=useAuth();
+  const [confirming,setConfirming]=useState(false);
+  const confirmingRef=useRef(false);
+  useEffect(()=>{if(!auth.user){confirmingRef.current=false;setConfirming(false);}},[auth.user]);
+  const cancelLogout=()=>{confirmingRef.current=false;setConfirming(false);};
   const action=useAsyncAction();
   const pending=auth.logoutPending||action.pending;
   const openAuth=(pathname:'/login'|'/register')=>router.push({pathname,params:{returnTo:'/menu'}});
@@ -24,12 +30,17 @@ export default function MenuScreen(){
         {'title' in section?<Text style={styles.section}>{section.title}</Text>:null}
         {section.rows.map(row=><MenuRow key={row.path} label={row.label} description={'description' in row?row.description:undefined} icon={row.icon} disabled={pending} onPress={()=>router.push(row.path)}/>)}
       </View>)}
-      {auth.user?<View style={styles.card}><MenuRow label="Logout" icon={LogOut} tone="danger" disabled={pending} onPress={()=>void action.run(auth.logout)}/></View>:null}
+      {auth.user?<View style={styles.card}><MenuRow label="Logout" icon={LogOut} tone="danger" disabled={pending} onPress={()=>{if(!pending){confirmingRef.current=true;setConfirming(true);}}}/></View>:null}
       <View style={styles.footer}>
         <Image source={require('../../assets/splash-logo.png')} style={styles.logo} contentFit="contain" accessible={false}/>
         {version?<Text style={styles.version}>version {version}{build==null?'':` (${build})`}</Text>:null}
       </View>
     </ScrollView>
+    <LogoutConfirmation visible={confirming && !!auth.user} onCancel={cancelLogout} onConfirm={()=>{
+      if(!confirmingRef.current || pending || !auth.user)return;
+      cancelLogout();
+      void action.run(auth.logout);
+    }}/>
   </SafeAreaView>;
 }
 const styles=StyleSheet.create({
