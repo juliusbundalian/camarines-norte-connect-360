@@ -15,7 +15,7 @@ export function MainTabBar({state,emitter,navigateToTab,insets}:BottomTabBarProp
         }}
         onLongPress={() => emitter.emit({type:'tabLongPress',target:route.key})}
         style={styles.item}>
-        <Icon size={24} color={color}/><Text style={[styles.label,{color}]}>{label}</Text>
+        <Icon size={24} color={color}/><Text textBreakStrategy="balanced" style={[styles.label,{color}]}>{label}</Text>
       </Pressable>;
     })}
   </View>;
@@ -23,5 +23,5 @@ export function MainTabBar({state,emitter,navigateToTab,insets}:BottomTabBarProp
 const styles=StyleSheet.create({
   bar:{flexDirection:'row',backgroundColor:'#FFFFFF',borderTopLeftRadius:12,borderTopRightRadius:12},
   item:{flex:1,minHeight:64,paddingTop:8,paddingBottom:8,alignItems:'center',justifyContent:'center',gap:4},
-  label:{fontFamily:'Poppins-Medium',fontSize:14,lineHeight:20,letterSpacing:0.1,textAlign:'center',flexShrink:1},
+  label:{fontFamily:'Poppins-Medium',fontSize:14,lineHeight:20,letterSpacing:0.1,textAlign:'center',width:'116%'},
 });
