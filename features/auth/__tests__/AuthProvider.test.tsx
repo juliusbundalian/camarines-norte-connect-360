@@ -72,3 +72,25 @@ test("retry immediately invalidates callbacks before effect cleanup runs", async
   expect(result.current.user).toBeNull();
   expect(result.current.ready).toBe(false);
 });
+test('holds registration presentation when observed sign-in arrives before create-user resolves',async()=>{
+ const {next}=setup();let resolve!:()=>void;
+ jest.mocked(getAuthService).mockReturnValue({...getAuthService(),register:()=>new Promise<void>(r=>resolve=r)});
+ const {result}=await renderHook(useAuth,{wrapper:AuthProvider});await act(()=>next[0]!(null));
+ let pending!:Promise<void>;await act(()=>{pending=result.current.register('new@example.com','password');});
+ expect(result.current.registrationPhase).toBe('creating');
+ await act(()=>next[0]!({uid:'new',email:'new@example.com',phoneNumber:null,source:'js',creationTimeMs:Date.now()}));
+ expect(result.current.registrationPhase).toBe('creating');
+ await act(async()=>{resolve();await pending;});
+ expect(result.current.registrationPhase).toBe('created');expect(result.current.registrationUid).toBe('new');
+ await act(()=>result.current.finishRegistrationPresentation());expect(result.current.registrationPhase).toBe('idle');
+});
+test('failed account creation clears presentation intent and rapid retries share one request',async()=>{
+ setup();let reject!:(e:Error)=>void;
+ const create=jest.fn(()=>new Promise<void>((_r,j)=>reject=j));
+ jest.mocked(getAuthService).mockReturnValue({...getAuthService(),register:create});
+ const {result}=await renderHook(useAuth,{wrapper:AuthProvider});let first!:Promise<void>,second!:Promise<void>;
+ await act(()=>{first=result.current.register('new@example.com','password');second=result.current.register('new@example.com','password');});
+ expect(first).toBe(second);expect(create).toHaveBeenCalledTimes(1);
+ await act(async()=>{reject(new Error('offline'));await expect(first).rejects.toThrow('offline');});
+ expect(result.current.registrationPhase).toBe('idle');
+});

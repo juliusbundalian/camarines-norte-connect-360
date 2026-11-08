@@ -16,6 +16,9 @@ import Index from "../../../app/index";
 import * as AuthLayout from "../../../app/(auth)/_layout";
 import * as AppLayout from "../../../app/(app)/_layout";
 import * as MainLayout from "../../../app/(main)/_layout";
+import * as ProfileLayout from "../../../app/(profile)/_layout";
+import GenderRoute from "../../../app/(profile)/gender";
+import ProfileRoute from "../../../app/(profile)/complete-profile";
 import * as TabsLayout from "../../../app/(main)/(tabs)/_layout";
 import Home from "../../../app/(main)/(tabs)/home";
 import Explore from "../../../app/(main)/(tabs)/explore";
@@ -32,6 +35,7 @@ import RetiredVerification from "../../../app/(auth)/verify-phone";
 import { useAuth } from "../AuthProvider";
 import { useOnboarding } from "../../onboarding/OnboardingProvider";
 import { Button } from "react-native-paper";
+jest.mock("../../../services/firebase/profile-service",()=>({profileService:{load:jest.fn().mockResolvedValue(null)}}));
 jest.mock("../../../services/firebase/auth-service", () => ({
   getAuthService: jest.fn(),
 }));
@@ -68,6 +72,9 @@ const routes = {
   "(main)/wishlist": Wishlist,
   "(main)/notifications": Notifications,
   "(main)/privacy-policy": Privacy,
+  "(profile)/_layout":ProfileLayout,
+  "(profile)/gender":GenderRoute,
+  "(profile)/complete-profile":ProfileRoute,
   terms: Terms,
   "(app)/welcome": WelcomeRedirect,
 };
@@ -256,4 +263,22 @@ test('partial logout recovery takes priority over an ignored onboarding storage 
   logout.mockResolvedValueOnce(undefined);
   await fireEvent.press(screen.getByRole('button',{name:'Retry'}));
   expect(logout).toHaveBeenCalledTimes(2);
+});
+test('a new account cannot bypass gender setup through a Main deep link',async()=>{
+ const {profileService}=require('../../../services/firebase/profile-service');
+ profileService.ensure=jest.fn().mockResolvedValue({schemaVersion:1,onboardingVersion:1,status:'incomplete',currentStep:'gender',gender:null,draft:{displayName:'',birthdateText:'',mobileText:'',avatarId:'avatar-1',avatarSelectionSource:'default'},revision:0});
+ await renderRouter(routes,{initialUrl:'/menu'});
+ await act(()=>next({...user,creationTimeMs:Date.parse('2026-12-01')}));
+ await waitFor(()=>expect(screen).toHavePathname('/gender'));
+ expect(screen.queryByText('Hello, User')).toBeNull();
+});
+test('registration keeps its route through early observation and only then enters required setup',async()=>{
+ let resolve!:()=>void;
+ jest.mocked(getAuthService).mockReturnValue({...getAuthService(),register:()=>new Promise<void>(r=>resolve=r)});
+ function RegisterProbe(){const auth=useAuth();return <><Button onPress={()=>{void auth.register('new@example.com','password');}}>Create account probe</Button><Text>{auth.registrationPhase}</Text><Button onPress={auth.finishRegistrationPresentation}>Continue setup probe</Button></>;}
+ await renderRouter({...routes,'(auth)/register':RegisterProbe},{initialUrl:'/register'});await act(()=>next(null));
+ await fireEvent.press(screen.getByText('Create account probe'));await act(()=>next({...user,creationTimeMs:Date.parse('2026-12-01')}));
+ expect(screen).toHavePathname('/register');expect(screen.getByText('creating')).toBeTruthy();
+ await act(()=>resolve());expect(screen.getByText('created')).toBeTruthy();expect(screen).toHavePathname('/register');
+ await fireEvent.press(screen.getByText('Continue setup probe'));await waitFor(()=>expect(screen).toHavePathname('/gender'));
 });

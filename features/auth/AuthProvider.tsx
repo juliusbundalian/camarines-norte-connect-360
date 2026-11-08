@@ -20,6 +20,9 @@ interface AuthValue extends Omit<AuthService, "observe"> {
   logoutError: string | null;
   logoutPending: boolean;
   retry(): void;
+  registrationPhase: "idle" | "creating" | "created";
+  registrationUid: string | null;
+  finishRegistrationPresentation(): void;
 }
 const Context = createContext<AuthValue | null>(null);
 const actions: Omit<AuthService, "observe" | "logout"> = {
@@ -65,6 +68,19 @@ export function AuthProvider({ children }: PropsWithChildren) {
     logoutRequest.current = request;
     return request;
   }, []);
+  const [registration,setRegistration]=useState<{phase:"idle"|"creating"|"created";uid:string|null}>({phase:"idle",uid:null});
+  const registrationRef=useRef(registration);
+  const registerRequest=useRef<Promise<void>|null>(null);
+  const updateRegistration=useCallback((value:typeof registration)=>{registrationRef.current=value;setRegistration(value);},[]);
+  const register=useCallback((email:string,password:string)=>{
+    if(registerRequest.current)return registerRequest.current;
+    updateRegistration({phase:"creating",uid:null});
+    const request=Promise.resolve().then(()=>getAuthService().register(email,password)).then(()=>{
+      if(mounted.current&&registrationRef.current.phase!=="idle")updateRegistration({...registrationRef.current,phase:"created"});
+    },error=>{if(mounted.current)updateRegistration({phase:"idle",uid:null});throw error;}).finally(()=>{registerRequest.current=null;});
+    registerRequest.current=request;return request;
+  },[updateRegistration]);
+  const finishRegistrationPresentation=useCallback(()=>updateRegistration({phase:"idle",uid:null}),[updateRegistration]);
   const [attempt, setAttempt] = useState(0);
   const generation = useRef(0);
   const retry = useCallback(() => {
@@ -79,8 +95,14 @@ export function AuthProvider({ children }: PropsWithChildren) {
     try {
       unsubscribe = getAuthService().observe(
         (user) => {
-          if (active && version === generation.current)
+          if (active && version === generation.current) {
+            const r=registrationRef.current;
+            if(r.phase!=="idle"){
+              if(user&&!r.uid)updateRegistration({...r,uid:user.uid});
+              else if((user&&r.uid!==user.uid)||(!user&&r.uid))updateRegistration({phase:"idle",uid:null});
+            }
             setState({ user, ready: true, error: null });
+          }
         },
         (error) => {
           if (active && version === generation.current)
@@ -110,6 +132,10 @@ export function AuthProvider({ children }: PropsWithChildren) {
         ...state,
         ...actions,
         logout,
+        register,
+        registrationPhase:registration.phase,
+        registrationUid:registration.uid,
+        finishRegistrationPresentation,
         logoutError,
         logoutPending,
         retry,

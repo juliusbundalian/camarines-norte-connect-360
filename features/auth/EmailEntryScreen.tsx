@@ -1,3 +1,4 @@
+import {RegistrationSuccessModal} from "../profile/RegistrationSuccessModal";
 import {getSafeAuthReturnPath} from "../navigation/auth-return";
 import { useCallback, useEffect } from "react";
 import { BackHandler, Pressable, StyleSheet, Text, View } from "react-native";
@@ -86,10 +87,10 @@ export default function EmailEntryScreen({
     useCallback(() => {
       const sub = BackHandler.addEventListener(
         "hardwareBackPress",
-        () => action.pending,
+        () => action.pending || (signup && auth.registrationPhase!=="idle"),
       );
       return () => sub.remove();
-    }, [action.pending]),
+    }, [action.pending,signup,auth.registrationPhase]),
   );
   const submit = handleSubmit(async () => {
     const current = schema.safeParse(getValues());
@@ -132,6 +133,8 @@ export default function EmailEntryScreen({
     else router.replace(returnTo);
   };
   return (
+    <>
+    <RegistrationSuccessModal visible={signup && auth.registrationPhase==='created'} onElapsed={auth.finishRegistrationPresentation}/>
     <AuthScaffold
       title={signup ? "Create an Account" : "Welcome back"}
       subtitle={
@@ -283,6 +286,7 @@ export default function EmailEntryScreen({
         />
       </View>
     </AuthScaffold>
+    </>
   );
 }
 const styles = StyleSheet.create({

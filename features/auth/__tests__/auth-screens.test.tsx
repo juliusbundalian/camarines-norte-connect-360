@@ -63,7 +63,7 @@ beforeEach(() => {
     error: null,
     logoutError: null,
     logoutPending: false,
-    retry: jest.fn(),
+    retry: jest.fn(),registrationPhase:"idle",registrationUid:null,finishRegistrationPresentation:jest.fn(),
     login,
     register,
     requestPasswordReset: reset,
