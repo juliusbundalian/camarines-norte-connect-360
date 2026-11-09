@@ -26,3 +26,9 @@ Use form-level error alerts for validation and submission failures. Do not add i
 ## Post-registration profiles
 
 The 2026-11-08 post-registration onboarding design/plan is approved: three-second account-success modal, required gender then profile, nine supplied avatars, name and nonfuture birthdate required with no minimum age, optional Philippine mobile contact only, owner-only Firestore saved drafts/completion and Menu identity. New accounts from the fixed2026-11-08T15:03:57.000Z cutoff resume setup; older accounts keep normal access. No SMS or profile editing is added. Production Firestore enablement/rules deployment is a separate release prerequisite; never infer deployment from emulator checks.
+
+## Navigation transitions
+
+Forward stack navigation pushes a screen in from the right. Back actions must pop/dismiss the current screen out to the right, revealing the prior screen; do not implement Back as a forward push or default push-style replacement. Use router.back() for the actual prior route, or router.dismissTo(destination) when returning to a named earlier screen. Shared features/navigation/stack-options.ts sets slide_from_right and animationTypeForReplace:pop so cold/deep-link Back fallbacks also move backward. Preserve returnTo parameters, pending-submit guards, and step1 post-registration Back blocking. Tabs and modal dismissals retain their own navigation semantics.
+
+For post-registration and similar multi-step forms, keep shared header/progress and bottom action bars in a persistent wrapper and animate only the content viewport between steps. Primary Next/Finish actions remain disabled (40% opacity) until the existing validation rules pass, and while submitting. Do not show validation alerts during editing; preserve form-level submission/save failures and server-side validation gates.

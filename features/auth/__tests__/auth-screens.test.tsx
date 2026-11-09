@@ -25,6 +25,7 @@ jest.mock("expo-router", () => ({
   router: {
     push: jest.fn(),
     replace: jest.fn(),
+    dismissTo:jest.fn(),
     back: jest.fn(),
     canGoBack: () => false,
   },
@@ -403,8 +404,8 @@ test("reset validates email and shows generic confirmation", async () => {
       "If an account exists for this email address, you will receive a password reset link.",
     ),
   ).toBeTruthy();
-  await fireEvent.press(screen.getByRole("button", { name: "Back to Login" }));
-  expect(router.replace).toHaveBeenCalledWith({pathname:"/login",params:{returnTo:"/menu"}});
+  await fireEvent.press(screen.getByRole("button", { name: "Back" }));
+  expect(router.dismissTo).toHaveBeenCalledWith({pathname:"/login",params:{returnTo:"/menu"}});
 });
 test("reset request failures remain retryable without showing confirmation", async () => {
   reset.mockRejectedValueOnce({ code: "auth/network-request-failed" });
@@ -524,7 +525,7 @@ test("auth navigation preserves its safe source and cold Back returns to that so
   jest.mocked(useLocalSearchParams).mockReturnValue({returnTo:'/account'});
   await show(<LoginScreen/>);
   await fireEvent.press(screen.getByRole('button',{name:'Back'}));
-  expect(router.replace).toHaveBeenCalledWith('/account');
+  expect(router.dismissTo).toHaveBeenCalledWith('/account');
   await fireEvent.press(screen.getByRole('button',{name:'Sign up'}));
   expect(router.push).toHaveBeenCalledWith({pathname:'/register',params:{returnTo:'/account'}});
   await fireEvent.press(screen.getByRole('button',{name:'Forgot Password?'}));
@@ -533,6 +534,11 @@ test("auth navigation preserves its safe source and cold Back returns to that so
 test("password recovery Back preserves the safe auth return path", async () => {
   jest.mocked(useLocalSearchParams).mockReturnValue({returnTo:'/wishlist'});
   await show(<ForgotPasswordScreen/>);
-  await fireEvent.press(screen.getByRole('button',{name:'Back to Login'}));
-  expect(router.replace).toHaveBeenCalledWith({pathname:'/login',params:{returnTo:'/wishlist'}});
+  await fireEvent.press(screen.getByRole('button',{name:'Back'}));
+  expect(router.dismissTo).toHaveBeenCalledWith({pathname:'/login',params:{returnTo:'/wishlist'}});
+});
+
+test('registration Back dismisses to Login instead of adding another Login screen',async()=>{
+ await show(<RegisterScreen/>);await fireEvent.press(screen.getByRole('button',{name:'Back'}));
+ expect(router.dismissTo).toHaveBeenCalledWith({pathname:'/login',params:{returnTo:'/menu'}});
 });

@@ -6,7 +6,7 @@ export default function TermsScreen() {
     <AuthScaffold
       title="Terms & conditions"
       onBack={() =>
-        router.canGoBack() ? router.back() : router.replace("/menu")
+        router.canGoBack() ? router.back() : router.dismissTo("/menu")
       }
     >
       <Text accessibilityRole="header" style={s.label}>

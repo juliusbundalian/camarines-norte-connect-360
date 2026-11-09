@@ -6,7 +6,7 @@ import {APP_NAME} from '../../constants/app';
 export function PlaceholderScreen({title,description,back=false}:{title:string;description?:string;back?:boolean}) {
   return <SafeAreaView style={styles.screen} edges={back?['top','left','right','bottom']:['top','left','right']}>
     <ScrollView contentContainerStyle={styles.content}>
-      {back?<Pressable accessibilityRole="button" accessibilityLabel="Back" onPress={() => router.canGoBack()?router.back():router.replace('/menu')} style={styles.back}><ArrowLeft color="#22303E" size={24}/></Pressable>:null}
+      {back?<Pressable accessibilityRole="button" accessibilityLabel="Back" onPress={() => router.canGoBack()?router.back():router.dismissTo('/menu')} style={styles.back}><ArrowLeft color="#22303E" size={24}/></Pressable>:null}
       <View style={styles.copy}>
         <Text style={styles.brand}>{APP_NAME}</Text>
         <Text accessibilityRole="header" style={styles.title}>{title}</Text>

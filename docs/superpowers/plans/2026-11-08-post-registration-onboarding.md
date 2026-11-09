@@ -10,6 +10,33 @@
 
 **Spec:** `docs/superpowers/specs/2026-11-08-post-registration-onboarding-design.md` (approved by user on2026-11-08). Source inspection: `docs/superpowers/specs/2026-11-08-post-registration-figma-inspection.md`.
 
+## Audit — 2026-11-09
+
+Status: core functionality implemented, **not every original acceptance item closed**. This audit supersedes the earlier all-checked completion wording below. Latest user refinements and unchanged-draft suppression are implemented; final commit/review checkpoint is recorded below.
+
+| Area | Status |
+| --- | --- |
+| Task1 validation/cohort/nine assets | Implemented |
+| Task2 Firestore adapter/rules/emulator configuration | Implemented; live deployment not verified |
+| Task3 resumable account-scoped drafts/conflict recovery | Implemented, including unchanged-draft write suppression |
+| Task4 registration modal/routing/setup gate | Implemented |
+| Task5 forms/date picker/keyboard handling | Implemented with user amendments below |
+| Task6 nine-avatar modal/Menu identity | Implemented |
+| Task7 verification/context/review | Substantial checks passed; remaining matrix below |
+
+User amendments now authoritative: step1 has no Back or sign-out shortcut and consumes Android Back; step2 goes backward to step1; shared wrapper keeps top/bottom bars still while body content slides; Next/Finish remain disabled until existing validation passes; form errors stay submission-only; reset page has only the header Back, no duplicate Back to Login link. These supersede the original enabled-invalid-submit, gender Back/logout and whole-screen transition instructions. Existing native Android date dialog and profile persistence remain in scope; new modules/permissions remain excluded.
+
+Current disposition (user instruction on2026-11-09):
+
+- [x] Task3: suppress unchanged draft writes. Equal raw drafts and repeated acknowledged snapshots skip persistence; reverting an unsaved edit skips Firestore. Failed saves remain retryable and explicit operations invalidate cached acknowledgements.
+- Skipped by user: remaining full native/a11y/offline/two-device matrix. These cases remain unverified, not passed.
+- Skipped by user: live Firestore readiness/rules deployment checks. No remote deployment or verification is claimed.
+- [ ] Commit/review latest UI refinements and unchanged-draft suppression. No merge/push authorized.
+
+Fresh checks:245/245 Jest tests across28 suites and strict TypeScript passed. Prior native builds and Android15/API35 evidence remain in docs/verification.md; the remaining device checks were explicitly skipped. Physical-device testing remains unverified and iOS intentionally deferred.
+
+---
+
 ## Global Constraints
 
 - Official name CamNorte 360; coverage Daet, Camarines Norte. Preserve package/Firebase/Expo identifiers and existing sessions.
@@ -79,7 +106,7 @@ Shared types (Task1 defines, subsequent tasks import):
 
 - [x] Write failing tests for old native-only user→legacy with no JS Firestore call; JS user reads profile/cohort; missing new profile ensured; failed initialization retry does not call register; completed profiles hydrate identity; UID changes clear state and ignore late responses.
 - [x] Run `npm test -- --runInBand features/profile/__tests__/ProfileProvider.test.tsx features/profile/__tests__/draft-writer.test.ts`; expect missing implementation failure.
-- [x] Implement serialized `DraftWriter` with600ms debounce, captured UID/session generation, pending revision and `flush():Promise<void>`, `dispose():void`. Reads/writes for another UID never enter current state. On completion cancel debounce, drain prior writes, validate and execute complete; no pending write can revert complete. Avoid persisting unchanged content or endlessly retriggering save effects.
+- [x] Implement serialized `DraftWriter` with600ms debounce, captured UID/session generation, pending revision and `flush():Promise<void>`, `dispose():void`. Reads/writes for another UID never enter current state. On completion cancel debounce, drain prior writes, validate and execute complete; no pending write can revert complete. Avoid persisting unchanged content or endlessly retriggering save effects. **Audit: unchanged-draft suppression is still outstanding; see the audit checklist above.**
 - [x] Implement provider: load/ensure profile after observed auth settles; legacy native identity with pre-cutoff metadata retains generic Menu and no transport request. New native identity that requires setup without supported matching transport exposes recoverable error/sign-out, never silent bypass. Do not initialize/retry accounts. Update UI optimistically but only mark saved after server acknowledgement; retain unsaved draft on errors without alerts from passive saves. Retry reload must not overwrite an unsaved current-session draft.
 - [x] Test600ms coalescing, editing while save in flight, failed write then flush/retry, revision conflict reload/reconcile, Finish after debounce, logout during save, account A response arriving after account B loads. Assert `complete` runs once and is last mutation. Test default gender avatar changes versus preserved manual choice.
 - [x] Run provider/writer/domain tests and typecheck; expected PASS. Commit Task3 files: `feat(profile): coordinate account-scoped draft recovery`.
@@ -105,11 +132,11 @@ Shared types (Task1 defines, subsequent tasks import):
 **Interfaces:** `ProfileSetupScaffold({step:1|2,title,subtitle,onBack,busy,children,actionLabel,onAction})`; `BirthdateField({value:string,onChange(text:string):void,disabled?:boolean})` displays MM/DD/YYYY and opens native Android date dialog, with cancel leaving value unchanged. Screens call Task3 methods; no duplicate persistence logic.
 
 - [x] Before writing styles, inspect remaining Design inspector layers in all five source frames: success modal size/padding/gaps/type, screen safe content offsets, Back dimensions, progress dimensions/gaps, headings/body fonts, selection circles, profile avatar/edit dimensions, field heights/radii/borders, bottom area and button tokens. Save numeric findings in source inspection doc. Use Figma desktop per user request; do not claim exact metrics from screenshots alone.
-- [x] Write failing component tests: gender starts unselected; Next alert only on attempted invalid submit; valid Next awaits save; profile fields/date format/no inline messages; Back retains draft; Finish submits through provider once; name/phone edit never shows validation alert. Future/malformed dates fail via Task1 validation.
+- [x] Write failing component tests: gender starts unselected; **updated:** Next disabled until gender selection; valid Next awaits save; profile fields/date format/no inline messages; Back retains draft; Finish submits through provider once; name/phone edit never shows validation alert. Future/malformed dates fail via Task1 validation.
 - [x] Run target component tests; confirm missing components fail. Install `@react-native-community/datetimepicker` through `npx expo install` using existing Expo SDK compatibility, then inspect official package documentation/local types for actual Android props. Record resolved version in lockfile; no iOS work.
-- [x] Implement measured styles and scaffold with SafeAreaView, keyboard-aware scrollable content, persistent bottom action surface and exact two-step copy. Gender Back opens existing LogoutConfirmation and confirmed action uses auth.logout; existing overlay handles partial failure. Profile Back flushes draft and goes gender, preserving unsaved memory on failure. Use submit-enabled actions except pending so invalid submission can produce the specified form alert.
+- [x] Implement measured styles and scaffold with SafeAreaView, keyboard-aware scrollable content, persistent bottom action surface and exact two-step copy. **Superseded by user amendment:** gender step no longer has Back/logout; Android Back is consumed. Profile Back flushes draft and goes gender, preserving unsaved memory on failure. **Superseded by user amendment:** disable Next/Finish until validation passes, and while pending; do not show typing/blur errors.
 - [x] Implement native date dialog with explicit confirm/cancel, local calendar conversion, maxDate today, and neutral initial calendar date that is not stored until confirmation. Keep static MM/DD/YYYY hint. Mobile fixed +63 prefix and phone keyboard; never invoke auth phone service. Text field input limits align with constrained draft rules and Unicode name validation.
-- [x] Test Android date confirm/cancel/timezone conversion, keyboard handling, gender Back cancel/confirm, save error retains data, pending controls and accessible selected choices. Run affected tests/typecheck. Commit Task5 files: `feat(profile): build Figma gender and profile forms`.
+- [x] Test Android date confirm/cancel/timezone conversion, keyboard handling, **updated:** gender hardware Back consumed with no Back control, save error retains data, pending controls and accessible selected choices. Run affected tests/typecheck. Commit Task5 files: `feat(profile): build Figma gender and profile forms`.
 
 ### Task 6: Nine-avatar picker and saved Menu identity
 

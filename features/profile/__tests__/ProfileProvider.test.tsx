@@ -86,3 +86,15 @@ it('reloads revision conflicts for explicit gender and completion saves',async()
  s.complete.mockRejectedValueOnce(new Error('Your profile was updated elsewhere. Please retry.'));
  await act(()=>result.current.finish('2026-11-08'));expect(result.current.phase).toBe('complete');
 });
+it('leaves an unchanged draft clean and avoids a second save for the same manual avatar',async()=>{
+ const s=service();const {result}=await renderHook(useProfile,{wrapper:({children})=><ProfileProvider service={s}>{children}</ProfileProvider>});
+ await act(()=>result.current.setDraft({displayName:''}));await act(()=>result.current.flushDraft());
+ expect(s.saveDraft).not.toHaveBeenCalled();expect(result.current.saveState).toBe('saved');
+ await act(()=>result.current.saveGender('male'));await act(()=>result.current.applyAvatar('avatar-6'));const revision=s.data?.revision;
+ await act(()=>result.current.applyAvatar('avatar-6'));expect(s.data?.revision).toBe(revision);expect(s.saveDraft).toHaveBeenCalledTimes(1);
+});
+it('does not save a draft edited back to its acknowledged value before the debounce',async()=>{
+ const s=service();const {result}=await renderHook(useProfile,{wrapper:({children})=><ProfileProvider service={s}>{children}</ProfileProvider>});
+ await act(()=>result.current.setDraft({displayName:'Temporary'}));await act(()=>result.current.setDraft({displayName:''}));await act(()=>result.current.flushDraft());
+ expect(s.saveDraft).not.toHaveBeenCalled();expect(result.current.saveState).toBe('saved');
+});

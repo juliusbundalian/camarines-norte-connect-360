@@ -1,3 +1,4 @@
+import {stackOptions} from '../../features/navigation/stack-options';
 export const unstable_settings = { anchor: "login" };
 import {MainFonts} from "../../features/navigation/MainFonts";
 import {useProfile} from "../../features/profile/ProfileProvider";
@@ -23,7 +24,7 @@ export default function AuthLayout() {
   }
   return (
     <MainFonts><AuthFonts>
-      <Stack screenOptions={{ headerShown: false }} />
+      <Stack screenOptions={stackOptions} />
     </AuthFonts></MainFonts>
   );
 }

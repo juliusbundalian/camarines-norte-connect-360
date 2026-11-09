@@ -128,9 +128,9 @@ export default function EmailEntryScreen({
   });
   const back = () => {
     if (action.pending) return;
-    if (signup) router.replace(authLink("/login"));
+    if (signup) router.dismissTo(authLink("/login"));
     else if (router.canGoBack()) router.back();
-    else router.replace(returnTo);
+    else router.dismissTo(returnTo);
   };
   return (
     <>
@@ -281,7 +281,7 @@ export default function EmailEntryScreen({
           label={signup ? "Log in" : "Sign up"}
           disabled={action.pending}
           onPress={() =>
-            signup ? router.replace(authLink("/login")) : router.push(authLink("/register"))
+            signup ? router.dismissTo(authLink("/login")) : router.push(authLink("/register"))
           }
         />
       </View>

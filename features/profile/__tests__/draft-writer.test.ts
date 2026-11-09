@@ -28,3 +28,19 @@ it('does not resurrect a failed old snapshot after a newer queued snapshot succe
  writer.schedule({...emptyDraft(),displayName:'New'});const newer=writer.flush();reject(new Error('offline'));
  await expect(old).rejects.toThrow('offline');await newer;await writer.flush();expect(written).toEqual(['Old','New']);
 });
+it('skips identical acknowledged and queued snapshots but persists a later real change',async()=>{
+ const written:string[]=[];const writer=new DraftWriter(async d=>{written.push(d.displayName);});
+ const draft={...emptyDraft(),displayName:'Alex'};
+ writer.schedule(draft);await writer.flush();writer.schedule({...draft});await writer.flush();
+ writer.schedule({...draft,displayName:'Updated'});const pending=writer.flush();writer.schedule({...draft,displayName:'Updated'});await writer.flush();await pending;
+ expect(written).toEqual(['Alex','Updated']);writer.dispose();
+});
+it('does not treat a failed identical snapshot as saved',async()=>{
+ let attempts=0;const writer=new DraftWriter(async()=>{if(++attempts===1)throw new Error('offline');});
+ writer.schedule(emptyDraft());await expect(writer.flush()).rejects.toThrow('offline');writer.schedule(emptyDraft());await writer.flush();expect(attempts).toBe(2);writer.dispose();
+});
+it('rechecks snapshots after an explicit operation changes persisted data',async()=>{
+ let saved='';const writer=new DraftWriter(async d=>{saved=d.displayName;});const draft={...emptyDraft(),displayName:'Alex'};
+ writer.schedule(draft);await writer.flush();await writer.run(async()=>{saved='Changed by explicit save';});
+ writer.schedule(draft);await writer.flush();expect(saved).toBe('Alex');writer.dispose();
+});

@@ -8,7 +8,6 @@ import {
   AuthAction,
   AuthAlert,
   AuthScaffold,
-  AuthTextLink,
   authStyles,
 } from "./AuthScaffold";
 import { AuthInput } from "./AuthInput";
@@ -42,7 +41,7 @@ export default function ForgotPasswordScreen() {
       setSent(true);
   });
   const back = () => {
-    if (!action.pending) router.replace(authLink("/login"));
+    if (!action.pending) router.dismissTo(authLink("/login"));
   };
   return (
     <AuthScaffold
@@ -88,11 +87,6 @@ export default function ForgotPasswordScreen() {
           />
         </>
       )}
-      <AuthTextLink
-        label="Back to Login"
-        disabled={action.pending}
-        onPress={back}
-      />
     </AuthScaffold>
   );
 }

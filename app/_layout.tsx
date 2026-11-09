@@ -1,3 +1,4 @@
+import {stackOptions} from '../features/navigation/stack-options';
 export const unstable_settings = { anchor: "index" };
 import {ProfileProvider,useProfile} from "../features/profile/ProfileProvider";
 import { useEffect } from "react";
@@ -53,7 +54,7 @@ function Navigation() {
   return (
     <View style={styles.container}>
     <View style={styles.container} accessibilityElementsHidden={signingOut} importantForAccessibility={signingOut ? "no-hide-descendants" : "auto"}>
-    <Stack screenOptions={{ headerShown: false }}>
+    <Stack screenOptions={stackOptions}>
       <Stack.Screen name="index" />
       <Stack.Protected guard={mainAllowed}>
         <Stack.Screen name="(main)" />

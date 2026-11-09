@@ -2,6 +2,10 @@
 
 Status: approved by the user on 2026-11-08. Planning only; no product implementation yet.
 
+## User amendments and audit — 2026-11-09
+
+Later user instructions supersede the original interaction details: step1 has no Back/sign-out action and consumes Android Back; step2 returns with backward content-only motion; persistent wrapper bars stay still. Next/Finish are disabled until the existing validation rules pass. Reset-page duplicate Back to Login link was removed. See the implementation plan's 2026-11-09 audit for outstanding unchanged-draft write suppression, verification coverage and live deployment checks. Original design below is retained as history where it conflicts with these amendments.
+
 ## Intent and approved decisions
 
 New CamNorte 360 email/password registrations complete a required, resumable profile setup using the supplied Authentication Flow Figma designs. Existing accounts continue normal sign-in. Guest browsing and existing authentication behavior remain available. Geographic coverage remains Daet, Camarines Norte.

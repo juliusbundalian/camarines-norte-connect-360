@@ -5,6 +5,7 @@ import {requiresSetup} from './profile-cohort';
 import {defaultAvatarForGender} from './avatars';
 import {emptyDraft,type AvatarId,type Gender,type ProfileDraft,type ProfileStep,type UserProfile} from './profile-types';
 import {validateProfile} from './profile-validation';
+import {sameDraft} from './same-draft';
 import {DraftWriter} from './draft-writer';
 type Phase='guest'|'loading'|'legacy'|'required'|'complete'|'error';
 interface State {uid:string|null;phase:Phase;profile:UserProfile|null;draft:ProfileDraft;step:ProfileStep;error:string|null;saveState:'saved'|'saving'|'unsaved'}
@@ -55,6 +56,7 @@ export function ProfileProvider({children,service=profileService}:PropsWithChild
     accept(p);draftRef.current=preserved??p.draft;
     const writer=new DraftWriter(async draft=>{
      if(!alive()||!profileRef.current)throw new Error('The active account changed.');
+     if(sameDraft(profileRef.current.draft,draft)){if(sameDraft(draftRef.current,draft))dirty.current=false;return;}
      const saved=await reconcile(user.uid,alive,p=>service.saveDraft(user.uid,draft,p.revision));
      if(!alive())return;
      if(saved.status==='complete'){adoptCompleted(saved);return;}
@@ -70,7 +72,7 @@ export function ProfileProvider({children,service=profileService}:PropsWithChild
  },[auth.ready,auth.user?.uid,auth.user?.source,auth.user?.creationTimeMs,attempt,service]);
  const setDraft=(values:Partial<ProfileDraft>)=>{
   if(stateRef.current.phase!=='required'||finishing.current)return;
-  const next={...draftRef.current,...values};draftRef.current=next;dirty.current=true;patch({draft:next});writerRef.current?.schedule(next);
+  const next={...draftRef.current,...values};if(sameDraft(next,draftRef.current))return;draftRef.current=next;dirty.current=true;patch({draft:next});writerRef.current?.schedule(next);
  };
  const flushDraft=()=>writerRef.current?.flush()??Promise.resolve();
  const saveGender=async(gender:Gender)=>{
