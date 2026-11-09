@@ -30,7 +30,9 @@ export function samePersonalInfo(a: PersonalInfo,b: PersonalInfo): boolean {
 }
 
 export function longBirthdate(iso: string): string {
-  const [year,month,day]=iso.split('-').map(Number);
+  const year=Number(iso.slice(0,4));
+  const month=Number(iso.slice(5,7));
+  const day=Number(iso.slice(8,10));
   const months=['January','February','March','April','May','June','July','August','September','October','November','December'];
   return `${months[month-1]} ${day}, ${year}`;
 }
