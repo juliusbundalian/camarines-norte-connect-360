@@ -1,4 +1,4 @@
-import {createContext,useContext,useEffect,useRef,useState,type PropsWithChildren} from 'react';
+import {createContext,useContext,useEffect,useRef,useState,useMemo,type PropsWithChildren} from 'react';
 import {useAuth} from '../auth/AuthProvider';
 import {profileService,type ProfileService} from '../../services/firebase/profile-service';
 import {requiresSetup} from './profile-cohort';
@@ -7,13 +7,20 @@ import {emptyDraft,type AvatarId,type Gender,type ProfileDraft,type ProfileStep,
 import {validateProfile} from './profile-validation';
 import {sameDraft} from './same-draft';
 import {DraftWriter} from './draft-writer';
+import {getAccountProfileService} from '../../services/firebase/account-profile-service';
+import {ProfileConflictError,type AccountProfileService} from '../../services/firebase/account-profile-types';
+import type {CompletedProfile} from './profile-types';
 type Phase='guest'|'loading'|'legacy'|'required'|'complete'|'error';
-interface State {uid:string|null;phase:Phase;profile:UserProfile|null;draft:ProfileDraft;step:ProfileStep;error:string|null;saveState:'saved'|'saving'|'unsaved'}
-interface ProfileValue extends State {setDraft(patch:Partial<ProfileDraft>):void;saveGender(gender:Gender):Promise<void>;applyAvatar(id:AvatarId):Promise<void>;flushDraft():Promise<void>;finish(today:string):Promise<void>;retry():void}
+interface State {uid:string|null;phase:Phase;profile:UserProfile|null;draft:ProfileDraft;step:ProfileStep;error:string|null;saveState:'saved'|'saving'|'unsaved';accountLoading:boolean;accountError:string|null}
+interface ProfileValue extends State {refreshAccount():Promise<void>;savePersonalInfo(values:CompletedProfile,revision:number|null):Promise<void>;saveAccountAvatar(id:AvatarId):Promise<void>;setDraft(patch:Partial<ProfileDraft>):void;saveGender(gender:Gender):Promise<void>;applyAvatar(id:AvatarId):Promise<void>;flushDraft():Promise<void>;finish(today:string):Promise<void>;retry():void}
 const Context=createContext<ProfileValue|null>(null);
-const initial=():State=>({uid:null,phase:'guest',profile:null,draft:emptyDraft(),step:'gender',error:null,saveState:'saved'});
-export function ProfileProvider({children,service=profileService}:PropsWithChildren<{service?:ProfileService}>){
- const auth=useAuth();const [state,setState]=useState<State>(initial);const [attempt,setAttempt]=useState(0);
+const initial=():State=>({uid:null,phase:'guest',profile:null,draft:emptyDraft(),step:'gender',error:null,saveState:'saved',accountLoading:false,accountError:null});
+export function ProfileProvider({children,service=profileService,accountService}:PropsWithChildren<{service?:ProfileService;accountService?:AccountProfileService}>){
+ const auth=useAuth();
+ const authRef=useRef(auth.user);authRef.current=auth.user;
+ const account=useMemo(()=>accountService??(auth.user?.source==='native'?getAccountProfileService('native'):service),[accountService,auth.user?.source,service]);
+ const accountMutation=useRef<Promise<void>|null>(null);
+ const [state,setState]=useState<State>(initial);const [attempt,setAttempt]=useState(0);
  const stateRef=useRef(state);stateRef.current=state;
  const profileRef=useRef<UserProfile|null>(null),draftRef=useRef(emptyDraft());
  const writerRef=useRef<DraftWriter|null>(null);const session=useRef(0);const dirty=useRef(false);const currentUid=useRef<string|null>(null);
@@ -38,6 +45,7 @@ export function ProfileProvider({children,service=profileService}:PropsWithChild
   const same=uid===currentUid.current;
   const preserved=same&&dirty.current?{...draftRef.current}:null;
   if(!same){dirty.current=false;finishing.current=null;}
+  accountMutation.current=null;
   currentUid.current=uid;profileRef.current=null;draftRef.current=preserved??emptyDraft();
   writerRef.current?.dispose();writerRef.current=null;
   setState({...initial(),uid,draft:draftRef.current,phase:!auth.ready?'loading':uid?'loading':'guest'});
@@ -47,7 +55,17 @@ export function ProfileProvider({children,service=profileService}:PropsWithChild
    if(!auth.ready||!user)return;
    try{
     if(user.source==='native'){
-     if(!requiresSetup(user,null)){if(alive())patch({phase:'legacy'});return;}
+     if(!requiresSetup(user,null)){
+      patch({phase:'legacy',accountLoading:true});
+      try {
+       const saved=await account.load(user.uid);
+       if(alive()){
+        if(saved?.status==='complete')adoptCompleted(saved);
+        patch({accountLoading:false});
+       }
+      }catch(error){if(alive())patch({accountLoading:false,accountError:error instanceof Error?error.message:'Unable to load account. Please retry.'});}
+      return;
+     }
      throw new Error('This session cannot access profile setup. Please sign out and sign in with email.');
     }
     let p=await service.load(user.uid);if(!alive())return;
@@ -69,7 +87,7 @@ export function ProfileProvider({children,service=profileService}:PropsWithChild
   }
   void initialize();
   return()=>{active=false;writerRef.current?.dispose();};
- },[auth.ready,auth.user?.uid,auth.user?.source,auth.user?.creationTimeMs,attempt,service]);
+ },[auth.ready,auth.user?.uid,auth.user?.source,auth.user?.creationTimeMs,attempt,service,account]);
  const setDraft=(values:Partial<ProfileDraft>)=>{
   if(stateRef.current.phase!=='required'||finishing.current)return;
   const next={...draftRef.current,...values};if(sameDraft(next,draftRef.current))return;draftRef.current=next;dirty.current=true;patch({draft:next});writerRef.current?.schedule(next);
@@ -104,8 +122,45 @@ export function ProfileProvider({children,service=profileService}:PropsWithChild
   })().finally(()=>{if(generation===session.current)finishing.current=null;});
   finishing.current=request;return request;
  };
+ const refreshAccount=async()=>{
+  const user=auth.user,generation=session.current;
+  if(!user)throw new Error('The active account changed.');
+  patch({accountLoading:true,accountError:null});
+  try{
+   const saved=await account.load(user.uid);
+   if(generation!==session.current||authRef.current?.uid!==user.uid||authRef.current?.source!==user.source)throw new Error('The active account changed.');
+   if(saved?.status==='complete')adoptCompleted(saved);
+  }catch(error){
+   if(generation===session.current)patch({accountError:error instanceof Error?error.message:'Unable to load account. Please retry.'});
+   throw error;
+  }finally{if(generation===session.current)patch({accountLoading:false});}
+ };
+ const mutateAccount=(operation:(uid:string)=>Promise<UserProfile>):Promise<void>=>{
+  if(accountMutation.current)return accountMutation.current;
+  const user=auth.user,generation=session.current;
+  if(!user||!['complete','legacy'].includes(stateRef.current.phase))return Promise.reject(new Error('Please wait for your account to load.'));
+  const alive=()=>generation===session.current&&authRef.current?.uid===user.uid&&authRef.current?.source===user.source;
+  const request=(async()=>{
+   try{
+    const saved=await operation(user.uid);
+    if(!alive())throw new Error('The active account changed.');
+    adoptCompleted(saved);
+   }catch(error){
+    if(!alive())throw new Error('The active account changed.');
+    if(error instanceof ProfileConflictError){
+     if(error.latest?.status==='complete')adoptCompleted(error.latest);
+     else if(!error.latest){profileRef.current=null;patch({profile:null,phase:'legacy'});}
+    }
+    throw error;
+   }
+  })().finally(()=>{if(accountMutation.current===request)accountMutation.current=null;});
+  accountMutation.current=request;
+  return request;
+ };
+ const savePersonalInfo=(values:CompletedProfile,revision:number|null)=>mutateAccount(uid=>account.savePersonalInfo(uid,values,revision));
+ const saveAccountAvatar=(id:AvatarId)=>mutateAccount(uid=>account.saveAvatar(uid,id));
  // A changed UID is hidden synchronously, before the effect resets its state.
  const visible=state.uid===(auth.user?.uid??null)?state:{...initial(),phase:auth.user?'loading' as const:'guest' as const};
- return <Context.Provider value={{...visible,setDraft,saveGender,applyAvatar,flushDraft,finish,retry:()=>setAttempt(v=>v+1)}}>{children}</Context.Provider>;
+ return <Context.Provider value={{...visible,refreshAccount,savePersonalInfo,saveAccountAvatar,setDraft,saveGender,applyAvatar,flushDraft,finish,retry:()=>setAttempt(v=>v+1)}}>{children}</Context.Provider>;
 }
 export function useProfile(){const value=useContext(Context);if(!value)throw new Error('useProfile requires ProfileProvider');return value;}
