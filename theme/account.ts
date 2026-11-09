@@ -1,4 +1,5 @@
 import {menuTokens} from './menu';
+import {profileTokens} from './profile';
 /** Manage Account 412×892 frames inspected in Figma desktop. */
 export const accountTokens={
   ...menuTokens,
@@ -6,5 +7,7 @@ export const accountTokens={
   fieldHeight:56,
   fieldRadius:16,
   actionColor:'#FFAB00',
-  border:'rgba(34,48,62,0.2)',
+  border:profileTokens.colors.border,
+  fieldText:profileTokens.body,
+  fieldLabel:profileTokens.label,
 } as const;

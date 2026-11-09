@@ -141,3 +141,23 @@ it('keeps native legacy browsing available after an account read failure',async(
  const {result}=await renderHook(useProfile,{wrapper:({children})=><ProfileProvider service={js} accountService={native}>{children}</ProfileProvider>});
  expect(result.current.phase).toBe('legacy');expect(result.current.accountError).toBe('offline');
 });
+
+test.each(['a','b'])('rejects a queued JS Save before writing when native %s becomes authoritative',async uid=>{
+ const js=service(completed()),native=service({...completed(),displayName:'Native'});
+ const hook=await renderHook(useProfile,{wrapper:({children})=><ProfileProvider service={js} accountService={useAuth().user?.source==='native'?native:js}>{children}</ProfileProvider>});
+ const queuedSave=hook.result.current.savePersonalInfo;
+ auth({...fresh,uid,source:'native',creationTimeMs:0});await hook.rerender({});
+ expect(hook.result.current.profile?.displayName).toBe('Native');
+ await act(async()=>{await expect(queuedSave({displayName:'Stale JS edit',gender:'male',birthdate:'2000-01-01',mobileNumber:null,avatarId:'avatar-1'},0)).rejects.toThrow(/account/);});
+ expect(js.savePersonalInfo).not.toHaveBeenCalled();expect(native.savePersonalInfo).not.toHaveBeenCalled();
+});
+it('rejects old account callbacks after initialization restarts for the same identity',async()=>{
+ const s=service(completed());const hook=await renderHook(useProfile,{wrapper:({children})=><ProfileProvider service={s}>{children}</ProfileProvider>});
+ const queuedSave=hook.result.current.saveAccountAvatar,queuedRefresh=hook.result.current.refreshAccount;
+ await act(()=>hook.result.current.retry());const reads=s.load.mock.calls.length;
+ await act(async()=>{
+  await expect(queuedSave('avatar-6')).rejects.toThrow(/account/);
+  await expect(queuedRefresh()).rejects.toThrow(/account/);
+ });
+ expect(s.saveAvatar).not.toHaveBeenCalled();expect(s.load).toHaveBeenCalledTimes(reads);
+});

@@ -60,10 +60,10 @@ export function PersonalInfoScreen() {
   <ChangesSavedModal visible={saved} onConfirm={returnToAccount}/></>;
 }
 const s=StyleSheet.create({
-  group:{gap:4},label:{fontFamily:t.fonts.regular,fontSize:14,lineHeight:20,color:t.colors.text},
-  input:{minHeight:56,paddingHorizontal:16,paddingVertical:12,borderRadius:16,borderWidth:1,borderColor:t.border,fontFamily:t.fonts.regular,fontSize:16,lineHeight:24,color:t.colors.text},
+  group:{gap:4},label:{...t.fieldLabel,fontFamily:t.fonts.regular,color:t.colors.text},
+  input:{...t.fieldText,minHeight:56,paddingHorizontal:16,paddingVertical:12,borderRadius:16,borderWidth:1,borderColor:t.border,fontFamily:t.fonts.regular,color:t.colors.text},
   phone:{flexDirection:'row',borderRadius:16,borderWidth:1,borderColor:t.border,overflow:'hidden'},
-  prefix:{padding:16,borderRightWidth:1,borderColor:t.border,fontFamily:t.fonts.regular,fontSize:16,lineHeight:24,color:t.colors.text},
+  prefix:{...t.fieldText,padding:16,borderRightWidth:1,borderColor:t.border,fontFamily:t.fonts.regular,color:t.colors.text},
   phoneInput:{flex:1,minWidth:0,borderWidth:0,borderRadius:0},
   save:{minHeight:48,borderRadius:12,padding:12,backgroundColor:t.actionColor,alignItems:'center',justifyContent:'center'},
   saveText:{fontFamily:'PublicSans-Medium',fontSize:16,lineHeight:24,letterSpacing:-0.85,color:t.colors.text},disabled:{opacity:0.4},

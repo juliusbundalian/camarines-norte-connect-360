@@ -122,38 +122,52 @@ export function ProfileProvider({children,service=profileService,accountService}
   })().finally(()=>{if(generation===session.current)finishing.current=null;});
   finishing.current=request;return request;
  };
+ const accountUser=auth.user;
+ const accountGeneration=session.current;
+ const accountIsCurrent=()=>!!accountUser && accountGeneration===session.current &&
+  authRef.current?.uid===accountUser.uid && authRef.current?.source===accountUser.source;
  const refreshAccount=async()=>{
-  const user=auth.user,generation=session.current;
-  if(!user)throw new Error('The active account changed.');
+  if(!accountUser||!accountIsCurrent())throw new Error('The active account changed.');
   patch({accountLoading:true,accountError:null});
   try{
-   const saved=await account.load(user.uid);
-   if(generation!==session.current||authRef.current?.uid!==user.uid||authRef.current?.source!==user.source)throw new Error('The active account changed.');
+   const saved=await account.load(accountUser.uid);
+   if(!accountIsCurrent())throw new Error('The active account changed.');
    if(saved?.status==='complete')adoptCompleted(saved);
   }catch(error){
-   if(generation===session.current)patch({accountError:error instanceof Error&&!('code' in error)?error.message:'Unable to load account. Please retry.'});
+   if(accountIsCurrent()){
+    patch({accountError:error instanceof Error&&!('code' in error)?error.message:'Unable to load account. Please retry.'});
+   }
    throw error;
-  }finally{if(generation===session.current)patch({accountLoading:false});}
+  }finally{
+   if(accountIsCurrent())patch({accountLoading:false});
+  }
  };
  const mutateAccount=(operation:(uid:string)=>Promise<UserProfile>):Promise<void>=>{
+  // Check the callback's render identity before joining a request or touching either SDK.
+  if(!accountUser||!accountIsCurrent())return Promise.reject(new Error('The active account changed.'));
   if(accountMutation.current)return accountMutation.current;
-  const user=auth.user,generation=session.current;
-  if(!user||!['complete','legacy'].includes(stateRef.current.phase))return Promise.reject(new Error('Please wait for your account to load.'));
-  const alive=()=>generation===session.current&&authRef.current?.uid===user.uid&&authRef.current?.source===user.source;
+  if(!['complete','legacy'].includes(stateRef.current.phase)){
+   return Promise.reject(new Error('Please wait for your account to load.'));
+  }
   const request=(async()=>{
    try{
-    const saved=await operation(user.uid);
-    if(!alive())throw new Error('The active account changed.');
+    const saved=await operation(accountUser.uid);
+    if(!accountIsCurrent())throw new Error('The active account changed.');
     adoptCompleted(saved);
    }catch(error){
-    if(!alive())throw new Error('The active account changed.');
+    if(!accountIsCurrent())throw new Error('The active account changed.');
     if(error instanceof ProfileConflictError){
      if(error.latest?.status==='complete')adoptCompleted(error.latest);
-     else if(!error.latest){profileRef.current=null;patch({profile:null,phase:'legacy'});}
+     else if(!error.latest){
+      profileRef.current=null;
+      patch({profile:null,phase:'legacy'});
+     }
     }
     throw error;
    }
-  })().finally(()=>{if(accountMutation.current===request)accountMutation.current=null;});
+  })().finally(()=>{
+   if(accountMutation.current===request)accountMutation.current=null;
+  });
   accountMutation.current=request;
   return request;
  };

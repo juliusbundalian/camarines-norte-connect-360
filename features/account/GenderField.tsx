@@ -21,9 +21,9 @@ export function GenderField({value,onChange,disabled=false}:{value:Gender|null;o
   </View>;
 }
 const s=StyleSheet.create({
-  group:{gap:4},label:{fontFamily:t.fonts.regular,fontSize:14,lineHeight:20,color:t.colors.text},
+  group:{gap:4},label:{...t.fieldLabel,fontFamily:t.fonts.regular,color:t.colors.text},
   field:{minHeight:56,borderRadius:16,borderWidth:1,borderColor:t.border,paddingHorizontal:16,paddingVertical:12,flexDirection:'row',alignItems:'center',justifyContent:'space-between'},
-  text:{fontFamily:t.fonts.regular,fontSize:16,lineHeight:24,color:t.colors.text},
+  text:{...t.fieldText,fontFamily:t.fonts.regular,color:t.colors.text},
   overlay:{flex:1,justifyContent:'center',padding:24,backgroundColor:'rgba(34,48,62,0.5)'},
   card:{backgroundColor:t.colors.card,borderRadius:16,padding:16,maxHeight:'80%',maxWidth:380,width:'100%',alignSelf:'center'},
   heading:{fontFamily:t.fonts.medium,padding:12},choice:{minHeight:48,padding:12},
