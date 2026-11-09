@@ -39,19 +39,26 @@ service cloud.firestore {
         && d.displayName.size()>0 && d.displayName.size()<=200 && d.displayName.matches('.*[^\\s].*')
         && d.birthdate is string && d.birthdate.matches('[0-9]{4}-[0-9]{2}-[0-9]{2}') && dateValid(d.birthdate)
         && (d.mobileNumber==null || (d.mobileNumber is string && d.mobileNumber.matches('\\+639[0-9]{9}')))
-        && d.completedAt==request.time && d.draft.displayName==d.displayName
+        && d.completedAt is timestamp && d.draft.displayName==d.displayName
         && d.draft.birthdateText==dateDisplay(d.birthdate)
         && d.draft.mobileText==(d.mobileNumber==null?'':d.mobileNumber));
   }
   match /users/{uid} {
    allow get: if request.auth!=null && request.auth.uid==uid;
    allow create: if request.auth!=null && request.auth.uid==uid && valid(request.resource.data)
-    && request.resource.data.status=='incomplete' && request.resource.data.revision==0
-    && request.resource.data.currentStep=='gender' && request.resource.data.gender==null
-    && request.resource.data.createdAt==request.time;
-   allow update: if request.auth!=null && request.auth.uid==uid && resource.data.status=='incomplete'
+    && request.resource.data.revision==0 && request.resource.data.createdAt==request.time
+    && (request.resource.data.status=='incomplete'
+      ? request.resource.data.currentStep=='gender' && request.resource.data.gender==null
+      : request.resource.data.completedAt==request.time);
+   allow update: if request.auth!=null && request.auth.uid==uid
     && valid(request.resource.data) && request.resource.data.createdAt==resource.data.createdAt
-    && request.resource.data.revision==resource.data.revision+1;
+    && request.resource.data.revision==resource.data.revision+1
+    && request.resource.data.schemaVersion==resource.data.schemaVersion
+    && request.resource.data.onboardingVersion==resource.data.onboardingVersion
+    && (resource.data.status=='complete'
+      ? request.resource.data.status=='complete' && request.resource.data.currentStep==resource.data.currentStep
+        && request.resource.data.completedAt==resource.data.completedAt
+      : request.resource.data.status=='incomplete' || request.resource.data.completedAt==request.time);
   }
  }
 }

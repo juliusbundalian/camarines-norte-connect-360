@@ -56,3 +56,37 @@ test('rules reject malformed dates, completion, oversized drafts and timestamp c
  await assert.rejects(service.complete(uid,{gender:'other',displayName:' ',birthdate:'2000-01-01',mobileNumber:null,avatarId:'avatar-1'},1),deny);
  assert.equal((await service.load(uid)).status,'incomplete');
 });
+
+test('account edits preserve lifecycle and unrelated fields, with conflict and retry safety',async()=>{
+ await signOut(getFirebaseAuth());
+ const id=(await createUserWithEmailAndPassword(getFirebaseAuth(),`edit-${randomUUID()}@example.com`,'Example password 123')).user.uid;
+ const values={gender:'male',displayName:'First',birthdate:'2000-01-01',mobileNumber:null,avatarId:'avatar-2'};
+ const first=await service.savePersonalInfo(id,values,null);
+ assert.equal(first.status,'complete');assert.equal(first.revision,0);
+ const retry=await service.savePersonalInfo(id,values,null);assert.equal(retry.revision,0);
+ const changed={...values,displayName:'Updated',gender:'other',birthdate:'2024-02-29',mobileNumber:'+639171234567',avatarId:'avatar-9'};
+ const saved=await service.savePersonalInfo(id,changed,0);
+ assert.equal(saved.avatarId,'avatar-2');assert.equal(saved.revision,1);
+ assert.equal(saved.createdAt.toMillis(),first.createdAt.toMillis());
+ assert.equal(saved.completedAt.toMillis(),first.completedAt.toMillis());
+ assert.equal(saved.draft.birthdateText,'02/29/2024');assert.equal(saved.draft.mobileText,'+639171234567');
+ await assert.rejects(service.savePersonalInfo(id,{...changed,displayName:'Stale'},0),/updated elsewhere/);
+ const avatar=await service.saveAvatar(id,'avatar-6');assert.equal(avatar.displayName,'Updated');assert.equal(avatar.revision,2);
+ assert.equal((await service.saveAvatar(id,'avatar-6')).revision,2);
+ const ref=doc(getFirestoreDb(),'users',id);
+ for(const patch of [{completedAt:serverTimestamp()},{createdAt:serverTimestamp()},{status:'incomplete'},{onboardingVersion:2},{draft:{...avatar.draft,displayName:'Mismatch'}}]){
+  await assert.rejects(updateDoc(ref,{...patch,revision:3,updatedAt:serverTimestamp()}),deny);
+ }
+ await assert.rejects(service.savePersonalInfo(id,{...changed,birthdate:'2023-02-29'},2),deny);
+});
+
+test('account saves cannot hijack incomplete setup or recreate a deleted baseline',async()=>{
+ await signOut(getFirebaseAuth());
+ const id=(await createUserWithEmailAndPassword(getFirebaseAuth(),`incomplete-edit-${randomUUID()}@example.com`,'Example password 123')).user.uid;
+ const values={gender:'male',displayName:'First',birthdate:'2000-01-01',mobileNumber:null,avatarId:'avatar-2'};
+ await assert.rejects(service.savePersonalInfo(id,values,4),/updated elsewhere/);
+ await service.ensure(id,emptyDraft());
+ await assert.rejects(service.savePersonalInfo(id,values,0),/setup/);
+ await assert.rejects(service.saveAvatar(id,'avatar-6'),/setup/);
+ await assert.rejects(service.savePersonalInfo('someone-else',values,null),/account/);
+});

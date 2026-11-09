@@ -9,7 +9,7 @@ const fresh={uid:'a',email:'a@example.com',phoneNumber:null,source:'js',creation
 const seed=():UserProfile=>({schemaVersion:1,onboardingVersion:1,status:'incomplete',currentStep:'gender',gender:null,draft:emptyDraft(),avatarId:'avatar-1',avatarSelectionSource:'default',displayName:null,birthdate:null,mobileNumber:null,createdAt:{} as any,updatedAt:{} as any,completedAt:null,revision:0});
 function service(){let data:UserProfile|null=null;let fail=false;return {
  get data(){return data;},set fail(v:boolean){fail=v;},
- load:jest.fn(async()=>data),ensure:jest.fn(async()=>data??=seed()),
+ savePersonalInfo:jest.fn(),saveAvatar:jest.fn(),load:jest.fn(async()=>data),ensure:jest.fn(async()=>data??=seed()),
  saveGender:jest.fn(async(_uid,gender,draft,revision)=>data={...data!,gender,draft,currentStep:'profile',revision:revision+1}),
  saveDraft:jest.fn(async(_uid,draft,revision)=>{if(fail)throw new Error('offline');return data={...data!,draft,revision:revision+1};}),
  complete:jest.fn(async(_uid,p,revision)=>data={...data!,...p,status:'complete',revision:revision+1})

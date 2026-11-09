@@ -2,7 +2,9 @@ import {doc,getDocFromServer,runTransaction,serverTimestamp,type DocumentData} f
 import {getFirebaseAuth,getFirestoreDb} from './client';
 import type {CompletedProfile,Gender,ProfileDraft,UserProfile} from '../../features/profile/profile-types';
 import {formatBirthdate} from '../../features/profile/profile-validation';
-export interface ProfileService {
+import type {AccountProfileService} from './account-profile-types';
+import {accountProfileOperations} from './account-profile-operations';
+export interface ProfileService extends AccountProfileService {
  load(uid:string):Promise<UserProfile|null>;
  ensure(uid:string,draft:ProfileDraft):Promise<UserProfile>;
  saveGender(uid:string,gender:Gender,draft:ProfileDraft,revision:number):Promise<UserProfile>;
@@ -27,7 +29,22 @@ async function mutate(uid:string,revision:number,patch:(p:UserProfile)=>Document
  });
  const result=await load(uid);if(!result)throw new Error('Unable to load the saved profile.');return result;
 }
+const accountOperations=accountProfileOperations({
+ load,
+ timestamp:serverTimestamp,
+ async transact(uid,change){
+  const ref=reference(uid);
+  await runTransaction(getFirestoreDb(),async tx=>{
+   owner(uid);const snap=await tx.get(ref);
+   const data=change(snap.exists()?decode(snap.data()):null);
+   owner(uid);
+   if(data){if(snap.exists())tx.update(ref,data);else tx.set(ref,data);}
+  });
+  owner(uid);
+ }
+});
 export const profileService:ProfileService={
+ ...accountOperations,
  load,
  async ensure(uid,draft){
   const ref=reference(uid);
