@@ -1,6 +1,6 @@
 import {doc,getDocFromServer,runTransaction,serverTimestamp,type DocumentData} from 'firebase/firestore';
 import {getFirebaseAuth,getFirestoreDb} from './client';
-import type {CompletedProfile,Gender,ProfileDraft,UserProfile} from '../../features/profile/profile-types';
+import type {AvatarId,CompletedProfile,Gender,ProfileDraft,UserProfile} from '../../features/profile/profile-types';
 import {formatBirthdate} from '../../features/profile/profile-validation';
 import type {AccountProfileService} from './account-profile-types';
 import {accountProfileOperations} from './account-profile-operations';
@@ -31,14 +31,25 @@ async function mutate(uid:string,revision:number,patch:(p:UserProfile)=>Document
 }
 const accountOperations=accountProfileOperations({
  load,
+ async loadLegacyAvatar(uid){
+  owner(uid);
+  const snapshot=await getDocFromServer(doc(getFirestoreDb(),'accountAvatars',uid));
+  owner(uid);
+  return snapshot.data()?.avatarId as AvatarId|undefined ?? null;
+ },
  timestamp:serverTimestamp,
  async transact(uid,change){
   const ref=reference(uid);
   await runTransaction(getFirestoreDb(),async tx=>{
    owner(uid);const snap=await tx.get(ref);
-   const data=change(snap.exists()?decodeProfile(snap.data()):null);
+   const avatarRef=doc(getFirestoreDb(),'accountAvatars',uid);
+   const avatar=snap.exists()?null:(await tx.get(avatarRef)).data()?.avatarId as AvatarId|undefined;
+   const data=change(snap.exists()?decodeProfile(snap.data()):null,avatar??null);
    owner(uid);
-   if(data){if(snap.exists())tx.update(ref,data);else tx.set(ref,data);}
+   if(!data)return;
+   if('legacyAvatar' in data)tx.set(avatarRef,{avatarId:data.legacyAvatar});
+   else if(snap.exists())tx.update(ref,data.profile);
+   else tx.set(ref,data.profile);
   });
   owner(uid);
  }

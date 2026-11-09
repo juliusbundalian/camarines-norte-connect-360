@@ -410,3 +410,23 @@ Production Firestore enablement and reviewed rules deployment remain release pre
 
 Final environment checkpoint: final main native ARM64 rebuild passed59s (447 tasks); installed with adb install -r and launched ph.cn360connect.app without clearing data. Main Metro listens only on127.0.0.1:8081 with sole owned reverse8081→8081. QA uninstall succeeded, ports8083/8088/9098 have no listeners.
 Main launch observed Home with all five tabs after Metro bundled successfully; no user credentials or profile were changed for this restoration.
+
+## Independent avatar editing — 2026-11-09
+
+The Account avatar picker now saves independently for accounts with or without Personal Info. Before the first complete profile save, the choice is stored in an owner-only avatar preference. The first profile save carries the choice forward transactionally. This supersedes the original Manage Account plan's missing-profile redirect.
+
+The component regression reproduced the redirect before the fix. Afterward, 268 Jest tests across 34 suites, strict TypeScript, six Auth/Firestore emulator tests, and the ARM64 Android debug build passed. On Diorama_API_35 (Android 15, API 35, emulator-5554), a disposable pre-cutoff JS-auth fixture saved Avatar 6 while Account still showed empty personal fields. The choice remained selected after a process restart. The separate personal-info pencil opened the editor directly. This check used local Firebase rules. Production rules deployment and the restored native-auth avatar-only flow on a device remain unverified.
+
+The Account avatar picker now shows a spinner and “Saving…” while Done is pending. The delayed-save regression passed with the full 269-test suite and strict TypeScript. The ARM64 debug build passed. On Android 15/API 35 (Diorama_API_35, emulator-5554), a disposable local Firebase fixture with a temporary delay showed the busy button, blocked hardware Back, closed the picker after acknowledgement, and retained the saved selection when reopened. The delay was confined to the QA copy.
+
+## Guest Account Login Back — 2026-11-09
+
+Reproduced the repeated Login screen on Android 15/API 35 (Diorama_API_35, emulator-5554). Guest Menu Account now opens Login directly with Account as the post-authentication destination. Login's toolbar and hardware Back dismiss to Menu for this flow. Rechecked both controls on the installed Android app with the updated Metro bundle. Router integration tests verify guest Back and post-sign-in Account routing. Strict TypeScript, 272 tests across 34 suites, and the ARM64 debug build passed.
+
+## Wishlist authentication gate — 2026-11-09
+
+Guests opening My Wishlist from Menu or a direct link now see Login. Login retains Wishlist as its post-authentication destination, and toolbar or hardware Back returns to Menu. The Wishlist route rechecks the session on sign-out. On Android 15/API 35 (Diorama_API_35, emulator-5554), verified guest Menu entry, both Back controls, and a direct link with the updated Metro bundle. Router integration tests cover authenticated return and sign-out. Strict TypeScript, 275 tests across 34 suites, and the ARM64 debug build passed.
+
+## Register Back — 2026-11-09
+
+Reproduced Menu → Sign up → Register Back opening Login on Android 15/API 35 (Diorama_API_35, emulator-5554). Register now pops the actual previous route with either Back control. The explicit Log in link retains its auth return target. Verified toolbar and hardware Back to guest Menu and toolbar Back to Login when Login opened Register. Strict TypeScript, 278 tests across 34 suites, and the ARM64 debug build passed.

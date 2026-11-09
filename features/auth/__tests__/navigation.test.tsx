@@ -30,12 +30,14 @@ import Wishlist from "../../../app/(main)/wishlist";
 import Notifications from "../../../app/(main)/notifications";
 import Privacy from "../../../app/(main)/privacy-policy";
 import Terms from "../../../app/terms";
+import LoginScreen from "../LoginScreen";
+import RegisterScreen from "../RegisterScreen";
 import WelcomeRedirect from "../../../app/(app)/welcome";
 import RetiredVerification from "../../../app/(auth)/verify-phone";
 import { useAuth } from "../AuthProvider";
 import { useOnboarding } from "../../onboarding/OnboardingProvider";
 import { Button } from "react-native-paper";
-jest.mock("../../../services/firebase/profile-service",()=>({profileService:{load:jest.fn().mockResolvedValue(null)}}));
+jest.mock("../../../services/firebase/profile-service",()=>({profileService:{load:jest.fn().mockResolvedValue(null),loadLegacyAvatar:jest.fn().mockResolvedValue(null)}}));
 jest.mock("../../../services/firebase/auth-service", () => ({
   getAuthService: jest.fn(),
 }));
@@ -226,7 +228,7 @@ test("guests can traverse all tabs with the selected state and open public Terms
   await act(() => next(user));
   expect(screen).toHavePathname('/terms');
 });
-test.each(['/wishlist','/notifications','/privacy-policy'])("guest deep link %s opens a placeholder without login", async path => {
+test.each(['/notifications','/privacy-policy'])("guest deep link %s opens a placeholder without login", async path => {
   await renderRouter(routes, {initialUrl:path});
   await act(() => next(null));
   await waitFor(() => expect(screen).toHavePathname(path));
@@ -288,4 +290,50 @@ test('a guest Account deep link opens Login and returns to Account after authent
  expect(screen).toHavePathname('/login');expect(screen).toHaveSearchParams({returnTo:'/account'});
  await act(()=>next(user));await waitFor(()=>expect(screen).toHavePathname('/account'));
  expect(await screen.findByText('PERSONAL INFO')).toBeTruthy();
+});
+
+
+test.each([['Account','/account'],['My Wishlist','/wishlist']])('guest Menu %s opens Login and Back reveals Menu',async(label,path)=>{
+ await renderRouter({...routes,'(auth)/login':LoginScreen},{initialUrl:'/menu'});
+ await act(()=>next(null));
+ await fireEvent.press(await screen.findByRole('button',{name:label}));
+ expect(screen).toHavePathname('/login');
+ expect(screen).toHaveSearchParams({returnTo:path});
+ await fireEvent.press(screen.getByRole('button',{name:'Back'}));
+ expect(screen).toHavePathname('/menu');
+ expect(screen.getByText('Hello, Guest')).toBeTruthy();
+});
+
+test.each([['Account','/account','PERSONAL INFO'],['My Wishlist','/wishlist','My Wishlist']])('signing in from the guest Menu %s flow opens its destination',async(label,path,content)=>{
+ await renderRouter({...routes,'(auth)/login':LoginScreen},{initialUrl:'/menu'});
+ await act(()=>next(null));
+ await fireEvent.press(await screen.findByRole('button',{name:label}));
+ expect(screen).toHavePathname('/login');
+ await act(()=>next(user));
+ await waitFor(()=>expect(screen).toHavePathname(path));
+ expect(await screen.findByText(content)).toBeTruthy();
+});
+
+
+test('Wishlist deep links require authentication, including after sign-out',async()=>{
+ await renderRouter(routes,{initialUrl:'/wishlist'});
+ await act(()=>next(null));
+ expect(screen).toHavePathname('/login');
+ expect(screen).toHaveSearchParams({returnTo:'/wishlist'});
+ await act(()=>next(user));
+ await waitFor(()=>expect(screen).toHavePathname('/wishlist'));
+ await act(()=>next(null));
+ expect(screen).toHavePathname('/login');
+ expect(screen).toHaveSearchParams({returnTo:'/wishlist'});
+});
+
+
+test.each(['/menu','/login'])('Register Back returns to the previous %s screen',async(source)=>{
+ await renderRouter({...routes,'(auth)/login':LoginScreen,'(auth)/register':RegisterScreen},{initialUrl:'/menu'});
+ await act(()=>next(null));
+ if(source==='/login')await fireEvent.press(await screen.findByRole('button',{name:'Login'}));
+ await fireEvent.press(await screen.findByRole('button',{name:'Sign up'}));
+ expect(screen).toHavePathname('/register');
+ await fireEvent.press(screen.getByRole('button',{name:'Back'}));
+ expect(screen).toHavePathname(source);
 });

@@ -521,11 +521,11 @@ test("registration requires the terms checkbox and keeps the Terms link independ
 });
 
 
-test("auth navigation preserves its safe source and cold Back returns to that source", async () => {
+test("account authentication preserves its sign-in destination and cold Back opens Menu", async () => {
   jest.mocked(useLocalSearchParams).mockReturnValue({returnTo:'/account'});
   await show(<LoginScreen/>);
   await fireEvent.press(screen.getByRole('button',{name:'Back'}));
-  expect(router.dismissTo).toHaveBeenCalledWith('/account');
+  expect(router.dismissTo).toHaveBeenCalledWith('/menu');
   await fireEvent.press(screen.getByRole('button',{name:'Sign up'}));
   expect(router.push).toHaveBeenCalledWith({pathname:'/register',params:{returnTo:'/account'}});
   await fireEvent.press(screen.getByRole('button',{name:'Forgot Password?'}));
@@ -538,7 +538,14 @@ test("password recovery Back preserves the safe auth return path", async () => {
   expect(router.dismissTo).toHaveBeenCalledWith({pathname:'/login',params:{returnTo:'/wishlist'}});
 });
 
-test('registration Back dismisses to Login instead of adding another Login screen',async()=>{
+test('registration Back falls back to Menu when there is no prior screen',async()=>{
  await show(<RegisterScreen/>);await fireEvent.press(screen.getByRole('button',{name:'Back'}));
- expect(router.dismissTo).toHaveBeenCalledWith({pathname:'/login',params:{returnTo:'/menu'}});
+ expect(router.dismissTo).toHaveBeenLastCalledWith('/menu');
+});
+
+test('the Register Log in link explicitly opens Login',async()=>{
+ jest.mocked(useLocalSearchParams).mockReturnValue({returnTo:'/wishlist'});
+ await show(<RegisterScreen/>);
+ await fireEvent.press(screen.getByRole('button',{name:'Log in'}));
+ expect(router.dismissTo).toHaveBeenLastCalledWith({pathname:'/login',params:{returnTo:'/wishlist'}});
 });

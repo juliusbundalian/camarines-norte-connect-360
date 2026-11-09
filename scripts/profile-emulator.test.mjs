@@ -5,7 +5,7 @@ import {createRequire} from 'node:module';
 const require=createRequire(import.meta.url);
 const {initializeApp,deleteApp}=require('firebase/app');
 const {initializeAuth,connectAuthEmulator,createUserWithEmailAndPassword,signOut}=require('firebase/auth');
-const {getFirestore,connectFirestoreEmulator,doc,getDocFromServer,getDocs,collection,updateDoc,serverTimestamp,terminate}=require('firebase/firestore');
+const {getFirestore,connectFirestoreEmulator,doc,getDocFromServer,getDocs,collection,setDoc,updateDoc,serverTimestamp,terminate}=require('firebase/firestore');
 const authHost=process.env.FIREBASE_AUTH_EMULATOR_HOST,dbHost=process.env.FIRESTORE_EMULATOR_HOST;
 assert.match(authHost??'',/^(localhost|127\.0\.0\.1):\d+$/);assert.match(dbHost??'',/^(localhost|127\.0\.0\.1):\d+$/);
 const [host,port]=dbHost.split(':');
@@ -89,4 +89,22 @@ test('account saves cannot hijack incomplete setup or recreate a deleted baselin
  await assert.rejects(service.savePersonalInfo(id,values,0),/setup/);
  await assert.rejects(service.saveAvatar(id,'avatar-6'),/setup/);
  await assert.rejects(service.savePersonalInfo('someone-else',values,null),/account/);
+});
+
+test('an avatar can be saved independently before the first personal info save',async()=>{
+ await signOut(getFirebaseAuth());
+ const id=(await createUserWithEmailAndPassword(getFirebaseAuth(),`avatar-${randomUUID()}@example.com`,'Example password 123')).user.uid;
+ const avatarRef=doc(getFirestoreDb(),'accountAvatars',id);
+ assert.deepEqual(await service.saveAvatar(id,'avatar-1'),{legacyAvatar:'avatar-1'});
+ assert.equal((await getDocFromServer(avatarRef)).exists(),false);
+ await assert.rejects(setDoc(avatarRef,{avatarId:'avatar-10'}),deny);
+ assert.deepEqual(await service.saveAvatar(id,'avatar-6'),{legacyAvatar:'avatar-6'});
+ assert.equal(await service.load(id),null);
+ assert.equal(await service.loadLegacyAvatar(id),'avatar-6');
+ const profile=await service.savePersonalInfo(id,{gender:'other',displayName:'Alex',birthdate:'2000-01-01',mobileNumber:null,avatarId:'avatar-1'},null);
+ assert.equal(profile.avatarId,'avatar-6');
+ assert.equal(profile.draft.avatarId,'avatar-6');
+ await assert.rejects(setDoc(avatarRef,{avatarId:'avatar-9'}),deny);
+ await signOut(getFirebaseAuth());
+ await assert.rejects(getDocFromServer(avatarRef),deny);
 });

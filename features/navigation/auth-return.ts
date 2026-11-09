@@ -4,3 +4,7 @@ export function getSafeAuthReturnPath(value: string | string[] | undefined): Aut
   return typeof value === 'string' && AUTH_RETURN_PATHS.some(path => path === value)
     ? value as AuthReturnPath : '/menu';
 }
+
+export function isProtectedMenuPath(path: string): path is '/account' | '/wishlist' {
+  return path === '/account' || path === '/wishlist';
+}

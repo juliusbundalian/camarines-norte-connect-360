@@ -1,4 +1,4 @@
-import {render,screen,fireEvent} from '@testing-library/react-native';
+import {act,render,screen,fireEvent} from '@testing-library/react-native';
 import {Alert} from 'react-native';
 import {router} from 'expo-router';
 import {AccountScreen} from '../AccountScreen';
@@ -23,11 +23,16 @@ test('shows persisted personal info and email, with functional edit and Back act
  await fireEvent.press(screen.getByLabelText('Edit personal info'));expect(router.push).toHaveBeenCalledWith('/personal-info');
  await fireEvent.press(screen.getByLabelText('Back'));expect(router.back).toHaveBeenCalled();
 });
-test('missing profiles direct avatar editing to the first complete personal form',async()=>{
- setup(null);await render(<AccountScreen/>);
+test('an account without a profile can save its avatar without opening Personal Info',async()=>{
+ const save=setup(null);
+ jest.mocked(router.push).mockClear();await render(<AccountScreen/>);
  expect(screen.getAllByText('Not provided')).toHaveLength(4);
  await fireEvent.press(screen.getByLabelText('Edit avatar'));
- expect(router.push).toHaveBeenCalledWith({pathname:'/personal-info',params:{selectAvatar:'1'}});
+ expect(router.push).not.toHaveBeenCalled();
+ await fireEvent.press(screen.getByLabelText('Avatar 6'));
+ await fireEvent.press(screen.getByText('Done'));
+ expect(save).toHaveBeenCalledWith('avatar-6');
+ expect(screen.queryByText('Select Avatar')).toBeNull();
 });
 test('a failed avatar save retains the choice and permits retry',async()=>{
  const save=setup();save.mockRejectedValueOnce(new Error('offline'));jest.spyOn(Alert,'alert').mockImplementation(()=>{});
@@ -36,4 +41,22 @@ test('a failed avatar save retains the choice and permits retry',async()=>{
  expect(Alert.alert).toHaveBeenCalledWith('Unable to save',expect.stringContaining('offline'));
  expect(screen.getByText('Done')).toBeTruthy();
  await fireEvent.press(screen.getByText('Done'));expect(save).toHaveBeenLastCalledWith('avatar-6');
+});
+
+test('shows avatar save progress until the save is acknowledged',async()=>{
+ const save=setup();
+ let acknowledge!:()=>void;
+ save.mockImplementationOnce(()=>new Promise<void>(resolve=>{acknowledge=resolve;}));
+ await render(<AccountScreen/>);
+ await fireEvent.press(screen.getByLabelText('Edit avatar'));
+ await fireEvent.press(screen.getByRole('radio',{name:'Avatar 6'}));
+ await fireEvent.press(screen.getByRole('button',{name:'Done'}));
+
+ expect(screen.getByText('Saving…')).toBeTruthy();
+ expect(screen.getByRole('button',{name:'Saving…'}).props.accessibilityState).toMatchObject({busy:true,disabled:true});
+ await fireEvent(screen.getByTestId('avatar-selection-modal'),'requestClose');
+ expect(screen.getByText('Saving…')).toBeTruthy();
+
+ await act(async()=>{acknowledge();});
+ expect(screen.queryByText('Select Avatar')).toBeNull();
 });

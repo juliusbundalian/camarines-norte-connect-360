@@ -8,13 +8,13 @@ import {validateProfile} from './profile-validation';
 import {sameDraft} from './same-draft';
 import {DraftWriter} from './draft-writer';
 import {getAccountProfileService} from '../../services/firebase/account-profile-service';
-import {ProfileConflictError,type AccountProfileService} from '../../services/firebase/account-profile-types';
+import {ProfileConflictError,type AccountAvatarSave,type AccountProfileService} from '../../services/firebase/account-profile-types';
 import type {CompletedProfile} from './profile-types';
 type Phase='guest'|'loading'|'legacy'|'required'|'complete'|'error';
-interface State {uid:string|null;phase:Phase;profile:UserProfile|null;draft:ProfileDraft;step:ProfileStep;error:string|null;saveState:'saved'|'saving'|'unsaved';accountLoading:boolean;accountError:string|null}
+interface State {uid:string|null;phase:Phase;profile:UserProfile|null;legacyAvatar:AvatarId|null;draft:ProfileDraft;step:ProfileStep;error:string|null;saveState:'saved'|'saving'|'unsaved';accountLoading:boolean;accountError:string|null}
 interface ProfileValue extends State {refreshAccount():Promise<void>;savePersonalInfo(values:CompletedProfile,revision:number|null):Promise<void>;saveAccountAvatar(id:AvatarId):Promise<void>;setDraft(patch:Partial<ProfileDraft>):void;saveGender(gender:Gender):Promise<void>;applyAvatar(id:AvatarId):Promise<void>;flushDraft():Promise<void>;finish(today:string):Promise<void>;retry():void}
 const Context=createContext<ProfileValue|null>(null);
-const initial=():State=>({uid:null,phase:'guest',profile:null,draft:emptyDraft(),step:'gender',error:null,saveState:'saved',accountLoading:false,accountError:null});
+const initial=():State=>({uid:null,phase:'guest',profile:null,legacyAvatar:null,draft:emptyDraft(),step:'gender',error:null,saveState:'saved',accountLoading:false,accountError:null});
 export function ProfileProvider({children,service=profileService,accountService}:PropsWithChildren<{service?:ProfileService;accountService?:AccountProfileService}>){
  const auth=useAuth();
  const authRef=useRef(auth.user);authRef.current=auth.user;
@@ -37,9 +37,13 @@ export function ProfileProvider({children,service=profileService,accountService}
  };
  const adoptCompleted=(saved:UserProfile)=>{
   writerRef.current?.dispose();profileRef.current=saved;draftRef.current=saved.draft;dirty.current=false;
-  patch({profile:saved,draft:saved.draft,phase:'complete',step:saved.currentStep,saveState:'saved'});
+  patch({profile:saved,legacyAvatar:null,draft:saved.draft,phase:'complete',step:saved.currentStep,saveState:'saved'});
  };
  const patch=(value:Partial<State>)=>setState(previous=>({...previous,...value}));
+ const loadLegacyAvatar=async(uid:string,alive:()=>boolean)=>{
+  const avatar=await account.loadLegacyAvatar(uid);
+  if(alive())patch({legacyAvatar:avatar});
+ };
  useEffect(()=>{
   const user=auth.user,uid=user?.uid??null;const generation=++session.current;let active=true;
   const same=uid===currentUid.current;
@@ -61,15 +65,23 @@ export function ProfileProvider({children,service=profileService,accountService}
        const saved=await account.load(user.uid);
        if(alive()){
         if(saved?.status==='complete')adoptCompleted(saved);
-        patch({accountLoading:false});
+        else if(!saved)await loadLegacyAvatar(user.uid,alive);
        }
-      }catch(error){if(alive())patch({accountLoading:false,accountError:error instanceof Error&&!('code' in error)?error.message:'Unable to load account. Please retry.'});}
+      }catch(error){if(alive())patch({accountError:error instanceof Error&&!('code' in error)?error.message:'Unable to load account. Please retry.'});}
+      finally{if(alive())patch({accountLoading:false});}
       return;
      }
      throw new Error('This session cannot access profile setup. Please sign out and sign in with email.');
     }
     let p=await service.load(user.uid);if(!alive())return;
-    if(!requiresSetup(user,p)){if(p){accept(p);draftRef.current=p.draft;patch({draft:p.draft,phase:'complete'});}else patch({phase:'legacy'});return;}
+    if(!requiresSetup(user,p)){
+     if(p){adoptCompleted(p);return;}
+     patch({phase:'legacy',accountLoading:true});
+     try{await loadLegacyAvatar(user.uid,alive);}
+     catch{if(alive())patch({accountError:'Unable to load account. Please retry.'});}
+     finally{if(alive())patch({accountLoading:false});}
+     return;
+    }
     p??=await service.ensure(user.uid,emptyDraft());if(!alive())return;
     accept(p);draftRef.current=preserved??p.draft;
     const writer=new DraftWriter(async draft=>{
@@ -133,6 +145,7 @@ export function ProfileProvider({children,service=profileService,accountService}
    const saved=await account.load(accountUser.uid);
    if(!accountIsCurrent())throw new Error('The active account changed.');
    if(saved?.status==='complete')adoptCompleted(saved);
+   else if(!saved)await loadLegacyAvatar(accountUser.uid,accountIsCurrent);
   }catch(error){
    if(accountIsCurrent()){
     patch({accountError:error instanceof Error&&!('code' in error)?error.message:'Unable to load account. Please retry.'});
@@ -142,7 +155,7 @@ export function ProfileProvider({children,service=profileService,accountService}
    if(accountIsCurrent())patch({accountLoading:false});
   }
  };
- const mutateAccount=(operation:(uid:string)=>Promise<UserProfile>):Promise<void>=>{
+ const mutateAccount=(operation:(uid:string)=>Promise<AccountAvatarSave>):Promise<void>=>{
   // Check the callback's render identity before joining a request or touching either SDK.
   if(!accountUser||!accountIsCurrent())return Promise.reject(new Error('The active account changed.'));
   if(accountMutation.current)return accountMutation.current;
@@ -153,7 +166,8 @@ export function ProfileProvider({children,service=profileService,accountService}
    try{
     const saved=await operation(accountUser.uid);
     if(!accountIsCurrent())throw new Error('The active account changed.');
-    adoptCompleted(saved);
+    if('legacyAvatar' in saved)patch({legacyAvatar:saved.legacyAvatar});
+    else adoptCompleted(saved);
    }catch(error){
     if(!accountIsCurrent())throw new Error('The active account changed.');
     if(error instanceof ProfileConflictError){

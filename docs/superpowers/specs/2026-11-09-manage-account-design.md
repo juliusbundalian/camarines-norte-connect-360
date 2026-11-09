@@ -58,7 +58,7 @@ Add account-edit operations at the existing profile service boundary rather than
 
 Firestore rules must explicitly permit valid owner-only completed-profile updates with immutable lifecycle fields and revision increments. Retain incomplete-profile protections and completion invariants. Adapt completedAt validation so editing preserves the original completion timestamp. Keep actual calendar, mobile, avatar, and canonical/draft consistency checks.
 
-For an older account without a profile document, merely viewing Account or opening/cancelling Personal Info creates no document. Saving a valid complete personal form creates a completed document transactionally. Such an explicit save does not send the user through registration onboarding. Preserve the fixed cohort cutoff. For an account without a document, the proposed avatar behavior is to keep the choice in the Personal Info editing session and require the complete personal form to save the first profile. The account avatar action opens that editor with the picker. This avoids persisting a partial document that could trigger required onboarding on an older account.
+For an older account without a profile document, merely viewing Account or opening/cancelling Personal Info creates no document. Saving a valid complete personal form creates a completed document transactionally. Such an explicit save does not send the user through registration onboarding. Preserve the fixed cohort cutoff. For an account without a profile document, the Account avatar pencil opens the same picker and Done saves the choice in the owner-only accountAvatars document. The first complete Personal Info save carries that choice into the profile transactionally. This keeps the profile lifecycle and onboarding gate independent of the avatar.
 
 Older native-only sessions currently have a separate authentication store from the JS Firestore client. Support these sessions using a profile adapter authenticated by the matching native Firebase session. This may require adding the matching `@react-native-firebase/firestore` dependency and a native Android rebuild. Reuse the same rules and data contract. Keep the JS-authenticated adapter for email sessions. Select the adapter using the authoritative AuthUser source and UID. Verify SDK compatibility and emulator configuration during planning. A native legacy account with no profile retains normal browsing eligibility while editing is voluntary.
 
@@ -80,7 +80,7 @@ The prior phase's skipped device matrix and live Firestore checks remain recorde
 - Omit the deferred Change Password action for this phase.
 - Show a discard confirmation when leaving edited Personal Info.
 - Confirm on Changes Saved returns to Account.
-- Older accounts can voluntarily create a complete profile through Save. Their first avatar choice is saved with that personal form.
+- Older accounts can voluntarily create a complete profile through Save. They can save an avatar independently before completing Personal Info.
 - Extend profile persistence to support older native sessions under their existing identity.
 
 These are implementer proposals for approval, except the user's explicit Change Password deferral.

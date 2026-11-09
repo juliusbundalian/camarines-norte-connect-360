@@ -3,9 +3,9 @@ import type {UserProfile} from '../../../features/profile/profile-types';
 
 test('a failed acknowledgement read can retry a committed first save without another write',async()=>{
  let data:UserProfile|null=null;
- const change=jest.fn(async(_uid,update)=>{const patch=update(data);if(patch)data={...data,...patch};});
+ const change=jest.fn(async(_uid,update)=>{const patch=update(data);if(patch?.profile)data={...data,...patch.profile};});
  const load=jest.fn(async()=>data).mockRejectedValueOnce(new Error('offline after commit'));
- const service=accountProfileOperations({load,transact:change,timestamp:()=>({toMillis:()=>1})});
+ const service=accountProfileOperations({load,loadLegacyAvatar:async()=>null,transact:change,timestamp:()=>({toMillis:()=>1})});
  const values={displayName:'Alex',gender:'other' as const,birthdate:'2000-01-01',mobileNumber:null,avatarId:'avatar-1' as const};
  await expect(service.savePersonalInfo('a',values,null)).rejects.toThrow('offline after commit');
  expect((await service.savePersonalInfo('a',values,null)).revision).toBe(0);

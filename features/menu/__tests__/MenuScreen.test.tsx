@@ -23,9 +23,18 @@ test('guest Menu exposes separate auth links and no Logout',async()=>{
   await fireEvent.press(screen.getByRole('button',{name:'Sign up'}));
   expect(router.push).toHaveBeenCalledWith({pathname:'/register',params:{returnTo:'/menu'}});
 });
-test.each([['My Wishlist','/wishlist'],['Account','/account'],['Notifications','/notifications'],['Privacy policy','/privacy-policy'],['Terms & conditions','/terms']])('Menu row %s opens its destination',async(label,path)=>{
+test.each([['Notifications','/notifications'],['Privacy policy','/privacy-policy'],['Terms & conditions','/terms']])('Menu row %s opens its destination',async(label,path)=>{
   await show();await fireEvent.press(screen.getByRole('button',{name:label}));
   expect(router.push).toHaveBeenCalledWith(path);
+});
+test.each([
+  ['Account','/account',false],['Account','/account',true],
+  ['My Wishlist','/wishlist',false],['My Wishlist','/wishlist',true],
+])('%s opens %s after checking sign-in status (%s)',async(label,path,signedIn)=>{
+  auth(signedIn);
+  await show();
+  await fireEvent.press(screen.getByRole('button',{name:label}));
+  expect(router.push).toHaveBeenLastCalledWith(signedIn?path:{pathname:'/login',params:{returnTo:path}});
 });
 test('shows actual version metadata without fake personal values',async()=>{
   await show();expect(screen.getByText('version 2.3.4 (7)')).toBeTruthy();

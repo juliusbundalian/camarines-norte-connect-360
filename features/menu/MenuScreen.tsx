@@ -6,6 +6,7 @@ import {Image} from 'expo-image';
 import Constants from 'expo-constants';
 import {router} from 'expo-router';
 import LogOut from 'lucide-react-native/icons/log-out';
+import {isProtectedMenuPath} from '../navigation/auth-return';
 import {useProfile} from '../profile/ProfileProvider';
 import {useAuth} from '../auth/AuthProvider';
 import {useAsyncAction} from '../auth/useAsyncAction';
@@ -16,7 +17,9 @@ import {menuTokens as t} from '../../theme/menu';
 export default function MenuScreen(){
   const auth=useAuth();
   const profile=useProfile();
-  const identity=profile.uid===auth.user?.uid&&profile.phase==='complete'?profile.profile:null;
+  const ownProfile=profile.uid===auth.user?.uid;
+  const identity=ownProfile&&profile.phase==='complete'?profile.profile:null;
+  const avatarId=identity?.avatarId??(ownProfile&&profile.phase==='legacy'?profile.legacyAvatar??undefined:undefined);
   const [confirming,setConfirming]=useState(false);
   const confirmingRef=useRef(false);
   useEffect(()=>{if(!auth.user){confirmingRef.current=false;setConfirming(false);}},[auth.user]);
@@ -24,14 +27,18 @@ export default function MenuScreen(){
   const action=useAsyncAction();
   const pending=auth.logoutPending||action.pending;
   const openAuth=(pathname:'/login'|'/register')=>router.push({pathname,params:{returnTo:'/menu'}});
+  const openDestination=(path:typeof MENU_SECTIONS[number]['rows'][number]['path'])=>{
+    if(!auth.user&&isProtectedMenuPath(path))router.push({pathname:'/login',params:{returnTo:path}});
+    else router.push(path);
+  };
   const version=Constants.expoConfig?.version;
   const build=Constants.expoConfig?.android?.versionCode;
   return <SafeAreaView edges={['top','left','right']} style={styles.screen}>
     <ScrollView contentContainerStyle={styles.content}>
-      <MenuHeader displayName={identity?.displayName??undefined} avatarId={identity?.avatarId} signedIn={!!auth.user} pending={pending} onLogin={()=>openAuth('/login')} onRegister={()=>openAuth('/register')} onAccount={()=>router.push('/account')}/>
+      <MenuHeader displayName={identity?.displayName??undefined} avatarId={avatarId} signedIn={!!auth.user} pending={pending} onLogin={()=>openAuth('/login')} onRegister={()=>openAuth('/register')} onAccount={()=>openDestination('/account')}/>
       {MENU_SECTIONS.map(section=><View key={section.key} style={styles.card}>
         {'title' in section?<Text style={styles.section}>{section.title}</Text>:null}
-        {section.rows.map(row=><MenuRow key={row.path} label={row.label} description={'description' in row?row.description:undefined} icon={row.icon} disabled={pending} onPress={()=>router.push(row.path)}/>)}
+        {section.rows.map(row=><MenuRow key={row.path} label={row.label} description={'description' in row?row.description:undefined} icon={row.icon} disabled={pending} onPress={()=>openDestination(row.path)}/>)}
       </View>)}
       {auth.user?<View style={styles.card}><MenuRow label="Logout" icon={LogOut} tone="danger" disabled={pending} onPress={()=>{if(!pending){confirmingRef.current=true;setConfirming(true);}}}/></View>:null}
       <View style={styles.footer}>

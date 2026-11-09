@@ -28,17 +28,14 @@ export function AccountScreen() {
   const auth=useAuth(),account=useProfile(),action=useProfileAction();
   const [picker,setPicker]=useState(false);
   const profile=account.profile;
+  const avatarId=profile?.avatarId??account.legacyAvatar??'avatar-1';
   const genderIcon=profile?.gender==='male'?Mars:profile?.gender==='other'?VenusAndMars:Venus;
   useEffect(()=>{if(action.error)Alert.alert('Unable to save',action.error);},[action.error]);
-  const editAvatar=()=>{
-    if(profile)setPicker(true);
-    else router.push({pathname:'/personal-info',params:{selectAvatar:'1'}});
-  };
   const back=()=>router.canGoBack()?router.back():router.dismissTo('/menu');
   return <AccountScaffold title="Account" onBack={back} busy={action.pending}>
     <View style={s.avatar}>
-      <ProfileAvatar id={profile?.avatarId??'avatar-1'} size={t.avatarSize}/>
-      <Pressable accessibilityRole="button" accessibilityLabel="Edit avatar" onPress={editAvatar} disabled={action.pending} style={s.editAvatar}><Pencil size={20} color="#FFFFFF"/></Pressable>
+      <ProfileAvatar id={avatarId} size={t.avatarSize}/>
+      <Pressable accessibilityRole="button" accessibilityLabel="Edit avatar" onPress={()=>setPicker(true)} disabled={action.pending||!!account.accountError} style={s.editAvatar}><Pencil size={20} color="#FFFFFF"/></Pressable>
     </View>
     {account.accountError?<View style={s.card}><Text style={s.label}>{account.accountError}</Text><Pressable accessibilityRole="button" onPress={()=>{void account.refreshAccount().catch(()=>{});}}><Text style={s.value}>Retry</Text></Pressable></View>:null}
     <View style={s.card}>
@@ -52,7 +49,7 @@ export function AccountScreen() {
       <Text style={[s.section,s.accountHeading]}>ACCOUNT INFO</Text>
       <InfoRow label="Email" value={auth.user?.email??'Not provided'} icon={Mail}/>
     </View>
-    <AvatarSelectionModal visible={picker} value={profile?.avatarId??'avatar-1'} busy={action.pending} onCancel={()=>setPicker(false)} onDone={id=>{void action.run(()=>account.saveAccountAvatar(id)).then(saved=>{if(saved)setPicker(false);});}}/>
+    <AvatarSelectionModal visible={picker} value={avatarId} busy={action.pending} onCancel={()=>setPicker(false)} onDone={id=>{void action.run(()=>account.saveAccountAvatar(id)).then(saved=>{if(saved)setPicker(false);});}}/>
   </AccountScaffold>;
 }
 const s=StyleSheet.create({

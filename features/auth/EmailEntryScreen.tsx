@@ -1,5 +1,5 @@
 import {RegistrationSuccessModal} from "../profile/RegistrationSuccessModal";
-import {getSafeAuthReturnPath} from "../navigation/auth-return";
+import {getSafeAuthReturnPath, isProtectedMenuPath} from "../navigation/auth-return";
 import { useCallback, useEffect } from "react";
 import { BackHandler, Pressable, StyleSheet, Text, View } from "react-native";
 import Check from "lucide-react-native/icons/check";
@@ -83,14 +83,27 @@ export default function EmailEntryScreen({
   const validationError = submitCount > 0
     ? errors.email?.message ?? errors.password?.message ?? errors.confirmPassword?.message ?? errors.termsAccepted?.message
     : undefined;
+  const backBlocked = action.pending || (signup && auth.registrationPhase !== "idle");
+  const protectedReturn = isProtectedMenuPath(returnTo);
+  const back = useCallback(() => {
+    if (backBlocked) return;
+    if (!signup && protectedReturn) router.dismissTo("/menu");
+    else if (router.canGoBack()) router.back();
+    else router.dismissTo(protectedReturn ? "/menu" : returnTo);
+  }, [backBlocked, signup, protectedReturn, returnTo]);
   useFocusEffect(
     useCallback(() => {
       const sub = BackHandler.addEventListener(
         "hardwareBackPress",
-        () => action.pending || (signup && auth.registrationPhase!=="idle"),
+        () => {
+          if (backBlocked) return true;
+          if (!signup && !protectedReturn) return false;
+          back();
+          return true;
+        },
       );
       return () => sub.remove();
-    }, [action.pending,signup,auth.registrationPhase]),
+    }, [backBlocked, signup, protectedReturn, back]),
   );
   const submit = handleSubmit(async () => {
     const current = schema.safeParse(getValues());
@@ -126,12 +139,6 @@ export default function EmailEntryScreen({
       } else await auth.login(email, password);
     });
   });
-  const back = () => {
-    if (action.pending) return;
-    if (signup) router.dismissTo(authLink("/login"));
-    else if (router.canGoBack()) router.back();
-    else router.dismissTo(returnTo);
-  };
   return (
     <>
     <RegistrationSuccessModal visible={signup && auth.registrationPhase==='created'} onElapsed={auth.finishRegistrationPresentation}/>

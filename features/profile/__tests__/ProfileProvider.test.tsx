@@ -12,7 +12,7 @@ const seed=():UserProfile=>({schemaVersion:1,onboardingVersion:1,status:'incompl
 function service(initial:UserProfile|null=null){let data:UserProfile|null=initial;let fail=false;return {
  get data(){return data;},set fail(v:boolean){fail=v;},
  savePersonalInfo:jest.fn(async(_uid,values,revision):Promise<UserProfile>=>data={...(data??seed()),...values,status:'complete',revision:revision===null?0:revision+1}),
- saveAvatar:jest.fn(async(_uid,avatarId)=>data={...data!,avatarId,revision:data!.revision+1}),load:jest.fn(async()=>data),ensure:jest.fn(async()=>data??=seed()),
+ loadLegacyAvatar:jest.fn(async()=>null),saveAvatar:jest.fn(async(_uid,avatarId)=>data={...data!,avatarId,revision:data!.revision+1}),load:jest.fn(async()=>data),ensure:jest.fn(async()=>data??=seed()),
  saveGender:jest.fn(async(_uid,gender,draft,revision)=>data={...data!,gender,draft,currentStep:'profile',revision:revision+1}),
  saveDraft:jest.fn(async(_uid,draft,revision)=>{if(fail)throw new Error('offline');return data={...data!,draft,revision:revision+1};}),
  complete:jest.fn(async(_uid,p,revision)=>data={...data!,...p,status:'complete',revision:revision+1})

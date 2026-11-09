@@ -43,6 +43,12 @@ service cloud.firestore {
         && d.draft.birthdateText==dateDisplay(d.birthdate)
         && d.draft.mobileText==(d.mobileNumber==null?'':d.mobileNumber));
   }
+  match /accountAvatars/{uid} {
+   allow get: if request.auth!=null && request.auth.uid==uid;
+   allow create, update: if request.auth!=null && request.auth.uid==uid
+    && !exists(/databases/$(database)/documents/users/$(uid))
+    && request.resource.data.keys().hasOnly(['avatarId']) && avatar(request.resource.data.avatarId);
+  }
   match /users/{uid} {
    allow get: if request.auth!=null && request.auth.uid==uid;
    allow create: if request.auth!=null && request.auth.uid==uid && valid(request.resource.data)

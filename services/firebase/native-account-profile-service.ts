@@ -1,3 +1,4 @@
+import type {AvatarId} from '../../features/profile/profile-types';
 import {doc,getDocFromServer,runTransaction,serverTimestamp} from '@react-native-firebase/firestore';
 import {getNativeAuth} from './native-auth';
 import {getNativeFirestore} from './native-firestore';
@@ -16,6 +17,12 @@ async function load(uid:string) {
 
 export const nativeAccountProfileService=accountProfileOperations({
   load,
+  async loadLegacyAvatar(uid){
+    owner(uid);
+    const snapshot=await getDocFromServer(doc(getNativeFirestore(),'accountAvatars',uid));
+    owner(uid);
+    return snapshot.data()?.avatarId as AvatarId|undefined ?? null;
+  },
   timestamp:serverTimestamp,
   async transact(uid,change) {
     owner(uid);
@@ -24,12 +31,14 @@ export const nativeAccountProfileService=accountProfileOperations({
     await runTransaction(database,async transaction=>{
       owner(uid);
       const snapshot=await transaction.get(reference);
-      const data=change(snapshot.exists()?decodeProfile(snapshot.data()!):null);
+      const avatarRef=doc(database,'accountAvatars',uid);
+      const avatar=snapshot.exists()?null:(await transaction.get(avatarRef)).data()?.avatarId as AvatarId|undefined;
+      const data=change(snapshot.exists()?decodeProfile(snapshot.data()!):null,avatar??null);
       owner(uid);
-      if(data) {
-        if(snapshot.exists())transaction.update(reference,data);
-        else transaction.set(reference,data);
-      }
+      if(!data)return;
+      if('legacyAvatar' in data)transaction.set(avatarRef,{avatarId:data.legacyAvatar});
+      else if(snapshot.exists())transaction.update(reference,data.profile);
+      else transaction.set(reference,data.profile);
     });
     owner(uid);
   },
