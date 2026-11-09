@@ -141,7 +141,7 @@ test("restored user takes precedence over absent onboarding and public deep link
   await waitFor(() => expect(screen).toHavePathname("/menu"));
   expect(screen.queryByText("Login destination")).toBeNull();
 });
-test("auth observer returns to the allowlisted source and signing out keeps guests in the shell", async () => {
+test("auth observer returns to Account and signing out protects its personal information", async () => {
   await renderRouter(routes, { initialUrl: "/login?returnTo=%2Faccount" });
   await act(() => next(null));
   expect(await screen.findByText("Login destination")).toBeTruthy();
@@ -149,8 +149,8 @@ test("auth observer returns to the allowlisted source and signing out keeps gues
   await waitFor(() => expect(screen).toHavePathname("/account"));
   expect(screen.queryByText("Login destination")).toBeNull();
   await act(() => next(null));
-  expect(screen).toHavePathname("/account");
-  expect(screen.getByText("Account is coming soon to CamNorte 360.")).toBeTruthy();
+  expect(screen).toHavePathname("/login");
+  expect(screen.getByText("Login destination")).toBeTruthy();
 });
 test("an observer failure shows recovery and hides splash", async () => {
   await renderRouter(routes);
@@ -226,7 +226,7 @@ test("guests can traverse all tabs with the selected state and open public Terms
   await act(() => next(user));
   expect(screen).toHavePathname('/terms');
 });
-test.each(['/account','/wishlist','/notifications','/privacy-policy'])("guest deep link %s opens a placeholder without login", async path => {
+test.each(['/wishlist','/notifications','/privacy-policy'])("guest deep link %s opens a placeholder without login", async path => {
   await renderRouter(routes, {initialUrl:path});
   await act(() => next(null));
   await waitFor(() => expect(screen).toHavePathname(path));
@@ -281,4 +281,11 @@ test('registration keeps its route through early observation and only then enter
  expect(screen).toHavePathname('/register');expect(screen.getByText('creating')).toBeTruthy();
  await act(()=>resolve());expect(screen.getByText('created')).toBeTruthy();expect(screen).toHavePathname('/register');
  await fireEvent.press(screen.getByText('Continue setup probe'));await waitFor(()=>expect(screen).toHavePathname('/gender'));
+});
+
+test('a guest Account deep link opens Login and returns to Account after authentication',async()=>{
+ await renderRouter(routes,{initialUrl:'/account'});await act(()=>next(null));
+ expect(screen).toHavePathname('/login');expect(screen).toHaveSearchParams({returnTo:'/account'});
+ await act(()=>next(user));await waitFor(()=>expect(screen).toHavePathname('/account'));
+ expect(await screen.findByText('PERSONAL INFO')).toBeTruthy();
 });

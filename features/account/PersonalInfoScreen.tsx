@@ -66,5 +66,5 @@ const s=StyleSheet.create({
   prefix:{padding:16,borderRightWidth:1,borderColor:t.border,fontFamily:t.fonts.regular,fontSize:16,lineHeight:24,color:t.colors.text},
   phoneInput:{flex:1,minWidth:0,borderWidth:0,borderRadius:0},
   save:{minHeight:48,borderRadius:12,padding:12,backgroundColor:t.actionColor,alignItems:'center',justifyContent:'center'},
-  saveText:{fontFamily:t.fonts.medium,fontSize:16,lineHeight:24,color:t.colors.text},disabled:{opacity:0.4},
+  saveText:{fontFamily:'PublicSans-Medium',fontSize:16,lineHeight:24,letterSpacing:-0.85,color:t.colors.text},disabled:{opacity:0.4},
 });

@@ -3,6 +3,8 @@ import {Alert,Pressable,StyleSheet,Text,View} from 'react-native';
 import {router} from 'expo-router';
 import UserRound from 'lucide-react-native/icons/user-round';
 import Venus from 'lucide-react-native/icons/venus';
+import Mars from 'lucide-react-native/icons/mars';
+import VenusAndMars from 'lucide-react-native/icons/venus-and-mars';
 import CalendarDays from 'lucide-react-native/icons/calendar-days';
 import Phone from 'lucide-react-native/icons/phone';
 import Mail from 'lucide-react-native/icons/mail';
@@ -26,6 +28,7 @@ export function AccountScreen() {
   const auth=useAuth(),account=useProfile(),action=useProfileAction();
   const [picker,setPicker]=useState(false);
   const profile=account.profile;
+  const genderIcon=profile?.gender==='male'?Mars:profile?.gender==='other'?VenusAndMars:Venus;
   useEffect(()=>{if(action.error)Alert.alert('Unable to save',action.error);},[action.error]);
   const editAvatar=()=>{
     if(profile)setPicker(true);
@@ -39,11 +42,11 @@ export function AccountScreen() {
     </View>
     {account.accountError?<View style={s.card}><Text style={s.label}>{account.accountError}</Text><Pressable accessibilityRole="button" onPress={()=>{void account.refreshAccount().catch(()=>{});}}><Text style={s.value}>Retry</Text></Pressable></View>:null}
     <View style={s.card}>
-      <View style={s.cardHeader}><Text style={s.section}>PERSONAL INFO</Text><Pressable accessibilityRole="button" accessibilityLabel="Edit personal info" disabled={action.pending||!!account.accountError} onPress={()=>router.push('/personal-info')} style={s.edit}><Pencil size={20} color={t.colors.text}/></Pressable></View>
+      <View style={s.cardHeader}><Text style={s.section}>PERSONAL INFO</Text><Pressable accessibilityRole="button" accessibilityLabel="Edit personal info" disabled={action.pending||!!account.accountError} onPress={()=>router.push('/personal-info')} style={s.edit}><Pencil size={16} color={t.colors.text}/></Pressable></View>
       <InfoRow label="Name" value={profile?.displayName??'Not provided'} icon={UserRound}/>
-      <InfoRow label="Gender" value={profile?.gender?profile.gender[0]!.toUpperCase()+profile.gender.slice(1):'Not provided'} icon={Venus}/>
+      <InfoRow label="Gender" value={profile?.gender?profile.gender[0]!.toUpperCase()+profile.gender.slice(1):'Not provided'} icon={genderIcon}/>
       <InfoRow label="Birthdate" value={profile?.birthdate?longBirthdate(profile.birthdate):'Not provided'} icon={CalendarDays}/>
-      <InfoRow label="Phone Number" value={profile?.mobileNumber??'Not provided'} icon={Phone}/>
+      <InfoRow label="Phone Number" value={profile?.mobileNumber?.replace(/^\+63(\d{3})(\d{3})(\d{4})$/, '+63 $1-$2-$3')??'Not provided'} icon={Phone}/>
     </View>
     <View style={s.card}>
       <Text style={[s.section,s.accountHeading]}>ACCOUNT INFO</Text>
@@ -55,11 +58,11 @@ export function AccountScreen() {
 const s=StyleSheet.create({
   avatar:{width:128,height:128,alignSelf:'center'},
   editAvatar:{position:'absolute',right:-4,bottom:-4,width:40,height:40,borderRadius:12,borderWidth:4,borderColor:t.colors.background,backgroundColor:t.colors.primary,alignItems:'center',justifyContent:'center'},
-  card:{padding:4,borderRadius:16,backgroundColor:t.colors.card},
-  cardHeader:{minHeight:28,paddingLeft:12,flexDirection:'row',alignItems:'center',justifyContent:'space-between'},
-  section:{...t.type.section,fontFamily:t.fonts.medium,color:t.colors.secondary},accountHeading:{paddingHorizontal:12,paddingTop:8},
-  edit:{minHeight:32,minWidth:40,alignItems:'center',justifyContent:'center'},
-  row:{minHeight:56,padding:8,flexDirection:'row',gap:14,alignItems:'center'},
+  card:{paddingHorizontal:4,paddingTop:12,paddingBottom:4,borderRadius:16,backgroundColor:t.colors.card},
+  cardHeader:{minHeight:16,paddingLeft:12,flexDirection:'row',alignItems:'center',justifyContent:'space-between'},
+  section:{...t.type.section,fontFamily:t.fonts.medium,color:t.colors.secondary},accountHeading:{paddingHorizontal:12},
+  edit:{position:'absolute',right:0,top:-16,minHeight:48,minWidth:48,alignItems:'center',justifyContent:'center'},
+  row:{minHeight:56,paddingHorizontal:8,paddingVertical:4,flexDirection:'row',gap:14,alignItems:'center'},
   tile:{width:40,height:40,borderRadius:12,alignItems:'center',justifyContent:'center',backgroundColor:t.colors.tile},
   copy:{flex:1},value:{...t.type.title,fontFamily:t.fonts.medium,color:t.colors.text},label:{...t.type.body,fontFamily:t.fonts.regular,color:t.colors.secondary},
 });

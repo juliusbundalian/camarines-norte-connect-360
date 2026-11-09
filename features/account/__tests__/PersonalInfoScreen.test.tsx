@@ -42,3 +42,26 @@ test('a conflicting revision keeps local input and uses the refreshed revision o
  await fireEvent.press(screen.getByRole('button',{name:'Save'}));expect(screen.getByDisplayValue('Local')).toBeTruthy();
  await fireEvent.press(screen.getByRole('button',{name:'Save'}));expect(save).toHaveBeenLastCalledWith(expect.objectContaining({displayName:'Local'}),8);
 });
+
+test('gender/date controls and optional mobile keep invalid input behind the Save gate',async()=>{
+ setup();const {DateTimePickerAndroid}=require('@react-native-community/datetimepicker');
+ await render(<PersonalInfoScreen/>);
+ await fireEvent.press(screen.getByLabelText('Gender'));await fireEvent.press(screen.getByRole('radio',{name:'Female'}));
+ await fireEvent.press(screen.getByLabelText('Birthdate'));
+ const options=DateTimePickerAndroid.open.mock.calls.at(-1)[0];
+ await act(()=>options.onDismiss());expect(screen.getByText('January 1, 2000')).toBeTruthy();
+ await act(()=>options.onValueChange({type:'set'},new Date(2999,0,1)));
+ expect(screen.getByRole('button',{name:'Save'})).toBeDisabled();
+ await act(()=>options.onValueChange({type:'set'},new Date(2000,1,29)));
+ await fireEvent.changeText(screen.getByLabelText('Mobile Number (optional)'),'123');expect(screen.getByRole('button',{name:'Save'})).toBeDisabled();
+ await fireEvent.changeText(screen.getByLabelText('Mobile Number (optional)'),'');expect(screen.getByRole('button',{name:'Save'})).toBeEnabled();
+ expect(Alert.alert).not.toHaveBeenCalled();
+});
+test('rapid Save and pending Back cannot submit or discard twice',async()=>{
+ const save=setup();let finish!:()=>void;save.mockImplementationOnce(()=>new Promise<void>(resolve=>{finish=resolve;}));
+ await render(<PersonalInfoScreen/>);await fireEvent.changeText(screen.getByLabelText('Name'),'Updated');
+ await fireEvent.press(screen.getByRole('button',{name:'Save'}));await fireEvent.press(screen.getByRole('button',{name:'Save'}));
+ await fireEvent.press(screen.getByLabelText('Back'));
+ expect(save).toHaveBeenCalledTimes(1);expect(Alert.alert).not.toHaveBeenCalled();
+ await act(()=>finish());expect(screen.getByText('Changes Saved')).toBeTruthy();
+});

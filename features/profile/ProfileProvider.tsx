@@ -63,7 +63,7 @@ export function ProfileProvider({children,service=profileService,accountService}
         if(saved?.status==='complete')adoptCompleted(saved);
         patch({accountLoading:false});
        }
-      }catch(error){if(alive())patch({accountLoading:false,accountError:error instanceof Error?error.message:'Unable to load account. Please retry.'});}
+      }catch(error){if(alive())patch({accountLoading:false,accountError:error instanceof Error&&!('code' in error)?error.message:'Unable to load account. Please retry.'});}
       return;
      }
      throw new Error('This session cannot access profile setup. Please sign out and sign in with email.');
@@ -131,7 +131,7 @@ export function ProfileProvider({children,service=profileService,accountService}
    if(generation!==session.current||authRef.current?.uid!==user.uid||authRef.current?.source!==user.source)throw new Error('The active account changed.');
    if(saved?.status==='complete')adoptCompleted(saved);
   }catch(error){
-   if(generation===session.current)patch({accountError:error instanceof Error?error.message:'Unable to load account. Please retry.'});
+   if(generation===session.current)patch({accountError:error instanceof Error&&!('code' in error)?error.message:'Unable to load account. Please retry.'});
    throw error;
   }finally{if(generation===session.current)patch({accountLoading:false});}
  };

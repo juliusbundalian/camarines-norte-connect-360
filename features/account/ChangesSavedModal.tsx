@@ -11,9 +11,9 @@ export function ChangesSavedModal({visible,onConfirm}:{visible:boolean;onConfirm
 const s=StyleSheet.create({
   overlay:{flex:1,justifyContent:'center',alignItems:'center',padding:16,backgroundColor:'rgba(34,48,62,0.5)'},
   card:{backgroundColor:t.colors.card,width:'100%',maxWidth:380,maxHeight:'90%',borderRadius:16},
-  content:{padding:24,gap:24},copy:{gap:8},
-  heading:{fontFamily:t.fonts.medium,fontSize:24,lineHeight:32,textAlign:'center',color:t.colors.text},
-  body:{fontFamily:t.fonts.regular,fontSize:16,lineHeight:24,textAlign:'center',color:t.colors.secondary},
+  content:{paddingHorizontal:24,paddingVertical:32,gap:16},copy:{gap:8,marginHorizontal:-8},
+  heading:{fontFamily:t.fonts.medium,fontSize:24,lineHeight:32,letterSpacing:-1,textAlign:'center',color:t.colors.text},
+  body:{fontFamily:t.fonts.regular,fontSize:16,lineHeight:24,letterSpacing:-0.5,textAlign:'center',color:t.colors.secondary},
   button:{minHeight:48,padding:12,borderRadius:12,backgroundColor:t.actionColor,alignItems:'center',justifyContent:'center'},
-  buttonText:{fontFamily:t.fonts.medium,fontSize:16,lineHeight:24,color:t.colors.text},
+  buttonText:{fontFamily:'PublicSans-Medium',fontSize:16,lineHeight:24,letterSpacing:-0.85,color:t.colors.text},
 });

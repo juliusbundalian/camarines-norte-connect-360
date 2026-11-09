@@ -11,7 +11,7 @@ export function AccountScaffold({title,onBack,busy=false,footer,children}:PropsW
     const subscription=BackHandler.addEventListener('hardwareBackPress',()=>{if(!busy)onBack();return true;});
     return ()=>subscription.remove();
   },[busy,onBack]));
-  return <SafeAreaView edges={['top','left','right']} style={s.screen}>
+  return <SafeAreaView edges={['top','left','right']} style={[s.screen,{backgroundColor:t.colors.card}]}>
     <KeyboardAvoidingView style={s.screen} behavior={Platform.OS==='ios'?'padding':'height'}>
       <View style={s.bar}>
         <Pressable accessibilityRole="button" accessibilityLabel="Back" disabled={busy} onPress={onBack} style={s.back}><ArrowLeft size={24} color={t.colors.text}/></Pressable>
