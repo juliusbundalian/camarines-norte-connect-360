@@ -1,6 +1,6 @@
 # Manage Account design
 
-Status is proposed for user approval on 2026-11-09.
+Approved by the user on 2026-11-09, including the proposed decisions recorded below.
 
 ## Intent and approved scope
 
@@ -50,7 +50,7 @@ After an acknowledged save, show Changes Saved. Confirm returns to Account, wher
 
 Account avatar pencil opens the existing nine-avatar selector, initialized from the saved selection. Done persists a changed selection and closes only after acknowledgement. Failure retains the selection for retry through a form-level alert. Back/outside dismissal discards the unconfirmed avatar choice. Reconfirming the saved avatar does not write. Gender changes preserve the chosen avatar. Explicit avatar selection marks its source as manual.
 
-The avatar-only operation must preserve every personal field, including concurrent changes. Personal Info Save must preserve the current avatar. Account and Menu update only with acknowledged data from the same active UID.
+The avatar-only operation must preserve every personal field, including concurrent changes. Personal Info Save must preserve the current avatar. Account and Menu update only with acknowledged data from the same active UID. Implementation clarification for the unchanged-save rule means reconfirming the saved avatar ID preserves its selection source without a write, while changing to another avatar marks its source manual.
 
 ## Persistence and compatibility
 
