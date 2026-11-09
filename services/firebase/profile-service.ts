@@ -13,16 +13,16 @@ export interface ProfileService extends AccountProfileService {
 }
 function owner(uid:string){if(getFirebaseAuth().currentUser?.uid!==uid)throw new Error('The active account changed. Please sign in again.');}
 function reference(uid:string){owner(uid);return doc(getFirestoreDb(),'users',uid);}
-function decode(data:DocumentData):UserProfile {
+export function decodeProfile(data:DocumentData):UserProfile {
  if(data.schemaVersion!==1||data.onboardingVersion!==1||!['incomplete','complete'].includes(data.status)||!Number.isInteger(data.revision)||!data.draft)throw new Error('This profile cannot be loaded. Please retry.');
  return data as UserProfile;
 }
-async function load(uid:string){const ref=reference(uid);const snap=await getDocFromServer(ref);owner(uid);return snap.exists()?decode(snap.data()):null;}
+async function load(uid:string){const ref=reference(uid);const snap=await getDocFromServer(ref);owner(uid);return snap.exists()?decodeProfile(snap.data()):null;}
 async function mutate(uid:string,revision:number,patch:(p:UserProfile)=>DocumentData){
  const ref=reference(uid);
  await runTransaction(getFirestoreDb(),async tx=>{
   owner(uid);const snap=await tx.get(ref);if(!snap.exists())throw new Error('Profile setup has not been initialized. Please retry.');
-  const p=decode(snap.data());
+  const p=decodeProfile(snap.data());
   if(p.status==='complete')throw new Error('Profile setup is already complete.');
   if(p.revision!==revision)throw new Error('Your profile was updated elsewhere. Please retry.');
   owner(uid);tx.update(ref,{...patch(p),revision:revision+1,updatedAt:serverTimestamp()});
@@ -36,7 +36,7 @@ const accountOperations=accountProfileOperations({
   const ref=reference(uid);
   await runTransaction(getFirestoreDb(),async tx=>{
    owner(uid);const snap=await tx.get(ref);
-   const data=change(snap.exists()?decode(snap.data()):null);
+   const data=change(snap.exists()?decodeProfile(snap.data()):null);
    owner(uid);
    if(data){if(snap.exists())tx.update(ref,data);else tx.set(ref,data);}
   });
@@ -49,7 +49,7 @@ export const profileService:ProfileService={
  async ensure(uid,draft){
   const ref=reference(uid);
   await runTransaction(getFirestoreDb(),async tx=>{
-   owner(uid);const snap=await tx.get(ref);if(snap.exists()){decode(snap.data());return;}
+   owner(uid);const snap=await tx.get(ref);if(snap.exists()){decodeProfile(snap.data());return;}
    tx.set(ref,{schemaVersion:1,onboardingVersion:1,status:'incomplete',currentStep:'gender',gender:null,draft,avatarId:draft.avatarId,avatarSelectionSource:draft.avatarSelectionSource,displayName:null,birthdate:null,mobileNumber:null,createdAt:serverTimestamp(),updatedAt:serverTimestamp(),completedAt:null,revision:0});
   });
   const result=await load(uid);if(!result)throw new Error('Unable to initialize your profile.');return result;
