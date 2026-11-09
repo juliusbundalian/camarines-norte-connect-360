@@ -31,7 +31,7 @@ Current disposition (user instruction on2026-11-09):
 - [x] Task3: suppress unchanged draft writes. Equal raw drafts and repeated acknowledged snapshots skip persistence; reverting an unsaved edit skips Firestore. Failed saves remain retryable and explicit operations invalidate cached acknowledgements.
 - Skipped by user: remaining full native/a11y/offline/two-device matrix. These cases remain unverified, not passed.
 - Skipped by user: live Firestore readiness/rules deployment checks. No remote deployment or verification is claimed.
-- [ ] Commit/review latest UI refinements and unchanged-draft suppression. No merge/push authorized.
+- [x] Commit/review latest UI refinements and unchanged-draft suppression: implementation commit9c37334; independent review of dc9712e..9c37334 found no Critical, Important or Minor issues and independently passed67 affected tests. No merge/push authorized.
 
 Fresh checks:245/245 Jest tests across28 suites and strict TypeScript passed. Prior native builds and Android15/API35 evidence remain in docs/verification.md; the remaining device checks were explicitly skipped. Physical-device testing remains unverified and iOS intentionally deferred.
 
