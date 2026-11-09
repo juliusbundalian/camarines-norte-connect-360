@@ -4,15 +4,15 @@ import {AVATARS} from './avatars';
 import {ProfileAvatar} from './ProfileAvatar';
 import type {AvatarId} from './profile-types';
 import {profileTokens as t} from '../../theme/profile';
-export function AvatarSelectionModal({visible,value,onDone,onCancel}:{visible:boolean;value:AvatarId;onDone(id:AvatarId):void;onCancel():void}){
+export function AvatarSelectionModal({visible,value,onDone,onCancel,busy=false}:{visible:boolean;value:AvatarId;onDone(id:AvatarId):void;onCancel():void;busy?:boolean}){
  const [selected,setSelected]=useState(value);const {width}=useWindowDimensions();
  useEffect(()=>{if(visible)setSelected(value);},[visible,value]);
  const inner=Math.min(380,width-32)-48;const gap=Math.min(24,Math.max(8,(inner-270)/2));const size=Math.min(90,(inner-gap*2)/3);
- return <Modal testID="avatar-selection-modal" visible={visible} transparent animationType="fade" onRequestClose={onCancel} statusBarTranslucent navigationBarTranslucent>
-  <View style={s.backdrop}><Pressable accessible={false} style={StyleSheet.absoluteFill} onPress={onCancel}/><View style={s.card} accessibilityViewIsModal><ScrollView contentContainerStyle={s.content}>
+ return <Modal testID="avatar-selection-modal" visible={visible} transparent animationType="fade" onRequestClose={()=>{if(!busy)onCancel();}} statusBarTranslucent navigationBarTranslucent>
+  <View style={s.backdrop}><Pressable accessible={false} style={StyleSheet.absoluteFill} disabled={busy} onPress={onCancel}/><View style={s.card} accessibilityViewIsModal><ScrollView contentContainerStyle={s.content}>
    <Text accessibilityRole="header" style={s.title}>Select Avatar</Text>
-   <View accessibilityRole="radiogroup" style={[s.grid,{width:size*3+gap*2,gap}]}>{AVATARS.map(avatar=><Pressable key={avatar.id} accessibilityRole="radio" accessibilityLabel={avatar.label} accessibilityState={{checked:selected===avatar.id,selected:selected===avatar.id}} onPress={()=>setSelected(avatar.id)} style={{width:size,height:size,borderRadius:size/2}}><ProfileAvatar id={avatar.id} size={size}/>{selected===avatar.id?<View pointerEvents="none" style={[StyleSheet.absoluteFill,s.selected,{borderRadius:size/2}]}/>:null}</Pressable>)}</View>
-   <Pressable accessibilityRole="button" onPress={()=>onDone(selected)} style={s.done}><Text style={s.doneText}>Done</Text></Pressable>
+   <View accessibilityRole="radiogroup" style={[s.grid,{width:size*3+gap*2,gap}]}>{AVATARS.map(avatar=><Pressable key={avatar.id} accessibilityRole="radio" accessibilityLabel={avatar.label} accessibilityState={{checked:selected===avatar.id,selected:selected===avatar.id}} disabled={busy} onPress={()=>setSelected(avatar.id)} style={{width:size,height:size,borderRadius:size/2}}><ProfileAvatar id={avatar.id} size={size}/>{selected===avatar.id?<View pointerEvents="none" style={[StyleSheet.absoluteFill,s.selected,{borderRadius:size/2}]}/>:null}</Pressable>)}</View>
+   <Pressable accessibilityRole="button" accessibilityState={{disabled:busy,busy}} disabled={busy} onPress={()=>onDone(selected)} style={s.done}><Text style={s.doneText}>Done</Text></Pressable>
   </ScrollView></View></View>
  </Modal>;
 }
