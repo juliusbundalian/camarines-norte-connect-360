@@ -482,3 +482,12 @@ On Diorama_API_35 (Android 15/API 35, ARM64, 1080×2424 at density 420) using pr
 The native ARM64 debug build, TypeScript, all 329 tests across 41 suites, and whitespace checks passed. Independent final review identified short multiline description clipping; its regression failed before the fix and passed afterward with the full suite. Short descriptions are now untruncated. Reduced-motion preference behavior is covered by an automated photo-viewer test; the live system-toggle transition was not separately checked.
 
 Production records still lack the optional description, seller/agency/contact, and lot/floor-area fields. The page uses their available values and empty-content fallbacks. Gallery count is 1/1 because each property currently has one bundled cover, despite the catalog's larger photoCount metadata. No monthly amount is invented.
+
+
+## Privacy Policy and Terms & Conditions — 2026-11-11
+
+Implemented the two Figma layouts as native Poppins documents with fixed white app bars and scrollable content. Both display a draft label and placeholders for unconfirmed publication details. Terms links to Privacy Policy within the app.
+
+On Diorama_API_35 (Android 15/API 35, ARM64), opened both pages from guest Menu, checked toolbar and hardware Back, followed the in-app Privacy Policy link from Terms, and scrolled to the final sections with the header pinned. Checked Terms at 320 dp and 130 percent text size, then restored the emulator display settings. A cold Terms link returned to Menu with hardware Back. The Firebase privacy link handed off to Chrome, which showed its first-run screen.
+
+Router integration tests cover signed-in Menu entry, registration input and checkbox preservation, direct links to both pages, and the required profile setup guard. The native ARM64 debug build, strict TypeScript, and all 336 tests across 41 suites passed.

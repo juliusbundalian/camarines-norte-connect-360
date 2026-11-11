@@ -60,7 +60,10 @@ function Navigation() {
         <Stack.Screen name="(main)" />
         <Stack.Screen name="(app)" />
       </Stack.Protected>
-      <Stack.Protected guard={!!auth.user || onboarding.completed}><Stack.Screen name="terms" /></Stack.Protected>
+      <Stack.Protected guard={!!auth.user || onboarding.completed}>
+        <Stack.Screen name="terms" />
+        <Stack.Screen name="privacy-policy" />
+      </Stack.Protected>
       <Stack.Protected guard={setupRequired}><Stack.Screen name="(profile)" /></Stack.Protected>
       <Stack.Protected guard={!auth.user && !onboarding.completed}>
         <Stack.Screen name="onboarding" />

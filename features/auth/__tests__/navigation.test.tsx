@@ -28,7 +28,7 @@ import Menu from "../../../app/(main)/(tabs)/menu";
 import Account from "../../../app/(main)/account";
 import Wishlist from "../../../app/(main)/wishlist";
 import Notifications from "../../../app/(main)/notifications";
-import Privacy from "../../../app/(main)/privacy-policy";
+import Privacy from "../../../app/privacy-policy";
 import Terms from "../../../app/terms";
 import LoginScreen from "../LoginScreen";
 import RegisterScreen from "../RegisterScreen";
@@ -73,7 +73,8 @@ const routes = {
   "(main)/account": Account,
   "(main)/wishlist": Wishlist,
   "(main)/notifications": Notifications,
-  "(main)/privacy-policy": Privacy,
+  "(main)/property/[id]": () => <Text>Property details destination</Text>,
+  "privacy-policy": Privacy,
   "(profile)/_layout":ProfileLayout,
   "(profile)/gender":GenderRoute,
   "(profile)/complete-profile":ProfileRoute,
@@ -224,15 +225,66 @@ test("guests can traverse all tabs with the selected state and open public Terms
     expect(screen.getByRole("tab",{name:label})).toBeSelected();
   }
   await act(() => router.push('/terms'));
-  expect(await screen.findByText('Content pending')).toBeTruthy();
+  expect(await screen.findByText('CamNorte 360 Terms & Conditions')).toBeTruthy();
   await act(() => next(user));
   expect(screen).toHavePathname('/terms');
 });
-test.each(['/notifications','/privacy-policy'])("guest deep link %s opens a placeholder without login", async path => {
+test.each(['/notifications','/privacy-policy'])("guest deep link %s opens without login", async path => {
   await renderRouter(routes, {initialUrl:path});
   await act(() => next(null));
   await waitFor(() => expect(screen).toHavePathname(path));
   expect(screen.queryByText('Login destination')).toBeNull();
+});
+
+test('legal links and Back preserve the registration draft', async () => {
+  await renderRouter({...routes, '(auth)/register': RegisterScreen}, {initialUrl: '/menu'});
+  await act(() => next(null));
+  await fireEvent.press(await screen.findByRole('button', {name: 'Sign up'}));
+  await fireEvent.changeText(await screen.findByLabelText('Email'), 'reader@example.com');
+  await fireEvent.press(screen.getByRole('checkbox'));
+  await fireEvent.press(screen.getByRole('button', {name: 'Terms & conditions'}));
+  expect(await screen.findByText('CamNorte 360 Terms & Conditions')).toBeTruthy();
+  await fireEvent.press(screen.getByRole('link', {name: 'Privacy Policy'}));
+  expect(await screen.findByText('CamNorte 360 Privacy Policy')).toBeTruthy();
+  await fireEvent.press(screen.getByRole('button', {name: 'Back'}));
+  expect(screen).toHavePathname('/terms');
+  await fireEvent.press(screen.getByRole('button', {name: 'Back'}));
+  expect(screen).toHavePathname('/register');
+  expect(screen.getByLabelText('Email')).toHaveDisplayValue('reader@example.com');
+  expect(screen.getByRole('checkbox')).toBeChecked();
+});
+
+test.each(['/terms', '/privacy-policy'])('Back from cold %s opens Menu', async path => {
+  await renderRouter(routes, {initialUrl: path});
+  await act(() => next(null));
+  await fireEvent.press(await screen.findByRole('button', {name: 'Back'}));
+  await waitFor(() => expect(screen).toHavePathname('/menu'));
+});
+
+test('Back from a legal link respects required profile setup', async () => {
+  const {profileService} = require('../../../services/firebase/profile-service');
+  profileService.ensure = jest.fn().mockResolvedValue({
+    schemaVersion: 1, onboardingVersion: 1, status: 'incomplete', currentStep: 'gender', gender: null,
+    draft: {displayName: '', birthdateText: '', mobileText: '', avatarId: 'avatar-1', avatarSelectionSource: 'default'},
+    revision: 0,
+  });
+  await renderRouter(routes, {initialUrl: '/privacy-policy'});
+  await act(() => next({...user, creationTimeMs: Date.parse('2026-12-01')}));
+  await screen.findByText('CamNorte 360 Privacy Policy');
+  await fireEvent.press(screen.getByRole('button', {name: 'Back'}));
+  await waitFor(() => expect(screen).toHavePathname('/gender'));
+});
+
+test.each([
+  ['Privacy policy', 'CamNorte 360 Privacy Policy'],
+  ['Terms & conditions', 'CamNorte 360 Terms & Conditions'],
+])('signed-in Menu opens %s and Back restores Menu', async (label, title) => {
+  await renderRouter(routes, {initialUrl: '/menu'});
+  await act(() => next(user));
+  await fireEvent.press(await screen.findByRole('button', {name: label}));
+  expect(await screen.findByText(title)).toBeTruthy();
+  await fireEvent.press(screen.getByRole('button', {name: 'Back'}));
+  expect(screen).toHavePathname('/menu');
 });
 
 test('successful Logout preserves the selected Menu while its pending overlay is visible', async () => {
