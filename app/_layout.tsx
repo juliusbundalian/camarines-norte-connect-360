@@ -95,7 +95,7 @@ export default function RootLayout() {
   );
 }
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  container: { flex: 1, backgroundColor: tokens.colors.background },
   loading: {
     flex: 1,
     alignItems: "center",

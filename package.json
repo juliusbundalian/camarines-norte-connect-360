@@ -16,7 +16,8 @@
     "test:emulator": "firebase emulators:exec --project demo-cn360-connect --only auth 'node --import tsx --test scripts/auth-emulator.test.mjs'",
     "emulators:auth": "firebase emulators:start --project demo-cn360-connect --only auth",
     "test:policy": "node --import tsx --test scripts/password-policy.test.mjs",
-    "test:profile-emulator": "firebase emulators:exec --project demo-cn360-connect --only auth,firestore 'node --import tsx --test scripts/profile-emulator.test.mjs'"
+    "test:profile-emulator": "firebase emulators:exec --project demo-cn360-connect --only auth,firestore 'node --import tsx --test scripts/profile-emulator.test.mjs'",
+    "test:property-listings-emulator": "firebase emulators:exec --project demo-cn360-connect --only auth,firestore 'node --import tsx --test scripts/property-listings-emulator.test.mjs'"
   },
   "dependencies": {
     "@hookform/resolvers": "^7.0.2",
@@ -40,11 +41,13 @@
     "react-dom": "19.3.0",
     "react-hook-form": "^7.91.0",
     "react-native": "0.88.1",
+    "react-native-maps": "1.29.11",
     "react-native-paper": "^5.15.4",
     "react-native-safe-area-context": "~5.11.1",
     "react-native-screens": "~4.30.1",
     "react-native-svg": "15.16.0",
     "react-native-web": "^0.21.4",
+    "supercluster": "^9.1.0",
     "zod": "^4.6.7"
   },
   "devDependencies": {

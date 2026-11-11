@@ -1,2 +1,1 @@
-import {PlaceholderScreen} from '../../../features/navigation/PlaceholderScreen';
-export default function Page(){return <PlaceholderScreen title="Properties"/>;}
+export {PropertiesScreen as default} from '../../../features/properties/PropertiesScreen';

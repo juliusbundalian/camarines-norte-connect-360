@@ -43,6 +43,10 @@ service cloud.firestore {
         && d.draft.birthdateText==dateDisplay(d.birthdate)
         && d.draft.mobileText==(d.mobileNumber==null?'':d.mobileNumber));
   }
+  match /propertyListings/{listingId} {
+   allow read: if resource.data.published == true;
+   allow write: if false;
+  }
   match /accountAvatars/{uid} {
    allow get: if request.auth!=null && request.auth.uid==uid;
    allow create, update: if request.auth!=null && request.auth.uid==uid

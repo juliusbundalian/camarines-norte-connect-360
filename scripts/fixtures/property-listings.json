@@ -1,0 +1,34 @@
+{
+  "danielle-luxe": {
+    "name": "Danielle Luxe",
+    "area": "West Ville, Bibirao, Daet",
+    "location": "Bibirao",
+    "type": "House & Lot",
+    "market": "For Sale",
+    "price": 2900000,
+    "amenities": ["Car Port"],
+    "bedrooms": 3,
+    "bathrooms": 1,
+    "photoKey": "danielle-luxe",
+    "photoCount": 2,
+    "latitude": null,
+    "longitude": null,
+    "published": false,
+    "displayOrder": 1
+  },
+  "belle-luxe": {
+    "name": "Belle Luxe",
+    "area": "West Ville, Bibirao, Daet",
+    "location": "Bibirao",
+    "type": "House & Lot",
+    "market": "For Sale",
+    "price": 2000000,
+    "amenities": [],
+    "photoKey": "belle-luxe",
+    "photoCount": 18,
+    "latitude": null,
+    "longitude": null,
+    "published": false,
+    "displayOrder": 2
+  }
+}

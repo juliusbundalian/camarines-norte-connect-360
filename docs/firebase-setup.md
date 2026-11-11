@@ -114,4 +114,12 @@ The fixed account-creation boundary is `2026-11-08T15:03:57.000Z` in `features/p
 
 Profiles use owner-only `users/{uid}` Firestore documents and `firestore.rules`. Run `npm run test:profile-emulator` for actual Auth/Firestore lifecycle and rules checks (demo-cn360-connect, Auth9098, Firestore8088). Optional paired `EXPO_PUBLIC_FIRESTORE_EMULATOR_HOST`/`EXPO_PUBLIC_FIRESTORE_EMULATOR_PORT` are development-only; use10.0.2.2 on Android. Never mix ESM and CommonJS Firestore instances in Node emulator tests; the test uses the same CommonJS Firebase distribution as tsx-transpiled project modules.
 
+## Properties catalog
+
+Properties reads `propertyListings` with `published == true` through the existing Firestore client. Guests and members can read published records. Catalog writes use authorized Firebase Console access. Run `npm run test:property-listings-emulator` to verify those rules locally.
+
+Before releasing the Firestore-backed app, confirm the target Firebase project and inspect any existing records. Obtain an approved coordinate pair for each listing. Use `scripts/fixtures/property-listings.json` as the baseline for `danielle-luxe` and `belle-luxe`. Keep optional details absent until the listing source confirms them, and put only approved public business details in `inquiryContact`. The catalog's cover photos still use the two bundled asset keys in the listing service.
+
+With production release authorization, deploy the reviewed Firestore rules and publish the two verified records under their fixed IDs. Confirm that a guest can fetch the intended published records and that the existing owner-only profile and avatar rules are active. Release the app after those checks pass.
+
 Before production release, enable/configure Cloud Firestore in the existing Firebase project and deploy the reviewed rules through the normal release process. Local implementation does not perform this deployment. Reads and acknowledged writes are required for setup; offline drafts are not claimed saved. Rules validate real dates and allow at most the latest local day worldwide (UTC+14); the app additionally checks the user's local today. This avoids rejecting valid birthdays around timezone midnight without collecting timezone data.

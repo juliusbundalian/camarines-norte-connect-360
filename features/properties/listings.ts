@@ -1,0 +1,27 @@
+export type Listing = {
+  id: string;
+  name: string;
+  area: string;
+  location: string;
+  type: string;
+  market: 'For Sale' | 'For Rent';
+  price: number;
+  monthlyAmount?: number;
+  furnishing?: string;
+  amenities: readonly string[];
+  bedrooms?: number;
+  bathrooms?: number;
+  photoCount: number;
+  photo: number;
+  coordinates: {latitude: number; longitude: number} | null;
+  locationApproximate?: boolean;
+  description?: string;
+  seller?: {displayName: string; kind: 'individual' | 'company'};
+  agent?: {name: string; role?: string};
+  agency?: {name: string; role?: string};
+  subdivision?: {name: string};
+  lotAreaSqm?: number;
+  floorAreaSqm?: number;
+  availability?: 'available' | 'reserved' | 'sold' | 'leased';
+  inquiryContact?: {phone?: string; email?: string; agentName?: string};
+};
